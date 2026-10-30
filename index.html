@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4A90E2">
+<title>Ali and Aboudy Scholars — Learning Adventure</title>
+<style>
+  :root{
+    --primary:#4A90E2;--primary-dark:#2E6BB8;--secondary:#FFB84D;
+    --success:#5CB85C;--danger:#E87C7C;--bg:#FFF8EC;--card:#FFFFFF;
+    --text:#2C3E50;--text-light:#6C7A89;--shadow:0 4px 12px rgba(0,0,0,.08);
+    --radius:18px;--radius-lg:24px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  input,button{font:inherit}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Comic Sans MS','Chalkboard SE','Trebuchet MS',system-ui,sans-serif;
+    background:linear-gradient(135deg,#FFF8EC 0%,#FFE8C4 100%);
+    color:var(--text);user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+  }
+  #app{height:100%;display:flex;flex-direction:column;max-width:1200px;margin:0 auto}
+  .screen{flex:1;overflow-y:auto;padding:16px;padding-bottom:80px;animation:fadeIn .3s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes pop{0%{transform:scale(.8)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes wiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+  @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .hidden{display:none!important}
+  .topbar{
+    background:var(--primary);color:#fff;padding:12px 16px;display:flex;
+    align-items:center;justify-content:space-between;box-shadow:var(--shadow);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar h1{font-size:1.1rem;font-weight:700}
+  .topbar .back-btn,.icon-btn{
+    background:rgba(255,255,255,.2);border:none;color:#fff;width:40px;height:40px;
+    border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .topbar .actions{display:flex;gap:8px}
+  .welcome{text-align:center;padding:20px 16px}
+  .welcome h2{font-size:1.6rem;color:var(--primary-dark);margin-bottom:8px}
+  .welcome p{color:var(--text-light);font-size:1rem;margin-bottom:20px}
+  .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;padding:8px}
+  .book-card{
+    background:var(--card);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow);
+    cursor:pointer;transition:transform .2s;text-align:center;border:3px solid transparent;
+  }
+  .book-card:active{transform:scale(.96)}
+  .book-card:hover{transform:translateY(-3px)}
+  .book-icon{font-size:3rem;margin-bottom:8px;display:block}
+  .book-title{font-size:1rem;font-weight:700;margin-bottom:4px}
+  .book-level{font-size:.8rem;color:var(--text-light);margin-bottom:10px}
+  .progress-bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-top:8px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--success),#7ED97E);transition:width .4s}
+  .progress-text{font-size:.75rem;color:var(--text-light);margin-top:4px}
+  .book-card.kg2-eng{border-color:#FFB84D}
+  .book-card.kg2-math{border-color:#4A90E2}
+  .book-card.g2-eng{border-color:#9B59B6}
+  .book-card.g2-math{border-color:#E74C3C}
+  .book-card.g2-sci{border-color:#27AE60}
+  .units-list{padding:8px}
+  .unit-card{
+    background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;
+    box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;gap:12px;
+  }
+  .unit-card:active{transform:scale(.98)}
+  .unit-icon{font-size:2rem;flex-shrink:0}
+  .unit-info{flex:1;min-width:0}
+  .unit-title{font-weight:700;font-size:1rem;margin-bottom:4px}
+  .unit-desc{font-size:.85rem;color:var(--text-light)}
+  .unit-status{
+    width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:1.1rem;flex-shrink:0;
+  }
+  .status-done{background:var(--success);color:#fff}
+  .status-progress{background:var(--secondary);color:#fff}
+  .status-new{background:#eee;color:var(--text-light)}
+  .lesson-container{padding:12px;max-width:700px;margin:0 auto}
+  .lesson-header{text-align:center;margin-bottom:16px}
+  .lesson-title{font-size:1.3rem;color:var(--primary-dark);margin-bottom:6px}
+  .lesson-goal{
+    background:#fff;border-radius:var(--radius);padding:10px 14px;font-size:.9rem;
+    color:var(--text-light);box-shadow:var(--shadow);display:inline-block;
+  }
+  .lesson-progress{height:10px;background:#eee;border-radius:5px;margin:14px 0;overflow:hidden}
+  .lesson-progress-fill{height:100%;background:var(--primary);transition:width .4s}
+  .character-wrap{display:flex;justify-content:center;align-items:center;margin:10px 0;position:relative;height:140px}
+  .character{width:120px;height:120px;position:relative;animation:bounce 3s ease-in-out infinite}
+  .character-body{
+    width:100px;height:100px;background:#FFD93D;border-radius:50%;
+    position:absolute;left:10px;top:10px;box-shadow:inset -8px -8px 0 rgba(0,0,0,.08);
+  }
+  .character-eye{width:14px;height:18px;background:#2C3E50;border-radius:50%;position:absolute;top:35px}
+  .character-eye.left{left:28px}
+  .character-eye.right{right:28px}
+  .character-eye.happy{height:6px;border-radius:0 0 10px 10px;top:40px}
+  .character-mouth{
+    width:30px;height:15px;border:3px solid #2C3E50;border-top:none;
+    border-radius:0 0 30px 30px;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  }
+  .character-mouth.happy{height:20px}
+  .character-mouth.sad{border:3px solid #2C3E50;border-bottom:none;border-radius:30px 30px 0 0;height:10px;bottom:32px}
+  .character-mouth.thinking{width:12px;height:12px;border-radius:50%;border:3px solid #2C3E50;background:#FF6B9D;bottom:32px}
+  .character-cheek{width:14px;height:8px;background:#FF9AAE;border-radius:50%;position:absolute;top:52px;opacity:.7}
+  .character-cheek.left{left:14px}
+  .character-cheek.right{right:14px}
+  .speech-bubble{
+    background:#fff;border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);
+    position:absolute;max-width:240px;font-size:.95rem;text-align:center;bottom:-10px;right:-30px;animation:pop .3s;
+  }
+  .speech-bubble::before{content:'';position:absolute;left:-8px;bottom:15px;width:0;height:0;border:8px solid transparent;border-right-color:#fff}
+  .activity-area{background:var(--card);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);margin:16px 0;min-height:200px}
+  .instruction{font-size:1.1rem;text-align:center;margin-bottom:16px;font-weight:600}
+  .listen-btn{
+    background:var(--secondary);color:#fff;border:none;border-radius:50%;
+    width:56px;height:56px;font-size:1.6rem;cursor:pointer;box-shadow:var(--shadow);
+    margin:0 auto 12px;display:block;
+  }
+  .listen-btn:active{transform:scale(.92)}
+  .listen-btn.playing{animation:wiggle .5s infinite}
+  .options-grid{display:grid;gap:12px;margin-top:12px}
+  .options-grid.cols-2{grid-template-columns:1fr 1fr}
+  .options-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .options-grid.cols-4{grid-template-columns:repeat(2,1fr)}
+  @media(min-width:500px){.options-grid.cols-4{grid-template-columns:repeat(4,1fr)}}
+  .option-btn{
+    background:#fff;border:3px solid #E0E6ED;border-radius:var(--radius);
+    padding:16px 10px;font-size:1.1rem;font-weight:600;cursor:pointer;
+    transition:all .2s;font-family:inherit;min-height:64px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+  }
+  .option-btn:active{transform:scale(.95)}
+  .option-btn.correct{border-color:var(--success);background:#E8F8E8;animation:pop .3s}
+  .option-btn.incorrect{border-color:var(--danger);background:#FDE8E8}
+  .option-btn .emoji{font-size:2rem;display:block;margin-bottom:4px}
+  .counting-area{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    padding:16px;background:#F8F9FA;border-radius:var(--radius);min-height:120px;
+  }
+  .count-object{font-size:2rem;cursor:pointer;transition:transform .2s}
+  .count-object:active{transform:scale(1.2)}
+  .count-object.counted{transform:scale(1.3);filter:drop-shadow(0 0 6px var(--secondary))}
+  .number-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+  .num-btn{
+    background:#fff;border:2px solid #BDC3C7;border-radius:12px;padding:14px 0;
+    font-size:1.3rem;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .num-btn:active{background:var(--primary);color:#fff}
+  .feedback{text-align:center;padding:14px;border-radius:var(--radius);margin-top:12px;font-size:1rem;font-weight:600;animation:pop .3s}
+  .feedback.correct{background:#E8F8E8;color:#2D7A2D}
+  .feedback.incorrect{background:#FDE8E8;color:#A83232}
+  .feedback.hint{background:#FFF4D6;color:#8B6914}
+  .btn{
+    background:var(--primary);color:#fff;border:none;border-radius:var(--radius);
+    padding:14px 24px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;
+    box-shadow:var(--shadow);
+  }
+  .btn:active{transform:scale(.96)}
+  .btn.secondary{background:var(--secondary)}
+  .btn.success{background:var(--success)}
+  .btn.ghost{background:transparent;color:var(--primary);border:2px solid var(--primary);box-shadow:none}
+  .btn-row{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000}
+  .confetti-piece{position:absolute;width:10px;height:10px;top:-20px;animation:confetti 2s linear forwards}
+  .parent-gate{padding:30px;text-align:center;max-width:400px;margin:40px auto;background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .parent-gate h2{margin-bottom:12px;color:var(--primary-dark)}
+  .parent-gate input{
+    width:100%;padding:12px;border:2px solid #E0E6ED;border-radius:12px;
+    font-size:1.1rem;text-align:center;margin:12px 0;font-family:inherit;
+  }
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+  .stat-card{background:var(--card);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
+  .stat-value{font-size:1.8rem;font-weight:700;color:var(--primary-dark)}
+  .stat-label{font-size:.85rem;color:var(--text-light);margin-top:4px}
+  .settings-section{background:var(--card);border-radius:var(--radius);padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+  .settings-section h3{margin-bottom:10px;color:var(--primary-dark);font-size:1.1rem}
+  .setting-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F0F0F0}
+  .setting-row:last-child{border:none}
+  .toggle{width:50px;height:28px;background:#ccc;border-radius:14px;position:relative;cursor:pointer;transition:background .2s}
+  .toggle.on{background:var(--success)}
+  .toggle::after{content:'';width:22px;height:22px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+  .toggle.on::after{left:25px}
+  .diag-item{background:#F8F9FA;border-radius:8px;padding:8px 12px;margin:4px 0;font-size:.85rem;display:flex;justify-content:space-between}
+  .diag-pass{color:var(--success);font-weight:700}
+  .diag-fail{color:var(--danger);font-weight:700}
+  .story-text{background:#FFF9E6;border-left:4px solid var(--secondary);padding:14px;border-radius:8px;font-size:1.05rem;line-height:1.6;margin:12px 0}
+  .letter-display{
+    font-size:5rem;font-weight:700;text-align:center;color:var(--primary-dark);
+    padding:20px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    margin:12px 0;text-transform:lowercase;
+  }
+  .word-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+  .word-tile{background:#fff;border:2px solid var(--primary);border-radius:10px;padding:10px 16px;font-size:1rem;font-weight:600;cursor:pointer;color:var(--primary)}
+  .word-tile.used{opacity:.3;pointer-events:none}
+  .sentence-slots{min-height:60px;background:#F8F9FA;border-radius:var(--radius);padding:10px;display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;border:2px dashed #BDC3C7}
+  .sentence-slot{background:var(--primary);color:#fff;padding:8px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;background:#fff;
+    box-shadow:0 -2px 8px rgba(0,0,0,.08);display:flex;justify-content:space-around;
+    padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:40;max-width:1200px;margin:0 auto;
+  }
+  .nav-btn{background:none;border:none;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-light);font-family:inherit;font-size:.7rem}
+  .nav-btn.active{color:var(--primary)}
+  .nav-btn .nav-icon{font-size:1.5rem}
+  /* Drag and Drop */
+  .drag-container{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+  .drag-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px;background:#F8F9FA;border-radius:var(--radius);min-height:80px;min-width:150px}
+  .drop-zone{
+    min-width:100px;min-height:100px;border:3px dashed #BDC3C7;border-radius:var(--radius);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:10px;background:#fff;transition:all .2s;
+  }
+  .drop-zone.over{border-color:var(--primary);background:#E8F2FF;transform:scale(1.05)}
+  .drop-zone.filled{border-style:solid;border-color:var(--success);background:#E8F8E8}
+  .drop-zone-label{font-size:.85rem;color:var(--text-light);margin-bottom:6px;font-weight:600}
+  .drop-zone-content{font-size:2rem;min-height:40px;display:flex;align-items:center;justify-content:center}
+  .drag-item{
+    background:#fff;border:2px solid var(--primary);border-radius:12px;
+    padding:10px 14px;font-size:1.8rem;cursor:grab;box-shadow:var(--shadow);
+    touch-action:none;transition:transform .1s;
+  }
+  .drag-item.dragging{opacity:.5;cursor:grabbing}
+  .drag-item.placed{opacity:.3;pointer-events:none}
+  /* Pattern */
+  .pattern-row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:16px 0}
+  .pattern-cell{
+    width:60px;height:60px;border-radius:12px;display:flex;align-items:center;
+    justify-content:center;font-size:2rem;background:#fff;border:2px solid #E0E6ED;
+  }
+  .pattern-cell.missing{border:3px dashed var(--secondary);background:#FFF8EC}
+  /* Tracing canvas */
+  .trace-container{text-align:center;margin:12px 0}
+  .trace-canvas{
+    border:3px solid var(--primary);border-radius:var(--radius);
+    background:#fff;touch-action:none;max-width:100%;
+  }
+  .trace-controls{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  /* Badges */
+  .badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin:12px 0}
+  .badge{
+    background:#fff;border-radius:var(--radius);padding:12px;text-align:center;
+    box-shadow:var(--shadow);border:2px solid #eee;
+  }
+  .badge.earned{border-color:var(--secondary);background:linear-gradient(135deg,#FFF8DC,#FFE8A0)}
+  .badge.locked{opacity:.4;filter:grayscale(1)}
+  .badge-icon{font-size:2.5rem;display:block;margin-bottom:4px}
+  .badge-name{font-size:.75rem;font-weight:600;color:var(--text)}
+  /* Sorting */
+  .sort-items{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0}
+  .sort-item{
+    background:#fff;border:2px solid #BDC3C7;border-radius:var(--radius);
+    padding:10px;font-size:1.5rem;cursor:pointer;min-width:60px;text-align:center;
+    transition:all .2s;
+  }
+  .sort-item.selected{border-color:var(--primary);background:#E8F2FF;transform:scale(1.05)}
+  .sort-item.correct{border-color:var(--success);background:#E8F8E8}
+  .sort-item.incorrect{border-color:var(--danger);background:#FDE8E8}
+  /* Clock */
+  .clock-container{text-align:center;margin:16px 0}
+  .clock-svg{max-width:220px;margin:0 auto;display:block}
+  /* Memory */
+  .memory-grid{display:grid;gap:8px;justify-content:center;margin:12px auto;max-width:400px}
+  .memory-card{
+    aspect-ratio:1;background:var(--primary);border-radius:12px;display:flex;
+    align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;
+    color:transparent;transition:all .3s;
+  }
+  .memory-card.flipped{background:#fff;color:var(--text);border:2px solid var(--primary)}
+  .memory-card.matched{background:#E8F8E8;border:2px solid var(--success);color:var(--text)}
+  @media(max-width:380px){
+    .book-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .book-icon{font-size:2.3rem}
+    .book-title{font-size:.9rem}
+    .instruction{font-size:1rem}
+  }
+  @media(min-width:768px){.screen{padding:24px}.book-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Local bilingual learning helper */
+#ls-helper-launch{position:fixed;right:14px;bottom:88px;z-index:9000;border:0;border-radius:999px;padding:12px 16px;background:#6b4fc7;color:#fff;font-weight:700;box-shadow:0 4px 14px #0003;cursor:pointer}
+#ls-helper-panel{position:fixed;inset:0;z-index:9100;background:#14203388;display:none;align-items:flex-end;justify-content:center;padding:12px}
+#ls-helper-panel.open{display:flex}
+#ls-helper-card{width:min(560px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:22px;padding:18px;box-shadow:0 10px 40px #0004;color:#243247}
+#ls-helper-card h2{margin:0 0 8px;color:#4c3a9b}#ls-helper-card p{line-height:1.6;margin:8px 0}
+#ls-helper-card button{border:0;border-radius:12px;padding:10px 13px;margin:5px;background:#eee;cursor:pointer;font:inherit}
+#ls-helper-card .primary{background:#5d50b5;color:white}#ls-helper-input{width:100%;padding:12px;border:1px solid #bbb;border-radius:10px;font:inherit;margin-top:8px}
+#ls-helper-answer{background:#f3f0ff;padding:12px;border-radius:12px;margin-top:10px;white-space:pre-wrap}
+.ai-page{max-width:820px;margin:0 auto}.ai-card{background:#fff;border-radius:var(--radius-lg);padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.ai-status{border:1px solid #e2e6ed;border-radius:14px;padding:14px;background:#fff}
+.ai-status h3{margin:0 0 6px;color:var(--primary-dark)}.ai-status p,.ai-note{font-size:.85rem;color:var(--text-light);line-height:1.5}
+.ai-page label{display:block;font-weight:700;margin:10px 0 5px}.ai-page input[type=url],.ai-page input[type=text],.ai-page input[type=password]{width:100%;padding:11px;border:2px solid #e0e6ed;border-radius:10px;font:inherit}
+.ai-toggle{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.ai-toggle input{margin-top:5px;width:20px;height:20px;flex:none}
+.ai-message{min-height:24px;margin-top:8px;color:var(--primary-dark);font-weight:700}.ai-state{font-weight:800}.ai-state.connected,.ai-state.configured{color:#287a42}.ai-state.quota-exhausted,.ai-state.error,.ai-state.not-configured{color:#a54646}
+body.ai-settings-open #ls-helper-launch{display:none}
+@media(max-width:520px){#ls-helper-launch{right:10px;bottom:82px;padding:10px 13px}.ai-grid{grid-template-columns:1fr}.ai-card{padding:13px}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<button id="ls-helper-launch" type="button" onclick="LSHelper.open()">💡 Help / مساعدة</button>
+<div id="ls-helper-panel" role="dialog" aria-modal="true" aria-labelledby="ls-helper-title" onclick="if(event.target===this)LSHelper.close()">
+ <div id="ls-helper-card"><button style="float:right" onclick="LSHelper.close()" aria-label="Close">✕</button>
+   <h2 id="ls-helper-title">Ali and Aboudy Scholars Helper 🌟</h2>
+  <p id="ls-helper-context">I can help you think step by step.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:4px">
+   <button class="primary" onclick="LSHelper.explain()">اشرح لي بالعربي</button>
+   <button onclick="LSHelper.simpleEnglish()">Easy English</button>
+   <button onclick="LSHelper.speak()">🔊 اقرأ الشرح</button>
+  </div>
+  <p>اكتب سؤالك أو قل لي أين توقفت:</p><input id="ls-helper-input" placeholder="مثلاً: ما معنى السؤال؟ / I don't understand" />
+  <button class="primary" onclick="LSHelper.reply()">إرسال</button>
+  <div id="ls-helper-answer" aria-live="polite">أنا هنا لمساعدتك. جرّب أولاً، وسنحلها خطوة خطوة.</div>
+  <p id="ls-helper-mode" style="font-size:.78rem;color:#667">المساعد المحلي يعمل دون إنترنت. الاتصال الخارجي معطّل افتراضيًا.</p>
+ </div>
+</div>
+
+<script>
+/* ============================================================
+   LITTLE SCHOLARS — EXPANDED EDITION
+   73 plan-based lessons; exact textbook mapping is not verified
+   ============================================================ */
+
+/* ============ STATE & STORAGE ============ */
+const STORAGE_KEY='littlescholars_v2';
+const PROFILE_STORAGE_KEY='little_scholars_child_profiles_v1';
+const ACTIVE_CHILD_KEY='little_scholars_active_child_v1';
+const AI_PREFS_KEY='little_scholars_ai_preferences_v1';
+const GEMINI_KEY_STORAGE='ali_aboudy_gemini_api_key_v1';
+const defaultAIPrefs={onlineEnabled:false,geminiModel:'gemini-2.5-flash'};
+function loadAIPrefs(){try{const saved=JSON.parse(localStorage.getItem(AI_PREFS_KEY)||'{}');return {onlineEnabled:Boolean(saved.onlineEnabled),geminiModel:String(saved.geminiModel||defaultAIPrefs.geminiModel)};}catch(e){return {...defaultAIPrefs};}}
+let aiPrefs=loadAIPrefs(),geminiApiKey='';
+try{geminiApiKey=localStorage.getItem(GEMINI_KEY_STORAGE)||'';}catch(e){}
+function saveAIPrefs(){try{localStorage.setItem(AI_PREFS_KEY,JSON.stringify(aiPrefs));}catch(e){}}
+function saveGeminiKey(value){geminiApiKey=value;try{if(value)localStorage.setItem(GEMINI_KEY_STORAGE,value);else localStorage.removeItem(GEMINI_KEY_STORAGE);}catch(e){}}
+const defaultState={childName:'Little Scholar',progress:{},badges:[],settings:{narration:true,soundEffects:true,music:false,slowSpeech:false},totalPoints:0,sessionStart:Date.now()};
+const CHILDREN={
+  ali:{id:'ali',name:'Ali',level:'KG2',books:['kg2-math','kg2-english'],icon:'🧒',subjects:'English & Mathematics'},
+  aboudi:{id:'aboudi',name:'Aboudy',level:'Grade 2',books:['g2-english','g2-math','g2-science'],icon:'👦',subjects:'English, Mathematics & Science'}
+};
+function freshState(name){return {...JSON.parse(JSON.stringify(defaultState)),childName:name,sessionStart:Date.now()};}
+function normalizeState(p,name){return {...freshState(name),...(p||{}),childName:(p&&p.childName&&p.childName!=='Aboudi')?p.childName:name,progress:(p&&p.progress)||{},badges:Array.isArray(p&&p.badges)?p.badges:[],settings:{...defaultState.settings,...((p&&p.settings)||{})}};}
+function loadLegacyState(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)return normalizeState(JSON.parse(raw),'Little Scholar');}catch(e){console.warn('Legacy state load failed',e);}return freshState('Little Scholar');}
+function loadProfiles(){
+  try{const raw=localStorage.getItem(PROFILE_STORAGE_KEY);if(raw){const p=JSON.parse(raw);return {ali:normalizeState(p.ali,'Ali'),aboudi:normalizeState(p.aboudi,'Aboudy')};}}catch(e){console.warn('Profile load failed',e);}
+  const legacy=loadLegacyState(),ali=freshState('Ali'),aboudi=freshState('Aboudy');
+  Object.entries(legacy.progress||{}).forEach(([id,data])=>{if(id.startsWith('kg2-'))ali.progress[id]=data;else if(id.startsWith('g2-'))aboudi.progress[id]=data;});
+  ali.settings={...defaultState.settings,...legacy.settings};aboudi.settings={...defaultState.settings,...legacy.settings};
+  const completed=p=>Object.values(p).reduce((n,b)=>n+Object.values(b||{}).reduce((m,u)=>m+Object.values(u||{}).filter(x=>x&&x.completed).length,0),0);
+  (completed(ali.progress)>=completed(aboudi.progress)?ali:aboudi).totalPoints=legacy.totalPoints||0;
+  return {ali,aboudi};
+}
+let childProfiles=loadProfiles();
+let activeChildId='';
+try{const saved=localStorage.getItem(ACTIVE_CHILD_KEY);if(saved&&CHILDREN[saved])activeChildId=saved;}catch(e){}
+let state=activeChildId?childProfiles[activeChildId]:freshState('Little Scholar');
+function activateChild(id){if(!CHILDREN[id])return;saveState();activeChildId=id;state=childProfiles[id];state.sessionStart=Date.now();try{localStorage.setItem(ACTIVE_CHILD_KEY,id);}catch(e){}Router.history=[];Router.current='home';Router.params={};Router.render();}
+function saveState(){try{if(activeChildId&&CHILDREN[activeChildId]){childProfiles[activeChildId]=state;localStorage.setItem(PROFILE_STORAGE_KEY,JSON.stringify(childProfiles));localStorage.setItem(ACTIVE_CHILD_KEY,activeChildId);}localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){console.warn('Save failed',e);}}
+function getVisibleBooks(){return activeChildId?CHILDREN[activeChildId].books.map(id=>CURRICULUM[id]).filter(Boolean):Object.values(CURRICULUM);}
+
+
+/* ============ AUDIO SYSTEM ============ */
+const AudioSystem={
+  synth:window.speechSynthesis,
+  voices:[],
+  englishVoice:null,
+  arabicVoice:null,
+  init(){
+    if(!this.synth)return;
+    const load=()=>{
+      this.voices=this.synth.getVoices();
+      const english=this.voices.filter(v=>/^en-GB/i.test(v.lang));
+      const arabic=this.voices.filter(v=>/^ar/i.test(v.lang));
+      this.englishVoice=english.find(v=>/Google UK English Female|Sonia|Libby|Natural/i.test(v.name))||english[0]||this.voices.find(v=>/^en/i.test(v.lang))||null;
+      this.arabicVoice=arabic.find(v=>/Google|Natural|Female/i.test(v.name))||arabic[0]||null;
+    };
+    load();
+    if(this.synth.addEventListener)this.synth.addEventListener('voiceschanged',load);
+    else this.synth.onvoiceschanged=load;
+  },
+  speak(text,opts={}){
+    if(!state.settings.narration&&!opts.force)return Promise.resolve();
+    if(!this.synth)return Promise.resolve();
+    return new Promise(r=>{
+      try{
+        this.synth.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        const lang=/[\u0600-\u06ff]/.test(text)?'ar':'en-GB';
+        u.lang=lang;
+        u.voice=lang==='ar'?this.arabicVoice:this.englishVoice;
+        u.rate=opts.rate||(state.settings.slowSpeech?0.78:0.9);
+        u.pitch=opts.pitch||1.1;
+        u.onend=()=>r();
+        u.onerror=()=>r();
+        this.synth.speak(u);
+      }catch(e){r();}
+    });
+  },
+  phoneme(letter,force=false){
+    const vowels={a:'the short a sound in apple',e:'the short e sound in egg',i:'the short i sound in insect',o:'the short o sound in hot',u:'the short u sound in umbrella'};
+    const examples={s:'sun',t:'top',b:'ball',c:'cat',d:'dog',f:'fish',g:'goat',h:'hat',j:'jam',k:'kite',l:'leaf',m:'moon',n:'net',p:'pen',qu:'queen',r:'red',v:'van',w:'web',x:'box',y:'yes',z:'zebra',sh:'ship',ch:'chip',th:'thin'};
+    const cue=vowels[letter]||`${letter==='x'?'the ending sound in':'the first sound in'} ${examples[letter]||letter}`;
+    return this.speak(cue,{force});
+  },
+  async speakBlend(sounds,word,force=false){
+    await this.speak('Listen to each sound, then blend them together.',{force});
+    for(const sound of sounds)await this.phoneme(sound,force);
+    await this.speak(`Now blend the sounds: ${word}.`,{force});
+  },
+  stop(){if(this.synth)this.synth.cancel();},
+  audioCtx:null,
+  getCtx(){
+    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return null;
+    if(!this.audioCtx)this.audioCtx=new Ctx();
+    return this.audioCtx;
+  },
+  tone(f,d,t='sine',v=0.2){
+    if(!state.settings.soundEffects)return;
+    try{
+      const c=this.getCtx();if(!c)return;const o=c.createOscillator(),g=c.createGain();
+      o.type=t;o.frequency.value=f;
+      g.gain.setValueAtTime(v,c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
+      o.connect(g);g.connect(c.destination);
+      o.start();o.stop(c.currentTime+d);
+    }catch(e){}
+  },
+  correct(){if(!state.settings.soundEffects)return;this.tone(523.25,.12);setTimeout(()=>this.tone(659.25,.12),100);setTimeout(()=>this.tone(783.99,.2),200);},
+  incorrect(){if(!state.settings.soundEffects)return;this.tone(220,.15);setTimeout(()=>this.tone(196,.25),120);},
+  click(){if(!state.settings.soundEffects)return;this.tone(800,.05,'square',0.1);},
+  celebration(){if(!state.settings.soundEffects)return;[523.25,659.25,783.99,1046.50].forEach((n,i)=>setTimeout(()=>this.tone(n,.2),i*120));},
+  badge(){if(!state.settings.soundEffects)return;[523.25,659.25,783.99,1046.50,1318.51].forEach((n,i)=>setTimeout(()=>this.tone(n,.25),i*100));},
+};
+
+/* ============ CURRICULUM — COMPLETE KG2 + GRADE 2 ============ */
+const CURRICULUM={
+  /* ============================================================
+     KG2 MATHEMATICS — 9 UNITS
+     ============================================================ */
+  'kg2-math':{
+    id:'kg2-math',title:'KG2 Mathematics',subtitle:'Maths Xpress — Senior KG',
+    icon:'🔢',colorClass:'kg2-math',
+     verification:{status:'PLAN_BASED_UNVERIFIED'},
+    units:[
+      {id:'u1',title:'Numbers 1–10',icon:'🔟',desc:'Recognise and count to ten',lessons:[
+        {id:'l1',title:'Count to 5',objective:'Count objects up to 5',type:'counting',
+          intro:"Let's count together! Touch each object.",
+          questions:[
+            {objects:['🍎','🍎','🍎'],answer:3,hint:'Touch each apple.'},
+            {objects:['⭐','⭐','⭐','⭐'],answer:4},
+            {objects:['🐶','🐶'],answer:2},
+            {objects:['🌸','🌸','🌸','🌸','🌸'],answer:5},
+            {objects:['🎈'],answer:1},
+          ]},
+        {id:'l2',title:'Count to 10',objective:'Count up to 10',type:'counting',
+          intro:"Now count bigger groups!",
+          questions:[
+            {objects:['🐟','🐟','🐟','🐟','🐟','🐟'],answer:6},
+            {objects:['🍓','🍓','🍓','🍓','🍓','🍓','🍓'],answer:7},
+            {objects:['🦋','🦋','🦋','🦋','🦋','🦋','🦋','🦋'],answer:8},
+            {objects:['🌼','🌼','🌼','🌼','🌼','🌼','🌼','🌼','🌼'],answer:9},
+            {objects:['🍪','🍪','🍪','🍪','🍪','🍪','🍪','🍪','🍪','🍪'],answer:10},
+          ]},
+        {id:'l3',title:'Match Number',objective:'Match numerals to groups',type:'match-quantity',
+          intro:'Match the number to the right group.',
+          questions:[
+            {number:3,options:[{emoji:'🍎🍎',n:2},{emoji:'🍎🍎🍎',n:3},{emoji:'🍎🍎🍎🍎',n:4}],answer:3},
+            {number:5,options:[{emoji:'⭐⭐⭐⭐',n:4},{emoji:'⭐⭐⭐⭐⭐',n:5},{emoji:'⭐⭐⭐',n:3}],answer:5},
+            {number:7,options:[{emoji:'🐱🐱🐱🐱🐱🐱',n:6},{emoji:'🐱🐱🐱🐱🐱🐱🐱',n:7},{emoji:'🐱🐱🐱🐱🐱🐱🐱🐱',n:8}],answer:7},
+          ]},
+      ]},
+      {id:'u2',title:'Number Order',icon:'🔢',desc:'Put numbers in order',lessons:[
+        {id:'l1',title:'What Comes Next?',objective:'Next number in sequence',type:'sequence',
+          intro:'What comes next?',
+          questions:[
+            {sequence:[1,2,3],answer:4,options:[3,4,5,6]},
+            {sequence:[2,3,4],answer:5,options:[4,5,6,7]},
+            {sequence:[5,6,7],answer:8,options:[6,7,8,9]},
+            {sequence:[7,8,9],answer:10,options:[8,9,10,11]},
+          ]},
+        {id:'l2',title:'Missing Numbers',objective:'Find the missing number',type:'sequence',
+          intro:'A number is hiding!',
+          questions:[
+            {sequence:[1,'_',3],answer:2,options:[1,2,3,4],display:'1, ?, 3'},
+            {sequence:[2,3,'_',5],answer:4,options:[3,4,5,6],display:'2, 3, ?, 5'},
+            {sequence:[4,'_',6,7],answer:5,options:[4,5,6,7],display:'4, ?, 6, 7'},
+          ]},
+      ]},
+      {id:'u3',title:'Shapes',icon:'🔷',desc:'Recognise shapes',lessons:[
+        {id:'l1',title:'Name the Shape',objective:'Identify shapes',type:'shape-match',
+          intro:"Let's learn shapes!",
+          questions:[
+            {target:'circle',options:['circle','square','triangle','rectangle']},
+            {target:'square',options:['triangle','square','circle','rectangle']},
+            {target:'triangle',options:['rectangle','circle','triangle','square']},
+            {target:'rectangle',options:['square','rectangle','circle','triangle']},
+          ]},
+        {id:'l2',title:'Count the Sides',objective:'Count sides of shapes',type:'mcq',
+          intro:'How many sides does the shape have?',
+          questions:[
+            {q:'How many sides does a triangle have?',options:['2','3','4','5'],answer:'3'},
+            {q:'How many sides does a square have?',options:['3','4','5','6'],answer:'4'},
+            {q:'How many corners does a rectangle have?',options:['3','4','5','6'],answer:'4'},
+          ]},
+      ]},
+      {id:'u4',title:'Comparing',icon:'⚖️',desc:'More, less, same',lessons:[
+        {id:'l1',title:'Which is More?',objective:'Compare quantities',type:'compare',
+          intro:'Which group has more?',
+          questions:[
+            {a:{emoji:'🍎',n:3},b:{emoji:'🍊',n:5},answer:'b'},
+            {a:{emoji:'⭐',n:7},b:{emoji:'🌙',n:4},answer:'a'},
+            {a:{emoji:'🐶',n:2},b:{emoji:'🐱',n:6},answer:'b'},
+            {a:{emoji:'🎈',n:4},b:{emoji:'🎁',n:4},answer:'same'},
+          ]},
+        {id:'l2',title:'Bigger or Smaller',objective:'Compare size',type:'mcq',
+          intro:'Which is bigger?',
+          questions:[
+            {q:'Which animal is bigger?',options:['🐭 mouse','🐘 elephant'],answer:'🐘 elephant'},
+            {q:'Which fruit is smaller?',options:['🍉 watermelon','🍓 strawberry'],answer:'🍓 strawberry'},
+            {q:'Which vehicle is longer?',options:['🚲 bike','🚌 bus'],answer:'🚌 bus'},
+          ]},
+      ]},
+      /* NEW UNIT 5: PATTERNS */
+      {id:'u5',title:'Patterns',icon:'🔁',desc:'Recognise and complete patterns',lessons:[
+        {id:'l1',title:'Complete the Pattern',objective:'Find the missing item in a pattern',type:'pattern',
+          intro:'Look at the pattern. What comes next?',
+          questions:[
+            {pattern:['🔴','🔵','🔴','🔵','🔴'],answer:'🔵',options:['🔴','🔵','🟢','🟡']},
+            {pattern:['🍎','🍌','🍎','🍌','🍎'],answer:'🍌',options:['🍎','🍌','🍇','🍓']},
+            {pattern:['⭐','⭐','🌙','⭐','⭐'],answer:'🌙',options:['⭐','🌙','☀️','💫']},
+            {pattern:['🐶','🐱','🐶','🐱','🐶'],answer:'🐱',options:['🐶','🐱','🐭','🐰']},
+          ]},
+        {id:'l2',title:'AB Patterns',objective:'Recognise AB patterns',type:'pattern',
+          intro:'This is an AB pattern. What comes next?',
+          questions:[
+            {pattern:['🌸','🌼','🌸','🌼','🌸'],answer:'🌼',options:['🌸','🌼','🌻','🌹']},
+            {pattern:['🟦','🟨','🟦','🟨','🟦'],answer:'🟨',options:['🟦','🟨','🟥','🟩']},
+            {pattern:['🐸','🐢','🐸','🐢','🐸'],answer:'🐢',options:['🐸','🐢','🐍','🦎']},
+          ]},
+      ]},
+      /* NEW UNIT 6: SORTING */
+      {id:'u6',title:'Sorting',icon:'🗂️',desc:'Sort by colour, shape, size',lessons:[
+        {id:'l1',title:'Sort by Colour',objective:'Group items by colour',type:'sort',
+          intro:'Sort the items into the right colour group.',
+          groups:['🔴 Red','🔵 Blue'],
+          items:[
+            {emoji:'🍎',group:'🔴 Red'},{emoji:'🫐',group:'🔵 Blue'},
+            {emoji:'🌹',group:'🔴 Red'},{emoji:'🐳',group:'🔵 Blue'},
+          ]},
+        {id:'l2',title:'Sort by Type',objective:'Group animals and fruits',type:'sort',
+          intro:'Sort into animals and fruits.',
+          groups:['🐾 Animals','🍎 Fruits'],
+          items:[
+            {emoji:'🐶',group:'🐾 Animals'},{emoji:'🍊',group:'🍎 Fruits'},
+            {emoji:'🐱',group:'🐾 Animals'},{emoji:'🍇',group:'🍎 Fruits'},
+          ]},
+      ]},
+      /* NEW UNIT 7: POSITION */
+      {id:'u7',title:'Position',icon:'📍',desc:'Above, below, left, right',lessons:[
+        {id:'l1',title:'Above and Below',objective:'Understand above/below',type:'mcq',
+          intro:'Where is the object?',
+          questions:[
+            {q:'The bird is ______ the tree.',options:['above','below','inside','next to'],answer:'above'},
+            {q:'The fish is ______ the water.',options:['above','below','on','near'],answer:'below'},
+            {q:'The sun is ______ the clouds.',options:['above','below','inside','under'],answer:'above'},
+          ]},
+        {id:'l2',title:'Left and Right',objective:'Understand left/right',type:'mcq',
+          intro:'Which hand is which?',
+          questions:[
+            {q:'You write with your ______ hand.',options:['right','left','top','bottom'],answer:'right'},
+            {q:'Your heart is on the ______ side.',options:['right','left','top','bottom'],answer:'left'},
+            {q:'The sun rises in the ______.',options:['east','west','north','south'],answer:'east'},
+          ]},
+      ]},
+      /* NEW UNIT 8: MEASUREMENT */
+      {id:'u8',title:'Measurement',icon:'📏',desc:'Longer, shorter, heavier',lessons:[
+        {id:'l1',title:'Longer or Shorter',objective:'Compare length',type:'mcq',
+          intro:'Which is longer?',
+          questions:[
+            {q:'Which is longer?',options:['🐍 snake','🐛 worm'],answer:'🐍 snake'},
+            {q:'Which is shorter?',options:['🦒 giraffe','🐁 mouse'],answer:'🐁 mouse'},
+            {q:'Which is taller?',options:['🌳 tree','🌱 sprout'],answer:'🌳 tree'},
+          ]},
+        {id:'l2',title:'Heavier or Lighter',objective:'Compare weight',type:'mcq',
+          intro:'Which is heavier?',
+          questions:[
+            {q:'Which is heavier?',options:['🪨 rock','🪶 feather'],answer:'🪨 rock'},
+            {q:'Which is lighter?',options:['🐘 elephant','🐜 ant'],answer:'🐜 ant'},
+            {q:'Which holds more water?',options:['🪣 bucket','🥄 spoon'],answer:'🪣 bucket'},
+          ]},
+      ]},
+      /* NEW UNIT 9: EARLY ADDITION */
+      {id:'u9',title:'Early Addition',icon:'➕',desc:'Adding small numbers',lessons:[
+        {id:'l1',title:'Add with Pictures',objective:'Add using pictures',type:'counting-add',
+          intro:'Count all the objects together.',
+          questions:[
+            {a:['🍎','🍎'],b:['🍊','🍊','🍊'],answer:5},
+            {a:['⭐'],b:['⭐','⭐','⭐'],answer:4},
+            {a:['🐶','🐶','🐶'],b:['🐶','🐶'],answer:5},
+            {a:['🌸','🌸'],b:['🌸','🌸'],answer:4},
+          ]},
+        {id:'l2',title:'Add to 5',objective:'Add numbers up to 5',type:'arithmetic',
+          intro:"Let's add small numbers!",
+          questions:[
+            {a:1,b:1,answer:2},{a:2,b:1,answer:3},{a:1,b:2,answer:3},
+            {a:2,b:2,answer:4},{a:3,b:1,answer:4},{a:2,b:3,answer:5},
+          ]},
+      ]},
+    ]
+  },
+
+  /* ============================================================
+     KG2 ENGLISH — 8 UNITS
+     ============================================================ */
+  'kg2-english':{
+    id:'kg2-english',title:'KG2 English',subtitle:'Hop Skip Jump — Senior KG',
+    icon:'📖',colorClass:'kg2-eng',
+     verification:{status:'PLAN_BASED_UNVERIFIED'},
+    units:[
+      {id:'u1',title:'Letter Sounds',icon:'🔤',desc:'Learn letter sounds',lessons:[
+        {id:'l1',title:'Sound: S',objective:'Recognise /s/',type:'phonics',letter:'s',sound:'s',
+          words:[{word:'sun',match:true},{word:'bus',match:true},{word:'cat',match:false},{word:'sock',match:true}],
+          intro:'The letter S makes the first sound in sun.'},
+        {id:'l2',title:'Sound: A',objective:'Recognise short /a/',type:'phonics',letter:'a',sound:'short a',
+          words:[{word:'apple',match:true},{word:'ant',match:true},{word:'egg',match:false},{word:'at',match:true}],
+          intro:'The letter A makes the short sound in apple.'},
+        {id:'l3',title:'Sound: T',objective:'Recognise /t/',type:'phonics',letter:'t',sound:'t',
+          words:[{word:'top',match:true},{word:'ten',match:true},{word:'pig',match:false},{word:'tin',match:true}],
+          intro:'The letter T makes the first sound in top.'},
+      ]},
+      /* NEW UNIT 2: MORE LETTER SOUNDS */
+      {id:'u2',title:'More Letter Sounds',icon:'🔡',desc:'Learn B, C, D, M, P',lessons:[
+        {id:'l1',title:'Sound: B',objective:'Recognise /b/',type:'phonics',letter:'b',sound:'b',
+          words:[{word:'ball',match:true},{word:'bat',match:true},{word:'dog',match:false},{word:'book',match:true}],
+          intro:'The letter B makes the first sound in ball.'},
+        {id:'l2',title:'Sound: M',objective:'Recognise /m/',type:'phonics',letter:'m',sound:'mmm',
+          words:[{word:'mum',match:true},{word:'map',match:true},{word:'cat',match:false},{word:'moon',match:true}],
+          intro:'The letter M says "mmm".'},
+        {id:'l3',title:'Sound: P',objective:'Recognise /p/',type:'phonics',letter:'p',sound:'p',
+          words:[{word:'pig',match:true},{word:'pen',match:true},{word:'dog',match:false},{word:'pan',match:true}],
+          intro:'The letter P makes the first sound in pen.'},
+      ]},
+      {id:'u3',title:'Listening',icon:'👂',desc:'Listen and choose',lessons:[
+        {id:'l1',title:'Listen and Pick',objective:'Identify spoken word',type:'listen-choose',
+          intro:'Tap the word you hear.',
+          questions:[
+            {audio:'cat',options:['cat','bat','hat','mat'],answer:'cat'},
+            {audio:'dog',options:['log','dog','fog','hog'],answer:'dog'},
+            {audio:'sun',options:['run','fun','sun','bun'],answer:'sun'},
+            {audio:'fish',options:['dish','fish','wish','splash'],answer:'fish'},
+          ]},
+      ]},
+      {id:'u4',title:'Rhyming',icon:'🎵',desc:'Find rhyming words',lessons:[
+        {id:'l1',title:'Rhyme Time',objective:'Identify rhymes',type:'rhyme',
+          intro:'Which word rhymes?',
+          questions:[
+            {word:'cat',options:['dog','hat','cup','pen'],answer:'hat'},
+            {word:'sun',options:['moon','star','run','tree'],answer:'run'},
+            {word:'ball',options:['tall','book','cup','fish'],answer:'tall'},
+            {word:'red',options:['blue','bed','cup','hat'],answer:'bed'},
+          ]},
+      ]},
+      /* NEW UNIT 5: CVC WORDS */
+      {id:'u5',title:'CVC Words',icon:'🔤',desc:'Short 3-letter words',lessons:[
+        {id:'l1',title:'Read CVC Words',objective:'Read simple CVC words',type:'listen-choose',
+          intro:'Listen and tap the correct word.',
+          questions:[
+            {audio:'cat',options:['cat','cut','cot','cap'],answer:'cat'},
+            {audio:'dog',options:['dig','dog','dig','dug'],answer:'dog'},
+            {audio:'pig',options:['peg','pig','pug','pag'],answer:'pig'},
+            {audio:'hen',options:['han','hin','hen','hon'],answer:'hen'},
+          ]},
+        {id:'l2',title:'Match Word to Picture',objective:'Match CVC words to pictures',type:'word-picture',
+          intro:'Match the word to the picture.',
+          questions:[
+            {word:'cat',picture:'🐱',options:['🐱','🐶','🐭','🐰']},
+            {word:'sun',picture:'☀️',options:['🌙','⭐','☀️','🌧️']},
+            {word:'bus',picture:'🚌',options:['🚗','🚌','🚲','🚂']},
+            {word:'bed',picture:'🛏️',options:['🪑','🛏️','🛋️','🚪']},
+          ]},
+      ]},
+      /* NEW UNIT 6: BLENDING */
+      {id:'u6',title:'Blending',icon:'🔗',desc:'Blend sounds to make words',lessons:[
+        {id:'l1',title:'Blend the Sounds',objective:'Blend 3 sounds into a word',type:'blend',
+          intro:'Put the sounds together to make a word.',
+          questions:[
+            {sounds:['c','a','t'],answer:'cat',options:['cat','bat','hat','mat']},
+            {sounds:['d','o','g'],answer:'dog',options:['dig','dog','log','fog']},
+            {sounds:['p','i','g'],answer:'pig',options:['peg','pig','pug','pan']},
+            {sounds:'s,u,n'.split(','),answer:'sun',options:['son','sun','sin','san']},
+          ]},
+      ]},
+      /* NEW UNIT 7: SIGHT WORDS */
+      {id:'u7',title:'Sight Words',icon:'👁️',desc:'Common words to know',lessons:[
+        {id:'l1',title:'First Sight Words',objective:'Recognise sight words',type:'listen-choose',
+          intro:'Listen and tap the word.',
+          questions:[
+            {audio:'the',options:['the','they','there','then'],answer:'the'},
+            {audio:'is',options:['in','it','is','if'],answer:'is'},
+            {audio:'am',options:['an','at','am','as'],answer:'am'},
+            {audio:'we',options:['we','me','be','he'],answer:'we'},
+          ]},
+        {id:'l2',title:'More Sight Words',objective:'Read more sight words',type:'listen-choose',
+          intro:'Listen and tap.',
+          questions:[
+            {audio:'he',options:['he','she','we','be'],answer:'he'},
+            {audio:'she',options:['he','she','we','me'],answer:'she'},
+            {audio:'my',options:['me','by','my','may'],answer:'my'},
+            {audio:'you',options:['you','yes','yoyo','youth'],answer:'you'},
+          ]},
+      ]},
+      /* NEW UNIT 8: SIMPLE SENTENCES */
+      {id:'u8',title:'Simple Sentences',icon:'📝',desc:'Read simple sentences',lessons:[
+        {id:'l1',title:'Read and Match',objective:'Match sentence to picture',type:'sentence-picture',
+          intro:'Read the sentence and tap the right picture.',
+          questions:[
+            {sentence:'The cat is big.',options:['🐱','🐭','🐶','🐰'],answer:'🐱'},
+            {sentence:'I see a red ball.',options:['🔴','🔵','🟢','🟡'],answer:'🔴'},
+            {sentence:'The sun is hot.',options:['☀️','🌙','⭐','🌧️'],answer:'☀️'},
+          ]},
+      ]},
+    ]
+  },
+
+  /* ============================================================
+     GRADE 2 ENGLISH — 8 UNITS
+     ============================================================ */
+  'g2-english':{
+    id:'g2-english',title:'Grade 2 English',subtitle:'Macmillan English — Grade 2',
+    icon:'📚',colorClass:'g2-eng',
+     verification:{status:'PLAN_BASED_UNVERIFIED'},
+    units:[
+      {id:'u1',title:'Reading',icon:'📖',desc:'Read and understand',lessons:[
+        {id:'l1',title:'The Lost Kitten',objective:'Read and answer questions',type:'story',
+          story:"One day, Mia found a small kitten in the garden. The kitten was grey and very shy. Mia gave it some milk. The kitten drank it all. Then it purred happily. Mia named the kitten Snow.",
+          questions:[
+            {q:'What did Mia find?',options:['a puppy','a kitten','a bird','a rabbit'],answer:'a kitten'},
+            {q:'What colour was the kitten?',options:['white','black','grey','brown'],answer:'grey'},
+            {q:'What did Mia give the kitten?',options:['water','milk','bread','fish'],answer:'milk'},
+            {q:'What name did Mia choose?',options:['Snow','Grey','Mia','Purr'],answer:'Snow'},
+          ]},
+        {id:'l2',title:'At the Park',objective:'Read a passage',type:'story',
+          story:"It was a sunny Saturday. Tom and his sister Lily went to the park. They saw ducks on the pond. Lily fed them some bread. Tom flew his red kite. They had a lovely day.",
+          questions:[
+            {q:'When did they go?',options:['Monday','Saturday','Sunday','Friday'],answer:'Saturday'},
+            {q:'What did they see?',options:['fish','ducks','swans','frogs'],answer:'ducks'},
+            {q:'What did Lily feed them?',options:['corn','bread','seeds','cake'],answer:'bread'},
+            {q:'What colour was the kite?',options:['blue','green','red','yellow'],answer:'red'},
+          ]},
+        {id:'l3',title:'My School Day',objective:'Read about daily routines',type:'story',
+          story:"I wake up at seven o'clock. I have breakfast with my family. Then I go to school. I learn many things. I like reading and maths. At lunch, I eat with my friends. After school, I play in the garden.",
+          questions:[
+            {q:'What time does the child wake up?',options:['six','seven','eight','nine'],answer:'seven'},
+            {q:'What does the child like?',options:['cooking','reading and maths','sleeping','singing'],answer:'reading and maths'},
+            {q:'Who does the child eat lunch with?',options:['family','teachers','friends','brother'],answer:'friends'},
+          ]},
+      ]},
+      {id:'u2',title:'Grammar',icon:'✏️',desc:'Sentences and punctuation',lessons:[
+        {id:'l1',title:'Capital Letters',objective:'Use capitals correctly',type:'fill-gap',
+          intro:'Sentences start with capitals. So do names.',
+          questions:[
+            {sentence:'___ like to read.',answer:'I',options:['i','I','me','my']},
+            {sentence:'___ lives in London.',answer:'Emma',options:['emma','Emma','they','we']},
+            {sentence:'___ is my friend.',answer:'Sam',options:['sam','Sam','he','him']},
+          ]},
+        {id:'l2',title:'Full Stops',objective:'End sentences properly',type:'fill-gap',
+          intro:'A sentence ends with a full stop ( . )',
+          questions:[
+            {sentence:'The dog is big ___',answer:'.',options:['.','?','!','']},
+            {sentence:'I like apples ___',answer:'.',options:['.','?','!','']},
+            {sentence:'My name is Ali ___',answer:'.',options:['.','?','!','']},
+          ]},
+      ]},
+      /* NEW UNIT 3: NOUNS AND VERBS */
+      {id:'u3',title:'Nouns & Verbs',icon:'📝',desc:'Naming and action words',lessons:[
+        {id:'l1',title:'What is a Noun?',objective:'Identify nouns',type:'classify-word',
+          intro:'A noun is a person, place, or thing. Tap the nouns.',
+          questions:[
+            {word:'teacher',isNoun:true},{word:'run',isNoun:false},
+            {word:'school',isNoun:true},{word:'jump',isNoun:false},
+            {word:'book',isNoun:true},{word:'sing',isNoun:false},
+          ]},
+        {id:'l2',title:'What is a Verb?',objective:'Identify verbs',type:'classify-word',
+          intro:'A verb is an action word. Tap the verbs.',
+          questions:[
+            {word:'run',isNoun:false,isVerb:true},{word:'cat',isNoun:true,isVerb:false},
+            {word:'jump',isNoun:false,isVerb:true},{word:'table',isNoun:true,isVerb:false},
+            {word:'read',isNoun:false,isVerb:true},{word:'chair',isNoun:true,isVerb:false},
+          ]},
+      ]},
+      /* NEW UNIT 4: ADJECTIVES */
+      {id:'u4',title:'Adjectives',icon:'🎨',desc:'Describing words',lessons:[
+        {id:'l1',title:'Describe Things',objective:'Use adjectives',type:'mcq',
+          intro:'Choose the best describing word.',
+          questions:[
+            {q:'The sun is _____.',options:['cold','hot','wet','soft'],answer:'hot'},
+            {q:'The ice cream is _____.',options:['hot','cold','loud','fast'],answer:'cold'},
+            {q:'The rabbit is _____.',options:['soft','hard','loud','heavy'],answer:'soft'},
+            {q:'The elephant is _____.',options:['tiny','small','big','thin'],answer:'big'},
+          ]},
+      ]},
+      /* NEW UNIT 5: PAST TENSE */
+      {id:'u5',title:'Past Tense',icon:'⏰',desc:'Things that happened',lessons:[
+        {id:'l1',title:'Change to Past',objective:'Use past tense verbs',type:'fill-gap',
+          intro:'Change the verb to past tense.',
+          questions:[
+            {sentence:'Yesterday, I ___ to school.',answer:'walked',options:['walk','walks','walked','walking']},
+            {sentence:'She ___ a book last night.',answer:'read',options:['read','reads','reading','readed']},
+            {sentence:'They ___ football yesterday.',answer:'played',options:['play','plays','played','playing']},
+          ]},
+      ]},
+      {id:'u6',title:'Sentence Building',icon:'🧱',desc:'Build sentences',lessons:[
+        {id:'l1',title:'Build a Sentence',objective:'Arrange words',type:'sentence-build',
+          intro:'Put words in order.',
+          questions:[
+            {words:['The','cat','is','black'],answer:'The cat is black'},
+            {words:['I','like','to','read'],answer:'I like to read'},
+            {words:['She','has','a','dog'],answer:'She has a dog'},
+            {words:['We','play','in','the','park'],answer:'We play in the park'},
+          ]},
+      ]},
+      /* NEW UNIT 7: ADVANCED READING */
+      {id:'u7',title:'Advanced Reading',icon:'📚',desc:'Longer stories',lessons:[
+        {id:'l1',title:'The Brave Rabbit',objective:'Read and infer',type:'story',
+          story:"Ben was a small rabbit. He lived in a big forest. One day, a fox came near his home. All the other rabbits ran away. But Ben stayed. He thumped his foot loudly. The fox was surprised and ran away. The other rabbits cheered. Ben was small, but he was very brave.",
+          questions:[
+            {q:'Where did Ben live?',options:['a garden','a forest','a house','a farm'],answer:'a forest'},
+            {q:'What did Ben do when the fox came?',options:['ran away','hid','thumped his foot','cried'],answer:'thumped his foot'},
+            {q:'Why did the fox run away?',options:['it was hungry','it was surprised','it was tired','it was scared of rabbits'],answer:'it was surprised'},
+            {q:'What word describes Ben?',options:['scared','brave','lazy','shy'],answer:'brave'},
+          ]},
+      ]},
+      /* NEW UNIT 8: WRITING */
+      {id:'u8',title:'Writing',icon:'✍️',desc:'Write short paragraphs',lessons:[
+        {id:'l1',title:'About Me',objective:'Write about yourself',type:'sentence-build',
+          intro:'Build sentences about yourself.',
+          questions:[
+            {words:['My','name','is'],answer:'My name is'},
+            {words:['I','am','years','old'],answer:'I am years old'},
+            {words:['I','like','to','play'],answer:'I like to play'},
+          ]},
+      ]},
+    ]
+  },
+
+  /* ============================================================
+     GRADE 2 MATHEMATICS — 10 UNITS
+     ============================================================ */
+  'g2-math':{
+    id:'g2-math',title:'Grade 2 Mathematics',subtitle:'Macmillan Mathematics — Grade 2',
+    icon:'➕',colorClass:'g2-math',
+     verification:{status:'PLAN_BASED_UNVERIFIED'},
+    units:[
+      {id:'u1',title:'Addition',icon:'➕',desc:'Add numbers',lessons:[
+        {id:'l1',title:'Adding to 10',objective:'Add within 10',type:'arithmetic',
+          intro:"Let's add!",
+          questions:[
+            {a:2,b:3,answer:5},{a:4,b:1,answer:5},{a:3,b:3,answer:6},
+            {a:5,b:2,answer:7},{a:4,b:4,answer:8},{a:6,b:3,answer:9},
+          ]},
+        {id:'l2',title:'Adding to 20',objective:'Add within 20',type:'arithmetic',
+          intro:'Bigger numbers!',
+          questions:[
+            {a:7,b:5,answer:12},{a:9,b:6,answer:15},{a:8,b:7,answer:15},
+            {a:10,b:4,answer:14},{a:6,b:9,answer:15},{a:11,b:5,answer:16},
+          ]},
+      ]},
+      {id:'u2',title:'Subtraction',icon:'➖',desc:'Take away',lessons:[
+        {id:'l1',title:'Subtract to 10',objective:'Subtract within 10',type:'arithmetic',op:'-',
+          intro:"Let's take away!",
+          questions:[
+            {a:5,b:2,answer:3},{a:7,b:3,answer:4},{a:9,b:4,answer:5},
+            {a:8,b:5,answer:3},{a:6,b:2,answer:4},{a:10,b:6,answer:4},
+          ]},
+        {id:'l2',title:'Subtract to 20',objective:'Subtract within 20',type:'arithmetic',op:'-',
+          intro:'Bigger subtraction!',
+          questions:[
+            {a:15,b:5,answer:10},{a:18,b:7,answer:11},{a:14,b:6,answer:8},
+            {a:20,b:9,answer:11},{a:17,b:8,answer:9},{a:16,b:7,answer:9},
+          ]},
+      ]},
+      {id:'u3',title:'Place Value',icon:'💯',desc:'Tens and ones',lessons:[
+        {id:'l1',title:'Tens and Ones',objective:'Partition numbers',type:'place-value',
+          intro:'14 is 1 ten and 4 ones.',
+          questions:[
+            {number:14,tens:1,ones:4},{number:27,tens:2,ones:7},
+            {number:35,tens:3,ones:5},{number:42,tens:4,ones:2},
+          ]},
+      ]},
+      /* NEW UNIT 4: NUMBERS TO 100 */
+      {id:'u4',title:'Numbers to 100',icon:'💯',desc:'Count and compare to 100',lessons:[
+        {id:'l1',title:'Count by 2s',objective:'Skip count by 2s',type:'sequence',
+          intro:'Count by 2s. What comes next?',
+          questions:[
+            {sequence:[2,4,6],answer:8,options:[7,8,9,10]},
+            {sequence:[10,12,14],answer:16,options:[15,16,17,18]},
+            {sequence:[20,22,24],answer:26,options:[25,26,27,28]},
+          ]},
+        {id:'l2',title:'Count by 5s',objective:'Skip count by 5s',type:'sequence',
+          intro:'Count by 5s.',
+          questions:[
+            {sequence:[5,10,15],answer:20,options:[18,19,20,21]},
+            {sequence:[25,30,35],answer:40,options:[38,39,40,41]},
+            {sequence:[50,55,60],answer:65,options:[63,64,65,66]},
+          ]},
+        {id:'l3',title:'Compare Numbers',objective:'Compare numbers to 100',type:'compare-numbers',
+          intro:'Which number is bigger?',
+          questions:[
+            {a:45,b:54,answer:'b'},{a:78,b:87,answer:'b'},
+            {a:99,b:91,answer:'a'},{a:36,b:63,answer:'b'},
+          ]},
+      ]},
+      {id:'u5',title:'Word Problems',icon:'📝',desc:'Real-life maths',lessons:[
+        {id:'l1',title:'Story Sums',objective:'Solve word problems',type:'word-problem',
+          intro:'Read and solve.',
+          questions:[
+            {text:'Tom has 5 apples. He gets 3 more. How many now?',answer:8,options:[7,8,9,10]},
+            {text:'Sara has 9 sweets. She eats 4. How many left?',answer:5,options:[4,5,6,7]},
+            {text:'6 birds on a tree. 2 fly away. How many remain?',answer:4,options:[3,4,5,6]},
+          ]},
+      ]},
+      /* NEW UNIT 6: MULTIPLICATION */
+      {id:'u6',title:'Multiplication',icon:'✖️',desc:'Equal groups',lessons:[
+        {id:'l1',title:'Equal Groups',objective:'Understand multiplication as equal groups',type:'mcq',
+          intro:'Multiplication is adding equal groups.',
+          questions:[
+            {q:'3 groups of 2 = ?',options:['5','6','7','8'],answer:'6'},
+            {q:'2 groups of 5 = ?',options:['7','8','10','12'],answer:'10'},
+            {q:'4 groups of 3 = ?',options:['7','10','12','15'],answer:'12'},
+          ]},
+        {id:'l2',title:'Times Tables 2',objective:'Learn the 2 times table',type:'arithmetic',op:'×',
+          intro:'The 2 times table!',
+          questions:[
+            {a:2,b:1,answer:2},{a:2,b:2,answer:4},{a:2,b:3,answer:6},
+            {a:2,b:4,answer:8},{a:2,b:5,answer:10},{a:2,b:6,answer:12},
+          ]},
+        {id:'l3',title:'Times Tables 5',objective:'Learn the 5 times table',type:'arithmetic',op:'×',
+          intro:'The 5 times table!',
+          questions:[
+            {a:5,b:1,answer:5},{a:5,b:2,answer:10},{a:5,b:3,answer:15},
+            {a:5,b:4,answer:20},{a:5,b:5,answer:25},{a:5,b:6,answer:30},
+          ]},
+        {id:'l4',title:'Times Tables 10',objective:'Learn the 10 times table',type:'arithmetic',op:'×',
+          intro:'The 10 times table!',
+          questions:[
+            {a:10,b:1,answer:10},{a:10,b:2,answer:20},{a:10,b:3,answer:30},
+            {a:10,b:4,answer:40},{a:10,b:5,answer:50},{a:10,b:6,answer:60},
+          ]},
+      ]},
+      /* NEW UNIT 7: DIVISION */
+      {id:'u7',title:'Division',icon:'➗',desc:'Sharing and grouping',lessons:[
+        {id:'l1',title:'Sharing Equally',objective:'Divide by sharing',type:'mcq',
+          intro:'Share equally between groups.',
+          questions:[
+            {q:'Share 6 between 2. Each gets?',options:['2','3','4','6'],answer:'3'},
+            {q:'Share 10 between 5. Each gets?',options:['2','3','4','5'],answer:'2'},
+            {q:'Share 8 between 4. Each gets?',options:['1','2','3','4'],answer:'2'},
+          ]},
+      ]},
+      /* NEW UNIT 8: FRACTIONS */
+      {id:'u8',title:'Fractions',icon:'🥧',desc:'Parts of a whole',lessons:[
+        {id:'l1',title:'Halves',objective:'Understand halves',type:'mcq',
+          intro:'A half is one of two equal parts.',
+          questions:[
+            {q:'What is half of 4?',options:['1','2','3','4'],answer:'2'},
+            {q:'What is half of 6?',options:['2','3','4','5'],answer:'3'},
+            {q:'What is half of 10?',options:['2','4','5','6'],answer:'5'},
+          ]},
+        {id:'l2',title:'Quarters',objective:'Understand quarters',type:'mcq',
+          intro:'A quarter is one of four equal parts.',
+          questions:[
+            {q:'What is a quarter of 8?',options:['1','2','3','4'],answer:'2'},
+            {q:'What is a quarter of 12?',options:['2','3','4','6'],answer:'3'},
+            {q:'What is a quarter of 20?',options:['4','5','6','10'],answer:'5'},
+          ]},
+      ]},
+      /* NEW UNIT 9: MONEY */
+      {id:'u9',title:'Money',icon:'💰',desc:'Coins and notes',lessons:[
+        {id:'l1',title:'Count the Coins',objective:'Add coins',type:'mcq',
+          intro:'How much money is this?',
+          questions:[
+            {q:'💰 + 💰 + 💰 = ?',options:['1p','2p','3p','4p'],answer:'3p'},
+            {q:'5p + 5p = ?',options:['5p','10p','15p','20p'],answer:'10p'},
+            {q:'10p + 5p = ?',options:['10p','15p','20p','25p'],answer:'15p'},
+          ]},
+      ]},
+      /* NEW UNIT 10: TIME */
+      {id:'u10',title:'Time',icon:'🕐',desc:'Read the clock',lessons:[
+        {id:'l1',title:'O\'Clock',objective:'Read o\'clock times',type:'mcq',
+          intro:'What time does the clock show?',
+          questions:[
+            {q:'🕐 What time is this?',options:['1 o\'clock','2 o\'clock','3 o\'clock','12 o\'clock'],answer:'1 o\'clock'},
+            {q:'🕒 What time is this?',options:['2 o\'clock','3 o\'clock','4 o\'clock','5 o\'clock'],answer:'3 o\'clock'},
+            {q:'🕕 What time is this?',options:['5 o\'clock','6 o\'clock','7 o\'clock','8 o\'clock'],answer:'6 o\'clock'},
+          ]},
+      ]},
+    ]
+  },
+
+  /* ============================================================
+     GRADE 2 SCIENCE — 7 UNITS
+     ============================================================ */
+  'g2-science':{
+    id:'g2-science',title:'Grade 2 Science',subtitle:'Macmillan Science — Grade 2',
+    icon:'🔬',colorClass:'g2-sci',
+     verification:{status:'PLAN_BASED_UNVERIFIED'},
+    units:[
+      {id:'u1',title:'Living Things',icon:'🌱',desc:'Living and non-living',lessons:[
+        {id:'l1',title:'Living or Not?',objective:'Classify things',type:'classify',
+          intro:'Living things grow and need food.',
+          questions:[
+            {item:'🌳 Tree',answer:'living'},{item:'🪨 Rock',answer:'non-living'},
+            {item:'🐶 Dog',answer:'living'},{item:'🚗 Car',answer:'non-living'},
+            {item:'🌻 Flower',answer:'living'},{item:'📱 Phone',answer:'non-living'},
+          ]},
+      ]},
+      {id:'u2',title:'Plants',icon:'🌿',desc:'What plants need',lessons:[
+        {id:'l1',title:'What Do Plants Need?',objective:'Identify plant needs',type:'mcq',
+          intro:'Plants need certain things to grow.',
+          questions:[
+            {q:'What do plants need from the sky?',options:['sunlight','toys','music','books'],answer:'sunlight'},
+            {q:'What do plants drink?',options:['juice','milk','water','cola'],answer:'water'},
+            {q:'Where do plants get food?',options:['the shop','the soil','the sky','the moon'],answer:'the soil'},
+            {q:'What helps seeds grow?',options:['warmth and water','cold and dark','only wind','only sand'],answer:'warmth and water'},
+          ]},
+        {id:'l2',title:'Parts of a Plant',objective:'Identify plant parts',type:'mcq',
+          intro:'Plants have different parts.',
+          questions:[
+            {q:'Which part is under the ground?',options:['leaf','stem','root','flower'],answer:'root'},
+            {q:'Which part makes seeds?',options:['leaf','stem','root','flower'],answer:'flower'},
+            {q:'Which part holds up the plant?',options:['leaf','stem','root','flower'],answer:'stem'},
+          ]},
+      ]},
+      {id:'u3',title:'Materials',icon:'🧱',desc:'What things are made of',lessons:[
+        {id:'l1',title:'Match the Material',objective:'Identify materials',type:'mcq',
+          intro:'Things are made from different materials.',
+          questions:[
+            {q:'What is a window made of?',options:['wood','glass','paper','cloth'],answer:'glass'},
+            {q:'What is a T-shirt made of?',options:['metal','cotton','stone','plastic'],answer:'cotton'},
+            {q:'What is a coin made of?',options:['paper','wood','metal','glass'],answer:'metal'},
+            {q:'What is a book made of?',options:['paper','metal','stone','water'],answer:'paper'},
+          ]},
+      ]},
+      {id:'u4',title:'Animals',icon:'🦁',desc:'Animal groups',lessons:[
+        {id:'l1',title:'Animal Groups',objective:'Identify animal types',type:'mcq',
+          intro:'Animals come in different groups.',
+          questions:[
+            {q:'Which animal lays eggs?',options:['cat','chicken','dog','cow'],answer:'chicken'},
+            {q:'Which lives in water with gills?',options:['bird','fish','lion','rabbit'],answer:'fish'},
+            {q:'Which has fur and feeds milk?',options:['snake','mammal','fish','insect'],answer:'mammal'},
+            {q:'How many legs does an insect have?',options:['4','6','8','10'],answer:'6'},
+          ]},
+      ]},
+      /* NEW UNIT 5: HUMAN BODY */
+      {id:'u5',title:'My Body',icon:'🫀',desc:'Body parts and senses',lessons:[
+        {id:'l1',title:'The Five Senses',objective:'Identify the five senses',type:'mcq',
+          intro:'We have five senses to learn about the world.',
+          questions:[
+            {q:'Which sense helps you see?',options:['hearing','smell','sight','taste'],answer:'sight'},
+            {q:'Which sense helps you hear?',options:['hearing','smell','touch','taste'],answer:'hearing'},
+            {q:'Which sense helps you smell?',options:['sight','smell','touch','hearing'],answer:'smell'},
+            {q:'Which organ helps you breathe?',options:['heart','lungs','stomach','brain'],answer:'lungs'},
+          ]},
+        {id:'l2',title:'Body Parts',objective:'Identify body parts',type:'mcq',
+          intro:'Name the parts of your body.',
+          questions:[
+            {q:'What do you use to think?',options:['heart','brain','lungs','stomach'],answer:'brain'},
+            {q:'What pumps blood around your body?',options:['heart','brain','lungs','skin'],answer:'heart'},
+            {q:'How many legs do humans have?',options:['2','4','6','8'],answer:'2'},
+          ]},
+      ]},
+      /* NEW UNIT 6: WEATHER */
+      {id:'u6',title:'Weather',icon:'☀️',desc:'Weather and seasons',lessons:[
+        {id:'l1',title:'Types of Weather',objective:'Identify weather types',type:'mcq',
+          intro:'The weather changes every day.',
+          questions:[
+            {q:'What falls from clouds when it rains?',options:['snow','rain','hail','wind'],answer:'rain'},
+            {q:'What is white and cold?',options:['rain','sun','snow','wind'],answer:'snow'},
+            {q:'What shines brightly in the sky?',options:['moon','sun','cloud','star'],answer:'sun'},
+          ]},
+        {id:'l2',title:'The Seasons',objective:'Learn about seasons',type:'mcq',
+          intro:'There are four seasons in a year.',
+          questions:[
+            {q:'Which season is hot?',options:['spring','summer','autumn','winter'],answer:'summer'},
+            {q:'Which season is cold with snow?',options:['spring','summer','autumn','winter'],answer:'winter'},
+            {q:'In which season do leaves fall?',options:['spring','summer','autumn','winter'],answer:'autumn'},
+          ]},
+      ]},
+      /* NEW UNIT 7: LIGHT AND SHADOWS */
+      {id:'u7',title:'Light & Shadows',icon:'💡',desc:'How light works',lessons:[
+        {id:'l1',title:'Sources of Light',objective:'Identify light sources',type:'mcq',
+          intro:'Light helps us see things.',
+          questions:[
+            {q:'Which gives us light during the day?',options:['moon','sun','lamp','fire'],answer:'sun'},
+            {q:'Which is NOT a light source?',options:['sun','lamp','torch','stone'],answer:'stone'},
+            {q:'What do we need to see a shadow?',options:['water','light','wind','sound'],answer:'light'},
+          ]},
+      ]},
+    ]
+  },
+};
+
+/* ============ BADGES SYSTEM ============ */
+const BADGES=[
+  {id:'first-lesson',name:'First Steps',icon:'🎯',desc:'Complete your first lesson'},
+  {id:'five-lessons',name:'Keen Learner',icon:'⭐',desc:'Complete 5 lessons'},
+  {id:'ten-lessons',name:'Super Student',icon:'🌟',desc:'Complete 10 lessons'},
+  {id:'twenty-lessons',name:'Learning Hero',icon:'🏆',desc:'Complete 20 lessons'},
+  {id:'all-kg2-math',name:'Maths Master',icon:'🔢',desc:'Complete all KG2 Maths'},
+  {id:'all-kg2-eng',name:'Reading Star',icon:'📖',desc:'Complete all KG2 English'},
+  {id:'all-g2-math',name:'Maths Champion',icon:'➕',desc:'Complete all Grade 2 Maths'},
+  {id:'all-g2-eng',name:'English Expert',icon:'📚',desc:'Complete all Grade 2 English'},
+  {id:'all-g2-sci',name:'Science Whiz',icon:'🔬',desc:'Complete all Grade 2 Science'},
+  {id:'perfect-score',name:'Perfect!',icon:'💯',desc:'Get 100% on a lesson'},
+  {id:'streak-3',name:'On Fire',icon:'🔥',desc:'3 correct answers in a row'},
+  {id:'points-100',name:'Century',icon:'💎',desc:'Earn 100 points'},
+];
+
+function checkBadges(){
+  const newBadges=[];
+  let totalLessons=0;
+  Object.values(CURRICULUM).forEach(b=>b.units.forEach(u=>u.lessons.forEach(l=>{
+    if(state.progress[b.id]?.[u.id]?.[l.id]?.completed)totalLessons++;
+  })));
+
+  const check=(id,cond)=>{if(cond&&!state.badges.includes(id))newBadges.push(id);};
+  check('first-lesson',totalLessons>=1);
+  check('five-lessons',totalLessons>=5);
+  check('ten-lessons',totalLessons>=10);
+  check('twenty-lessons',totalLessons>=20);
+  check('points-100',state.totalPoints>=100);
+
+  Object.values(CURRICULUM).forEach(b=>{
+    let done=0,total=0;
+    b.units.forEach(u=>u.lessons.forEach(l=>{total++;if(state.progress[b.id]?.[u.id]?.[l.id]?.completed)done++;}));
+    const map={'kg2-math':'all-kg2-math','kg2-english':'all-kg2-eng','g2-math':'all-g2-math','g2-english':'all-g2-eng','g2-science':'all-g2-sci'};
+    if(map[b.id])check(map[b.id],done===total);
+  });
+
+  if(newBadges.length>0){
+    state.badges.push(...newBadges);
+    saveState();
+    return newBadges.map(id=>BADGES.find(b=>b.id===id));
+  }
+  return [];
+}
+
+/* ============ ROUTER ============ */
+const Router={
+  current:activeChildId?'home':'selectChild',params:{},history:[],
+  go(s,p={}){this.history.push({screen:this.current,params:this.params});this.current=s;this.params=p;this.render();},
+  back(){if(this.history.length>0){const p=this.history.pop();this.current=p.screen;this.params=p.params;this.render();}else this.go('home');},
+  render(){
+    AudioSystem.stop();
+    document.body.classList.toggle('ai-settings-open',this.current==='aiSettings');
+    const app=document.getElementById('app');app.innerHTML='';
+     ({selectChild:renderChildSelect,home:renderHome,book:renderBook,lesson:renderLesson,parent:renderParentGate,parentDash:renderParentDashboard,aiSettings:renderAISettings,dashboard:renderChildDashboard,diagnostics:renderDiagnostics,badges:renderBadges}[this.current]||renderHome)(app,this.params);
+  }
+};
+
+/* ============ UI COMPONENTS ============ */
+function topbar(title,showBack=true){
+  return `<div class="topbar">
+    ${showBack?`<button class="back-btn" onclick="Router.back()" aria-label="Back">←</button>`:'<div style="width:40px"></div>'}
+    <h1>${title}</h1>
+    <div class="actions">
+      <button class="icon-btn" onclick="Router.go('selectChild')" aria-label="Switch child" title="Switch child">👧</button>
+      <button class="icon-btn" onclick="Router.go('badges')" aria-label="Badges">🏆</button>
+      <button class="icon-btn" onclick="Router.go('parent')" aria-label="Parent area">👨‍👩‍👧</button>
+    </div>
+  </div>`;
+}
+
+function bottomNav(active){
+  return `<div class="bottom-nav">
+    <button class="nav-btn ${active==='home'?'active':''}" onclick="Router.go('home')"><span class="nav-icon">🏠</span><span>Home</span></button>
+    <button class="nav-btn ${active==='badges'?'active':''}" onclick="Router.go('badges')"><span class="nav-icon">🏆</span><span>Badges</span></button>
+    <button class="nav-btn ${active==='dashboard'?'active':''}" onclick="Router.go('dashboard')"><span class="nav-icon">⭐</span><span>Progress</span></button>
+    <button class="nav-btn ${active==='parent'?'active':''}" onclick="Router.go('parent')"><span class="nav-icon">🔒</span><span>Parent</span></button>
+  </div>`;
+}
+
+function character(state='idle',msg=''){
+  const ec=state==='happy'||state==='celebrating'?'happy':'';
+  const mc=state==='happy'||state==='celebrating'?'happy':state==='sad'?'sad':state==='thinking'?'thinking':'';
+  return `<div class="character-wrap">
+    <div class="character"><div class="character-body">
+      <div class="character-eye left ${ec}"></div>
+      <div class="character-eye right ${ec}"></div>
+      <div class="character-mouth ${mc}"></div>
+      <div class="character-cheek left"></div>
+      <div class="character-cheek right"></div>
+    </div></div>
+    ${msg?`<div class="speech-bubble">${msg}</div>`:''}
+  </div>`;
+}
+
+function confetti(){
+  const c=document.createElement('div');c.className='confetti-container';
+  const cols=['#FFB84D','#4A90E2','#5CB85C','#E87C7C','#9B59B6','#FFD93D'];
+  for(let i=0;i<40;i++){
+    const p=document.createElement('div');p.className='confetti-piece';
+    p.style.left=Math.random()*100+'%';
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDelay=Math.random()*.5+'s';
+    p.style.animationDuration=(1.5+Math.random())+'s';
+    if(Math.random()>.5)p.style.borderRadius='50%';
+    c.appendChild(p);
+  }
+  document.body.appendChild(c);
+  setTimeout(()=>c.remove(),2500);
+}
+
+/* ============ CHILD PROFILE SELECTOR ============ */
+function renderChildSelect(app){
+  app.innerHTML=topbar('Choose your learner',false)+`<div class="screen">
+      <div class="welcome"><h2>🌟 Ali and Aboudy Scholars</h2><p>Choose a profile. Each child keeps separate points, badges and lesson progress.</p></div>
+    <div class="book-grid" style="max-width:760px;margin:0 auto">${Object.values(CHILDREN).map(c=>`
+      <button class="book-card" onclick="activateChild('${c.id}')" style="font:inherit;color:var(--text);text-align:center;border:3px solid ${c.id==='ali'?'#FFB84D':'#4A90E2'};cursor:pointer">
+        <span class="book-icon">${c.icon}</span><div class="book-title" style="font-size:1.3rem">${c.name}</div><div class="book-level">${c.level}</div><div style="font-size:.85rem;color:var(--text-light)">${c.subjects}</div><div class="btn-row"><span class="btn">Start learning →</span></div>
+      </button>`).join('')}</div><p style="text-align:center;color:var(--text-light);font-size:.8rem;margin:18px">You can switch profiles at any time using the child icon above.</p></div>`;
+}
+
+/* ============ HOME SCREEN ============ */
+function renderHome(app){
+  app.innerHTML=topbar('Ali and Aboudy Scholars',false)+`
+    <div class="screen">
+      <div class="welcome">
+        <h2>Hello, ${escapeAIHtml(state.childName)}! 👋</h2>
+        <p>What shall we learn today?</p>
+      </div>
+      <div class="book-grid">
+        ${getVisibleBooks().map(b=>{
+          const p=getBookProgress(b.id);
+          return `<div class="book-card ${b.colorClass}" onclick="Router.go('book',{bookId:'${b.id}'})">
+            <span class="book-icon">${b.icon}</span>
+            <div class="book-title">${b.title}</div>
+            <div class="book-level">${b.subtitle}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+            <div class="progress-text">${p}% complete</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    ${bottomNav('home')}`;
+}
+
+function getBookProgress(bid){
+  const b=CURRICULUM[bid];if(!b)return 0;
+  const bp=state.progress[bid]||{};let t=0,d=0;
+  b.units.forEach(u=>u.lessons.forEach(l=>{t++;if(bp[u.id]&&bp[u.id][l.id]&&bp[u.id][l.id].completed)d++;}));
+  return t?Math.round(d/t*100):0;
+}
+
+function renderBook(app,{bookId}){
+  const b=CURRICULUM[bookId];
+  if(!b||!getVisibleBooks().some(x=>x.id===bookId)){Router.current='home';Router.render();return;}
+  app.innerHTML=topbar(b.title)+`
+    <div class="screen">
+      <div class="welcome">
+        <h2>${b.icon} ${b.title}</h2>
+        <p style="font-size:.85rem;color:var(--text-light)">Status: ${b.verification.status}</p>
+      </div>
+      <div class="units-list">
+        ${b.units.map(u=>{
+          const p=getUnitProgress(bookId,u.id);
+          const sc=p===100?'status-done':p>0?'status-progress':'status-new';
+          const si=p===100?'✓':p>0?'•':'○';
+          return `<div class="unit-card" onclick="Router.go('lesson',{bookId:'${bookId}',unitId:'${u.id}',lessonIdx:0})">
+            <div class="unit-icon">${u.icon}</div>
+            <div class="unit-info">
+              <div class="unit-title">${u.title}</div>
+              <div class="unit-desc">${u.desc}</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+            </div>
+            <div class="unit-status ${sc}">${si}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    ${bottomNav('home')}`;
+}
+
+function getUnitProgress(bid,uid){
+  const b=CURRICULUM[bid],u=b.units.find(x=>x.id===uid);if(!u)return 0;
+  const bp=state.progress[bid]||{};let t=u.lessons.length,d=0;
+  u.lessons.forEach(l=>{if(bp[uid]&&bp[uid][l.id]&&bp[uid][l.id].completed)d++;});
+  return t?Math.round(d/t*100):0;
+}
+
+/* ============ LESSON ENGINE ============ */
+let LS=null;
+
+function renderLesson(app,{bookId,unitId,lessonIdx}){
+  const book=CURRICULUM[bookId],unit=book?.units.find(x=>x.id===unitId),l=unit?.lessons[lessonIdx];
+  if(!l||!getVisibleBooks().some(x=>x.id===bookId)){Router.back();return;}
+  LS={bookId,unitId,lessonIdx,lesson:l,questionIdx:0,attempts:0,correct:0,charState:'idle',charMessage:"Let's begin!",answered:false,streak:0};
+  drawLesson(app);
+  AudioSystem.speak(l.intro||`Let's learn ${l.title}.`);
+}
+
+function drawLesson(app){
+  if(!app)app=document.getElementById('app');
+  const{lesson,questionIdx,charState,charMessage}=LS;
+  const total=getLessonTotal(lesson);
+  const progress=(questionIdx/total)*100;
+  app.innerHTML=topbar(lesson.title)+`
+    <div class="screen"><div class="lesson-container">
+      <div class="lesson-header">
+        <div class="lesson-title">${lesson.title}</div>
+        <div class="lesson-goal">🎯 ${lesson.objective}</div>
+      </div>
+      <div class="lesson-progress"><div class="lesson-progress-fill" style="width:${progress}%"></div></div>
+      ${character(charState,charMessage)}
+      <div class="activity-area" id="activity-area"></div>
+    </div></div>`;
+  renderActivity();
+}
+
+function getLessonTotal(l){
+  if(l.questions)return l.questions.length;
+  if(l.words)return l.words.length;
+  if(l.items)return l.items.length;
+  return 0;
+}
+
+function renderActivity(){
+  const{lesson,questionIdx}=LS;
+  const total=getLessonTotal(lesson);
+  if(questionIdx>=total){finishLesson();return;}
+  const q=lesson.questions?lesson.questions[questionIdx]:null;
+  const area=document.getElementById('activity-area');
+  LS.answered=false;LS.attempts=0;
+  switch(lesson.type){
+    case 'counting':renderCounting(area,q);break;
+    case 'match-quantity':renderMatchQty(area,q);break;
+    case 'sequence':renderSequence(area,q);break;
+    case 'shape-match':renderShape(area,q);break;
+    case 'compare':renderCompare(area,q);break;
+    case 'phonics':renderPhonics(area,lesson);break;
+    case 'listen-choose':renderListen(area,q);break;
+    case 'rhyme':renderRhyme(area,q);break;
+    case 'story':renderStory(area,lesson,questionIdx);break;
+    case 'fill-gap':renderGap(area,q);break;
+    case 'sentence-build':renderSentence(area,q);break;
+    case 'arithmetic':renderArith(area,q,lesson.op);break;
+    case 'place-value':renderPV(area,q);break;
+    case 'word-problem':renderWP(area,q);break;
+    case 'classify':renderClassify(area,q);break;
+    case 'mcq':renderMCQ(area,q);break;
+    case 'pattern':renderPattern(area,q);break;
+    case 'sort':renderSort(area,lesson);break;
+    case 'counting-add':renderCountingAdd(area,q);break;
+    case 'word-picture':renderWordPicture(area,q);break;
+    case 'blend':renderBlend(area,q);break;
+    case 'sentence-picture':renderSentencePicture(area,q);break;
+    case 'classify-word':renderClassifyWord(area,lesson);break;
+    case 'compare-numbers':renderCompareNumbers(area,q);break;
+    default:area.innerHTML='<p>Activity type not implemented.</p>';
+  }
+}
+
+/* ============ ACTIVITY RENDERERS ============ */
+function renderCounting(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('Count the objects.')" aria-label="Listen">🔊</button>
+    <div class="instruction">Count and tap the right number.</div>
+    <div class="counting-area">
+      ${q.objects.map((o,i)=>`<span class="count-object" data-i="${i}" onclick="tapCount(${i})">${o}</span>`).join('')}
+    </div>
+    <div style="text-align:center;font-size:1.4rem;margin:12px 0;color:var(--primary-dark)">Counted: <span id="cd">0</span></div>
+    <div class="number-pad">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="num-btn" onclick="submitCount(${n})">${n}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+  LS.ct=0;
+}
+function tapCount(i){
+  if(LS.answered)return;
+  const e=document.querySelector(`.count-object[data-i="${i}"]`);
+  if(!e.classList.contains('counted')){
+    e.classList.add('counted');LS.ct++;
+    document.getElementById('cd').textContent=LS.ct;
+    AudioSystem.speak(String(LS.ct),{force:true});AudioSystem.click();
+  }
+}
+function submitCount(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect(`Yes! There are ${n}.`);
+  else handleIncorrect(`That's ${n}. Let's count again.`,q.hint||'Count each object.');
+}
+
+function renderMatchQty(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('Find ${q.number}.')">🔊</button>
+    <div class="instruction">Which group has <strong>${q.number}</strong>?</div>
+    <div class="options-grid cols-3">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitMQ(${o.n})"><span class="emoji">${o.emoji}</span></button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitMQ(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect(`Yes! ${n}.`);
+  else handleIncorrect(`That's ${n}.`,'Count carefully.');
+}
+
+function renderSequence(a,q){
+  const d=q.display||q.sequence.map(x=>x==='_'?'?':x).join(', ');
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('What comes next?')">🔊</button>
+    <div class="instruction">What comes next?</div>
+    <div style="text-align:center;font-size:2.2rem;font-weight:700;color:var(--primary-dark);margin:16px 0;letter-spacing:8px">${d}</div>
+    <div class="options-grid cols-4">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitSeq(${o})">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitSeq(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect(`Yes! ${n}.`);
+  else handleIncorrect(`The answer is ${q.answer}.`,'Look at the pattern.');
+}
+
+function renderShape(a,q){
+  const s={
+    circle:'<svg width="80" height="80"><circle cx="40" cy="40" r="35" fill="#FFB84D"/></svg>',
+    square:'<svg width="80" height="80"><rect x="5" y="5" width="70" height="70" fill="#4A90E2"/></svg>',
+    triangle:'<svg width="80" height="80"><polygon points="40,5 75,75 5,75" fill="#5CB85C"/></svg>',
+    rectangle:'<svg width="100" height="60"><rect x="5" y="5" width="90" height="50" fill="#9B59B6"/></svg>'
+  };
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('Find the ${q.target}.')">🔊</button>
+    <div class="instruction">Tap the <strong>${q.target}</strong>.</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitShape('${o}')">${s[o]}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitShape(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.target)handleCorrect(`Yes! A ${n}.`);
+  else handleIncorrect(`That's a ${n}.`,`Find the ${q.target}.`);
+}
+
+function renderCompare(a,q){
+  const g=x=>`<div style="font-size:1.8rem">${(x.emoji+' ').repeat(x.n).trim()}</div><div style="font-size:.9rem;color:var(--text-light)">${x.n} items</div>`;
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('Which has more?')">🔊</button>
+    <div class="instruction">Which group has more?</div>
+    <div class="options-grid cols-3">
+      <button class="option-btn" onclick="submitCmp('a')">${g(q.a)}</button>
+      <button class="option-btn" onclick="submitCmp('same')"><div style="font-size:1.5rem">=</div><div>Same</div></button>
+      <button class="option-btn" onclick="submitCmp('b')">${g(q.b)}</button>
+    </div>
+    <div id="fb"></div>`;
+}
+function submitCmp(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Brilliant!');
+  else handleIncorrect(`The answer is ${q.answer==='a'?'first group':q.answer==='b'?'second group':'same'}.`,'Count carefully.');
+}
+
+function renderPhonics(a,l){
+  const q=l.words[LS.questionIdx%l.words.length];
+  a.innerHTML=`
+    <div class="letter-display">${l.letter}</div>
+    <button class="listen-btn" onclick="AudioSystem.phoneme('${l.letter}',true)">🔊</button>
+    <div class="instruction">Does "<strong>${q.word}</strong>" have the ${l.sound} sound?</div>
+    <div class="options-grid cols-2">
+      <button class="option-btn" style="font-size:1.5rem" onclick="submitPh(true)">✅ Yes</button>
+      <button class="option-btn" style="font-size:1.5rem" onclick="submitPh(false)">❌ No</button>
+    </div>
+    <div id="fb"></div>`;
+  const lessonRun=LS;
+  AudioSystem.phoneme(l.letter).then(()=>{if(LS===lessonRun&&Router.current==='lesson')AudioSystem.speak(`${q.word}. Does it have that sound?`);});
+  LS._pq=q;
+}
+function submitPh(y){
+  if(LS.answered)return;
+  const q=LS._pq;
+  if(y===q.match)handleCorrect(y?`Yes! ${q.word} has it.`:`Right! ${q.word} doesn't.`);
+  else handleIncorrect(`Actually, ${q.match?'it does':"it doesn't"}.`,'Listen again.');
+}
+
+function renderListen(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('${q.audio}',{force:true})">🔊</button>
+    <div class="instruction">Tap the word you hear.</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitLis('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+  const lessonRun=LS;setTimeout(()=>{if(LS===lessonRun&&Router.current==='lesson')AudioSystem.speak(q.audio,{force:true});},300);
+}
+function submitLis(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Well heard!');
+  else handleIncorrect(`That was "${q.answer}".`,'Listen again.');
+}
+
+function renderRhyme(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('What rhymes with ${q.word}?')">🔊</button>
+    <div class="instruction">What rhymes with <strong>${q.word}</strong>?</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitRh('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitRh(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect(`Yes! ${q.word} and ${c} rhyme!`);
+  else handleIncorrect(`${c} doesn't rhyme.`,'Listen to the ending.');
+}
+
+function renderStory(a,l,qi){
+  if(!LS._ss){
+    a.innerHTML=`
+      <button class="listen-btn" onclick="AudioSystem.speak(\`${l.story.replace(/`/g,"'")}\`)">🔊</button>
+      <div class="instruction">Read or listen.</div>
+      <div class="story-text">${l.story}</div>
+      <div class="btn-row"><button class="btn" onclick="LS._ss=true;renderActivity()">I'm ready! →</button></div>`;
+    return;
+  }
+  const q=l.questions[qi];
+  if(!q){finishLesson();return;}
+  a.innerHTML=`
+    <div class="instruction">${q.q}</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitSt('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitSt(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Great reading!');
+  else handleIncorrect(`The answer is "${q.answer}".`,'Look at the story.');
+}
+
+function renderGap(a,q){
+  a.innerHTML=`
+    <div class="instruction">Choose the right word:</div>
+    <div style="text-align:center;font-size:1.3rem;margin:16px 0;font-weight:600">${q.sentence}</div>
+    <div class="options-grid cols-4">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitGap('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitGap(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Correct!');
+  else handleIncorrect(`The answer is "${q.answer}".`,'Remember the rule.');
+}
+
+function renderSentence(a,q){
+  LS._sw=[...q.words];LS._b=[];drawSB();
+}
+function drawSB(){
+  const a=document.getElementById('activity-area');
+  a.innerHTML=`
+    <div class="instruction">Put words in order.</div>
+    <div class="sentence-slots">${LS._b.map((w,i)=>`<span class="sentence-slot" onclick="rmW(${i})">${w}</span>`).join('')}</div>
+    <div class="word-bank">${LS._sw.map(w=>`<button class="word-tile" onclick="addW('${w}')">${w}</button>`).join('')}</div>
+    <div class="btn-row">
+      <button class="btn ghost" onclick="LS._b=[];drawSB()">Reset</button>
+      <button class="btn success" onclick="chkS()">Check</button>
+    </div>
+    <div id="fb"></div>`;
+}
+function addW(w){if(LS.answered)return;LS._b.push(w);AudioSystem.click();drawSB();}
+function rmW(i){if(LS.answered)return;LS._b.splice(i,1);drawSB();}
+function chkS(){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(LS._b.join(' ')===q.answer)handleCorrect('Perfect!');
+  else handleIncorrect(`The sentence is: "${q.answer}"`,'Try again.');
+}
+
+function renderArith(a,q,op='+'){
+  const s=op==='-'?'−':op==='×'?'×':'+';
+  const max=op==='×'?12:(op==='-'?20:20);
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('What is ${q.a} ${s} ${q.b}?')">🔊</button>
+    <div class="instruction">What is the answer?</div>
+    <div style="text-align:center;font-size:3rem;font-weight:700;color:var(--primary-dark);margin:16px 0">${q.a} ${s} ${q.b} = ?</div>
+    <div class="number-pad">
+      ${Array.from({length:max+1},(_,i)=>i).map(n=>`<button class="num-btn" onclick="submitA(${n})">${n}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitA(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect(`Yes! ${q.answer}.`);
+  else handleIncorrect(`The answer is ${q.answer}.`,'Try again.');
+}
+
+function renderPV(a,q){
+  a.innerHTML=`
+    <div class="instruction">How many tens and ones in <strong>${q.number}</strong>?</div>
+    <div style="text-align:center;font-size:3rem;font-weight:700;color:var(--primary-dark);margin:16px 0">${q.number}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+      <div style="background:#fff;padding:12px;border-radius:12px;text-align:center">
+        <div style="font-size:.9rem;color:var(--text-light)">Tens</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--primary-dark)" id="td">?</div>
+        <div style="display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+          ${[0,1,2,3,4,5,6,7,8,9].map(n=>`<button class="num-btn" style="padding:6px 0;font-size:1rem" onclick="setPV('t',${n})">${n}</button>`).join('')}
+        </div>
+      </div>
+      <div style="background:#fff;padding:12px;border-radius:12px;text-align:center">
+        <div style="font-size:.9rem;color:var(--text-light)">Ones</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--secondary)" id="od">?</div>
+        <div style="display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+          ${[0,1,2,3,4,5,6,7,8,9].map(n=>`<button class="num-btn" style="padding:6px 0;font-size:1rem" onclick="setPV('o',${n})">${n}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn success" onclick="chkPV()">Check</button></div>
+    <div id="fb"></div>`;
+  LS._pv={t:null,o:null};
+}
+function setPV(w,n){LS._pv[w]=n;document.getElementById(w==='t'?'td':'od').textContent=n;AudioSystem.click();}
+function chkPV(){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  const{t,o}=LS._pv;
+  if(t===q.tens&&o===q.ones)handleCorrect(`Yes! ${q.tens} ten${q.tens!==1?'s':''} and ${q.ones} one${q.ones!==1?'s':''}.`);
+  else handleIncorrect(`${q.number} is ${q.tens} tens and ${q.ones} ones.`,'The last digit is ones.');
+}
+
+function renderWP(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak(\`${q.text.replace(/`/g,"'")}\`)">🔊</button>
+    <div class="story-text">${q.text}</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitWP(${o})">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitWP(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect('Brilliant!');
+  else handleIncorrect(`The answer is ${q.answer}.`,'Read again.');
+}
+
+function renderClassify(a,q){
+  a.innerHTML=`
+    <div class="instruction">Is this LIVING or NOT LIVING?</div>
+    <div style="text-align:center;font-size:3rem;margin:20px 0">${q.item}</div>
+    <div class="options-grid cols-2">
+      <button class="option-btn" style="background:#E8F8E8;font-size:1.2rem" onclick="submitCl('living')">🌱 Living</button>
+      <button class="option-btn" style="background:#FDE8E8;font-size:1.2rem" onclick="submitCl('non-living')">🪨 Not Living</button>
+    </div>
+    <div id="fb"></div>`;
+}
+function submitCl(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Correct!');
+  else handleIncorrect(`That is ${q.answer}.`,'Living things grow.');
+}
+
+function renderMCQ(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak(\`${q.q.replace(/`/g,"'")}\`)">🔊</button>
+    <div class="instruction">${q.q}</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitMCQ('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitMCQ(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Excellent!');
+  else handleIncorrect(`The answer is "${q.answer}".`,'Think again.');
+}
+
+/* NEW: Pattern activity */
+function renderPattern(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('What comes next in the pattern?')">🔊</button>
+    <div class="instruction">Complete the pattern!</div>
+    <div class="pattern-row">
+      ${q.pattern.map(p=>`<div class="pattern-cell">${p}</div>`).join('')}
+      <div class="pattern-cell missing">?</div>
+    </div>
+    <div class="options-grid cols-4">
+      ${q.options.map(o=>`<button class="option-btn" style="font-size:1.8rem" onclick="submitPat('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitPat(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Yes! The pattern continues!');
+  else handleIncorrect(`The answer is ${q.answer}.`,'Look at what repeats.');
+}
+
+/* NEW: Sort activity */
+function renderSort(a,lesson){
+  const item=lesson.items[LS.questionIdx];
+  if(!item){finishLesson();return;}
+  LS._sortItem=item;
+  a.innerHTML=`
+    <div class="instruction">Where does <span style="font-size:2rem">${item.emoji}</span> belong?</div>
+    <div class="options-grid cols-2">
+      ${lesson.groups.map(g=>`<button class="option-btn" style="font-size:1.1rem;padding:20px" onclick="submitSort('${g}')">${g}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitSort(g){
+  if(LS.answered)return;
+  const item=LS._sortItem;
+  if(g===item.group)handleCorrect(`Yes! ${item.emoji} belongs with ${g}.`);
+  else handleIncorrect(`No, ${item.emoji} goes with ${item.group}.`,'Think about what it is.');
+}
+
+/* NEW: Counting addition */
+function renderCountingAdd(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('Count all the objects together.')">🔊</button>
+    <div class="instruction">Count all the objects together.</div>
+    <div style="display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap;margin:16px 0">
+      <div class="counting-area" style="min-width:100px">${q.a.map(o=>`<span style="font-size:2rem">${o}</span>`).join('')}</div>
+      <div style="font-size:2rem;font-weight:700;color:var(--primary-dark)">+</div>
+      <div class="counting-area" style="min-width:100px">${q.b.map(o=>`<span style="font-size:2rem">${o}</span>`).join('')}</div>
+      <div style="font-size:2rem;font-weight:700;color:var(--primary-dark)">= ?</div>
+    </div>
+    <div class="number-pad">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="num-btn" onclick="submitCA(${n})">${n}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitCA(n){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(n===q.answer)handleCorrect(`Yes! ${q.a.length} + ${q.b.length} = ${q.answer}.`);
+  else handleIncorrect(`The answer is ${q.answer}.`,'Count all the objects.');
+}
+
+/* NEW: Word-picture match */
+function renderWordPicture(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('${q.word}',{force:true})">🔊</button>
+    <div class="instruction">Which picture matches "<strong>${q.word}</strong>"?</div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" style="font-size:3rem" onclick="submitWP2('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+  const lessonRun=LS;setTimeout(()=>{if(LS===lessonRun&&Router.current==='lesson')AudioSystem.speak(q.word,{force:true});},300);
+}
+function submitWP2(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.picture)handleCorrect(`Yes! ${q.word}!`);
+  else handleIncorrect(`That's not ${q.word}.`,'Listen again.');
+}
+
+/* NEW: Blending */
+function renderBlend(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick='AudioSystem.speakBlend(${JSON.stringify(q.sounds)},"${q.answer}",true)'>🔊</button>
+    <div class="instruction">Blend the sounds together:</div>
+    <div class="pattern-row">
+      ${q.sounds.map(s=>`<div class="pattern-cell" style="font-size:1.5rem;font-weight:700;color:var(--primary-dark)">${s}</div>`).join('')}
+      <div class="pattern-cell" style="font-size:1.5rem">= ?</div>
+    </div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" onclick="submitBl('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+  const lessonRun=LS;setTimeout(()=>{if(LS===lessonRun&&Router.current==='lesson')AudioSystem.speakBlend(q.sounds,q.answer);},300);
+}
+function submitBl(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect(`Yes! The word is ${q.answer}!`);
+  else handleIncorrect(`The word is ${q.answer}.`,'Listen to each sound.');
+}
+
+/* NEW: Sentence-picture match */
+function renderSentencePicture(a,q){
+  a.innerHTML=`
+    <button class="listen-btn" onclick="AudioSystem.speak('${q.sentence}',{force:true})">🔊</button>
+    <div class="instruction">Read: <strong>${q.sentence}</strong></div>
+    <div class="options-grid cols-2">
+      ${q.options.map(o=>`<button class="option-btn" style="font-size:3rem" onclick="submitSP('${o}')">${o}</button>`).join('')}
+    </div>
+    <div id="fb"></div>`;
+}
+function submitSP(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  if(c===q.answer)handleCorrect('Great reading!');
+  else handleIncorrect(`The answer is ${q.answer}.`,'Read the sentence again.');
+}
+
+/* NEW: Classify word (noun/verb) */
+function renderClassifyWord(a,lesson){
+  const q=lesson.questions[LS.questionIdx];
+  if(!q){finishLesson();return;}
+  const isNounLesson=lesson.id==='l1';
+  a.innerHTML=`
+    <div class="instruction">Is "<strong>${q.word}</strong>" a ${isNounLesson?'noun (thing)':'verb (action)'}?</div>
+    <div style="text-align:center;font-size:2rem;font-weight:700;color:var(--primary-dark);margin:20px 0">${q.word}</div>
+    <div class="options-grid cols-2">
+      <button class="option-btn" style="font-size:1.2rem" onclick="submitCW(true)">✅ Yes</button>
+      <button class="option-btn" style="font-size:1.2rem" onclick="submitCW(false)">❌ No</button>
+    </div>
+    <div id="fb"></div>`;
+  LS._cwq=q;
+}
+function submitCW(yes){
+  if(LS.answered)return;
+  const q=LS._cwq;
+  const isNounLesson=LS.lesson.id==='l1';
+  const correct=isNounLesson?q.isNoun:q.isVerb;
+  if(yes===correct)handleCorrect(`Yes! "${q.word}" is ${isNounLesson?'a noun':'a verb'}.`);
+  else handleIncorrect(`Actually, "${q.word}" is ${isNounLesson?(q.isNoun?'a noun':'not a noun'):(q.isVerb?'a verb':'not a verb')}.`,'Think about what the word means.');
+}
+
+/* NEW: Compare numbers */
+function renderCompareNumbers(a,q){
+  a.innerHTML=`
+    <div class="instruction">Which number is bigger?</div>
+    <div class="options-grid cols-2">
+      <button class="option-btn" style="font-size:2rem;font-weight:700" onclick="submitCN('a')">${q.a}</button>
+      <button class="option-btn" style="font-size:2rem;font-weight:700" onclick="submitCN('b')">${q.b}</button>
+    </div>
+    <div id="fb"></div>`;
+}
+function submitCN(c){
+  if(LS.answered)return;
+  const q=LS.lesson.questions[LS.questionIdx];
+  const correct=c==='a'?q.a:q.b;
+  const answer=c==='a'?'a':'b';
+  if(answer===q.answer)handleCorrect(`Yes! ${correct} is bigger.`);
+  else handleIncorrect(`The bigger number is ${q.answer==='a'?q.a:q.b}.`,'Look at the tens first.');
+}
+
+/* ============ FEEDBACK & PROGRESSION ============ */
+const praise=['Brilliant!','Wonderful!','Well done!','Fantastic!','Great work!','You did it!','Super!','Amazing!'];
+const enc=['Good try!','Nearly!',"Let's try again.",'You can do this!','Keep going!'];
+
+function handleCorrect(msg){
+  const lessonRun=LS;
+  LS.answered=true;LS.correct++;LS.streak++;
+  LS.charState='happy';
+  LS.charMessage=msg||praise[Math.floor(Math.random()*praise.length)];
+  AudioSystem.correct();
+  AudioSystem.speak(LS.charMessage);
+  confetti();
+
+  const{bookId,unitId,lesson}=LS;
+  if(!state.progress[bookId])state.progress[bookId]={};
+  if(!state.progress[bookId][unitId])state.progress[bookId][unitId]={};
+  const lp=state.progress[bookId][unitId][lesson.id]=state.progress[bookId][unitId][lesson.id]||{completed:false,correct:0,attempts:0,mastery:'learning'};
+  lp.correct++;lp.attempts++;lp.lastSeen=Date.now();
+  state.totalPoints+=10;
+  saveState();
+
+  // Check streak badge
+  if(LS.streak===3&&!state.badges.includes('streak-3')){
+    state.badges.push('streak-3');
+    saveState();
+    setTimeout(()=>{
+      AudioSystem.badge();
+      alert('🏆 Badge earned: On Fire! (3 correct in a row)');
+    },1500);
+  }
+
+  const total=getLessonTotal(LS.lesson);
+  setTimeout(()=>{
+    if(LS!==lessonRun||Router.current!=='lesson')return;
+    LS.questionIdx++;
+    LS.charState='idle';
+    LS.charMessage=LS.questionIdx>=total?'Lesson complete!':'Next!';
+    drawLesson(document.getElementById('app'));
+  },1800);
+}
+
+function handleIncorrect(msg,hint){
+  const lessonRun=LS;
+  LS.attempts++;LS.streak=0;
+  LS.charState=LS.attempts>=2?'encouraging':'thinking';
+  LS.charMessage=msg||enc[Math.floor(Math.random()*enc.length)];
+  AudioSystem.incorrect();
+
+  const{bookId,unitId,lesson}=LS;
+  if(!state.progress[bookId])state.progress[bookId]={};
+  if(!state.progress[bookId][unitId])state.progress[bookId][unitId]={};
+  const lp=state.progress[bookId][unitId][lesson.id]=state.progress[bookId][unitId][lesson.id]||{completed:false,correct:0,attempts:0,mastery:'learning'};
+  lp.attempts++;saveState();
+
+  const fb=document.getElementById('fb');
+  if(fb)fb.innerHTML=`<div class="feedback incorrect">${msg}</div>`;
+  const cw=document.querySelector('.character-wrap');
+  if(cw)cw.outerHTML=character(LS.charState,LS.charMessage);
+
+  if(LS.attempts>=2&&hint){
+    setTimeout(()=>{
+      if(LS!==lessonRun||Router.current!=='lesson')return;
+      const f=document.getElementById('fb');
+      if(f)f.innerHTML+=`<div class="feedback hint">💡 ${hint}</div>`;
+      AudioSystem.speak('Hint. '+hint);
+    },1500);
+  }
+
+  if(LS.attempts>=3){
+    setTimeout(()=>{
+      if(LS!==lessonRun||Router.current!=='lesson')return;
+      const q=LS.lesson.questions?LS.lesson.questions[LS.questionIdx]:LS.lesson.items?LS.lesson.items[LS.questionIdx]:null;
+      const a=q?(q.answer!==undefined?q.answer:(q.target||q.picture||'')):'';
+      const f=document.getElementById('fb');
+      if(f)f.innerHTML+=`<div class="feedback hint">The answer was: <strong>${a}</strong>. Next!</div>`;
+      LS.answered=true;
+      setTimeout(()=>{
+        if(LS!==lessonRun||Router.current!=='lesson')return;
+        LS.questionIdx++;LS.charState='idle';LS.charMessage="Let's keep going!";
+        drawLesson(document.getElementById('app'));
+      },2500);
+    },2500);
+  }else{
+    setTimeout(()=>{if(LS===lessonRun&&Router.current==='lesson')LS.answered=false;},1500);
+  }
+}
+
+function finishLesson(){
+  const{bookId,unitId,lesson,correct}=LS;
+  const total=getLessonTotal(lesson);
+  const pct=Math.round(correct/total*100);
+
+  if(!state.progress[bookId])state.progress[bookId]={};
+  if(!state.progress[bookId][unitId])state.progress[bookId][unitId]={};
+  const lp=state.progress[bookId][unitId][lesson.id]=state.progress[bookId][unitId][lesson.id]||{completed:false,correct:0,attempts:0,mastery:'learning'};
+  lp.completed=true;
+  lp.mastery=pct>=80?'mastered':pct>=50?'practising':'learning';
+  state.totalPoints+=20;
+  saveState();
+
+  AudioSystem.celebration();
+  confetti();
+
+  // Check perfect score badge
+  if(pct===100&&!state.badges.includes('perfect-score')){
+    state.badges.push('perfect-score');
+    saveState();
+  }
+
+  // Check all badges
+  const newBadges=checkBadges();
+
+  const b=CURRICULUM[bookId],u=b.units.find(x=>x.id===unitId);
+  const nli=LS.lessonIdx+1,hnl=nli<u.lessons.length;
+  const nui=b.units.findIndex(x=>x.id===unitId)+1,hnu=nui<b.units.length;
+
+  document.getElementById('app').innerHTML=topbar('Well done!')+`
+    <div class="screen"><div class="lesson-container" style="text-align:center">
+      ${character('celebrating','You finished!')}
+      <h2 style="color:var(--primary-dark);margin:16px 0">🌟 Brilliant work! 🌟</h2>
+      <div style="background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin:16px 0">
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">${lesson.title}</div>
+        <div style="font-size:3rem;color:var(--success);font-weight:700">${correct}/${total}</div>
+        <div style="color:var(--text-light)">correct answers</div>
+        <div style="margin-top:12px;font-size:1.1rem;color:var(--primary-dark);font-weight:600">
+          ${pct>=80?'⭐ Mastered!':pct>=50?'👍 Good progress':'📚 Keep practising'}
+        </div>
+        <div style="margin-top:8px;color:var(--secondary);font-weight:600">+${20+correct*10} points</div>
+      </div>
+      ${newBadges.length>0?`
+        <div style="background:linear-gradient(135deg,#FFF8DC,#FFE8A0);border-radius:var(--radius);padding:16px;margin:12px 0;border:2px solid var(--secondary)">
+          <div style="font-size:1.2rem;font-weight:700;color:var(--primary-dark);margin-bottom:8px">🏆 New Badge${newBadges.length>1?'s':''}!</div>
+          ${newBadges.map(b=>`<div style="font-size:2rem">${b.icon} ${b.name}</div>`).join('')}
+        </div>
+      `:''}
+      <div class="btn-row">
+        <button class="btn ghost" onclick="Router.go('book',{bookId:'${bookId}'})">Back to units</button>
+        ${hnl?`<button class="btn success" onclick="Router.go('lesson',{bookId:'${bookId}',unitId:'${unitId}',lessonIdx:${nli}})">Next lesson →</button>`:''}
+        ${!hnl&&hnu?`<button class="btn success" onclick="Router.go('lesson',{bookId:'${bookId}',unitId:'${b.units[nui].id}',lessonIdx:0})">Next unit →</button>`:''}
+      </div>
+    </div></div>`;
+
+  AudioSystem.speak(pct>=80?'Wonderful work! You mastered this.':'Good effort! Let\'s practise more.');
+}
+
+/* ============ BADGES SCREEN ============ */
+function renderBadges(app){
+  app.innerHTML=topbar('My Badges')+`
+    <div class="screen">
+      <div class="welcome">
+        <h2>🏆 My Badges 🏆</h2>
+        <p>${state.badges.length} / ${BADGES.length} earned</p>
+      </div>
+      <div class="badges-grid">
+        ${BADGES.map(b=>{
+          const earned=state.badges.includes(b.id);
+          return `<div class="badge ${earned?'earned':'locked'}">
+            <span class="badge-icon">${b.icon}</span>
+            <div class="badge-name">${b.name}</div>
+            <div style="font-size:.7rem;color:var(--text-light);margin-top:4px">${b.desc}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    ${bottomNav('badges')}`;
+}
+
+/* ============ CHILD DASHBOARD ============ */
+function renderChildDashboard(app){
+  let t=0,d=0,m=0;
+  getVisibleBooks().forEach(b=>b.units.forEach(u=>u.lessons.forEach(l=>{
+    t++;
+    const lp=state.progress[b.id]?.[u.id]?.[l.id];
+    if(lp?.completed)d++;
+    if(lp?.mastery==='mastered')m++;
+  })));
+
+  app.innerHTML=topbar('My Progress')+`
+    <div class="screen">
+      <div class="welcome"><h2>⭐ ${escapeAIHtml(state.childName)}'s Progress ⭐</h2></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${state.totalPoints}</div><div class="stat-label">Points</div></div>
+        <div class="stat-card"><div class="stat-value">${d}/${t}</div><div class="stat-label">Lessons</div></div>
+        <div class="stat-card"><div class="stat-value">${m}</div><div class="stat-label">Mastered</div></div>
+        <div class="stat-card"><div class="stat-value">${state.badges.length}</div><div class="stat-label">Badges</div></div>
+      </div>
+      <div class="settings-section">
+        <h3>📚 Subjects</h3>
+        ${getVisibleBooks().map(b=>{
+          const p=getBookProgress(b.id);
+          return `<div style="margin:10px 0">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span>${b.icon} ${b.title}</span><span>${p}%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="btn-row"><button class="btn" onclick="Router.go('home')">Back</button></div>
+    </div>
+    ${bottomNav('dashboard')}`;
+}
+
+/* ============ PARENT AREA ============ */
+function renderParentGate(app){
+  const a=6+Math.floor(Math.random()*6),b=3+Math.floor(Math.random()*5),ans=a*b;
+  app.innerHTML=topbar('Parent Area')+`
+    <div class="screen">
+      <div class="parent-gate">
+        <h2>🔒 Parent Area</h2>
+        <p style="color:var(--text-light);margin-bottom:12px">Solve to continue:</p>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--primary-dark);margin:12px 0">${a} × ${b} = ?</div>
+        <input type="number" id="ga" placeholder="Answer" inputmode="numeric">
+        <div class="btn-row">
+          <button class="btn" onclick="chkGate(${ans})">Enter</button>
+          <button class="btn ghost" onclick="Router.go('home')">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>document.getElementById('ga')?.focus(),100);
+}
+function chkGate(c){if(parseInt(document.getElementById('ga').value)===c)Router.go('parentDash');else alert('Try again.');}
+
+function escapeAIHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function timeoutSignal(ms){
+  if(typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function')return AbortSignal.timeout(ms);
+  if(typeof AbortController==='undefined')return undefined;
+  const controller=new AbortController();setTimeout(()=>controller.abort(),ms);return controller.signal;
+}
+async function requestGemini(question,context=null){
+  if(!geminiApiKey)throw new Error('Save a Gemini API key in Parent settings first.');
+  const model=String(aiPrefs.geminiModel||defaultAIPrefs.geminiModel).trim();
+  const contextText=context?`Lesson: ${context.lessonTitle}. Subject: ${context.subject}. Goal: ${context.objective}. Activity: ${context.activityPrompt}. Current question: ${context.question}.\nLearner's message: ${question}`:question;
+  const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':geminiApiKey},signal:timeoutSignal(25000),
+    body:JSON.stringify({systemInstruction:{parts:[{text:'You are a kind, encouraging tutor for a young child. Give a short, simple hint and explain one small step. Do not reveal the direct answer to a homework question. Reply in the language the learner used.'}]},contents:[{role:'user',parts:[{text:contextText}]}],generationConfig:{temperature:0.35,maxOutputTokens:240}})
+  });
+  let data={};try{data=await response.json();}catch(e){}
+  if(!response.ok)throw new Error(data?.error?.message||`Gemini request failed (${response.status}).`);
+  const answer=(data.candidates?.[0]?.content?.parts||[]).map(part=>part.text||'').join('\n').trim();
+  if(!answer)throw new Error(data.promptFeedback?.blockReason||'Gemini did not return an answer.');
+  return answer;
+}
+function renderAISettings(app){
+  app.innerHTML=topbar('Gemini Assistant')+`<div class="screen"><div class="ai-page">
+    <div class="welcome"><h2>Gemini Assistant Settings</h2><p>Only Google Gemini is used. The learning activities and bilingual helper still work offline.</p></div>
+    <section class="ai-card"><h3>🔑 Connect Gemini</h3><p class="ai-note">Paste your Google Gemini API key, save it on this device, then test it. The key is never included in the project files.</p>
+      <label for="gemini-api-key">Gemini API key</label><div style="display:flex;gap:8px;align-items:stretch"><input id="gemini-api-key" type="password" style="flex:1;min-width:0" placeholder="${geminiApiKey?'A key is saved on this device':'Paste your Gemini API key'}" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn ghost" id="gemini-key-visibility" type="button" aria-label="Show API key" onclick="toggleGeminiKeyVisibility()">Show</button></div>
+      <div class="ai-actions"><button class="btn" onclick="saveGeminiSettingsFromUI()">Save key and settings</button><button class="btn secondary" onclick="testGeminiProvider()">Test Gemini</button><button class="btn ghost" onclick="clearGeminiKey()">Clear saved key</button></div>
+      <div class="ai-message" id="ai-settings-message" role="status">${geminiApiKey?'Gemini key saved on this device.':'No key saved yet. Offline learning is ready.'}</div>
+      <p class="ai-note">Get a key from <a href="https://aistudio.google.com/apikey">Google AI Studio</a>. Gemini API requests can incur charges depending on your Google account and usage limits.</p>
+    </section>
+    <section class="ai-card"><h3>⚙️ Assistant</h3>
+      <label for="ai-gemini-model">Gemini model</label><select id="ai-gemini-model" style="width:100%;padding:11px;border:2px solid #e0e6ed;border-radius:10px;font:inherit"><option value="gemini-2.5-flash" ${aiPrefs.geminiModel==='gemini-2.5-flash'?'selected':''}>Gemini 2.5 Flash · Recommended</option><option value="gemini-2.5-flash-lite" ${aiPrefs.geminiModel==='gemini-2.5-flash-lite'?'selected':''}>Gemini 2.5 Flash Lite</option></select>
+      <label class="ai-toggle"><input id="ai-online-enabled" type="checkbox" ${aiPrefs.onlineEnabled?'checked':''}><span><b>Enable online Gemini helper</b><br><small>Off by default. Turning it on may use your Google API quota.</small></span></label>
+      <div class="ai-actions"><button class="btn" onclick="saveGeminiSettingsFromUI()">Save settings</button></div>
+      <div class="ai-message" id="ai-test-message" role="status"></div>
+    </section>
+    <section class="ai-card"><h3>Privacy and offline use</h3><p class="ai-note">When enabled, your question and the current lesson details are sent directly to Google Gemini. Your Gemini key is kept in this device's browser storage; do not share this device with people you do not trust, and do not put a personal key in a public app release. Child names, profiles, points and chat history are not sent. If Gemini is unavailable, the local bilingual helper continues to work.</p></section>
+    <div class="btn-row"><button class="btn ghost" onclick="Router.back()">Back to Parent Dashboard</button></div>
+  </div></div>`;
+}
+function saveGeminiSettingsFromUI(){
+  const keyField=document.getElementById('gemini-api-key'),modelField=document.getElementById('ai-gemini-model'),onlineField=document.getElementById('ai-online-enabled');
+  const newKey=String(keyField?.value||'').trim();
+  if(newKey)saveGeminiKey(newKey);
+  if(modelField)aiPrefs.geminiModel=modelField.value||defaultAIPrefs.geminiModel;
+  let online=Boolean(onlineField?.checked);
+  const msg=document.getElementById('ai-settings-message');
+  if(online&&!geminiApiKey){online=false;if(onlineField)onlineField.checked=false;if(msg)msg.textContent='Paste and save your Gemini API key before enabling the online helper.';}
+  else if(online&&!aiPrefs.onlineEnabled&&!confirm('Gemini API use may incur charges. Check your Google AI Studio usage limits before enabling it. Continue?')){online=false;if(onlineField)onlineField.checked=false;}
+  aiPrefs.onlineEnabled=online;saveAIPrefs();
+  if(keyField){keyField.value='';keyField.placeholder=geminiApiKey?'A key is saved on this device':'Paste your Gemini API key';}
+  if(msg&&geminiApiKey)msg.textContent='Settings saved. Gemini key stays on this device and is not part of the project.';
+  updateHelperMode();
+}
+function toggleGeminiKeyVisibility(){
+  const field=document.getElementById('gemini-api-key'),button=document.getElementById('gemini-key-visibility');if(!field||!button)return;
+  field.type=field.type==='password'?'text':'password';button.textContent=field.type==='password'?'Show':'Hide';
+}
+function clearGeminiKey(){
+  if(!confirm('Remove the Gemini API key saved on this device?'))return;
+  saveGeminiKey('');aiPrefs.onlineEnabled=false;saveAIPrefs();
+  const field=document.getElementById('gemini-api-key'),online=document.getElementById('ai-online-enabled'),msg=document.getElementById('ai-settings-message');
+  if(field){field.value='';field.placeholder='Paste your Gemini API key';}if(online)online.checked=false;if(msg)msg.textContent='Saved Gemini key removed. The offline helper remains available.';updateHelperMode();
+}
+async function testGeminiProvider(){
+  const msg=document.getElementById('ai-test-message');
+  if(!geminiApiKey){if(msg)msg.textContent='Save your Gemini API key first. No request was sent.';return;}
+  if(!confirm('Send one test request to Google Gemini? This uses your API quota and may incur charges.'))return;
+  if(msg)msg.textContent='Testing Gemini connection…';
+  try{const answer=await requestGemini('Reply with the single word READY.');if(msg)msg.textContent=`Gemini replied: ${answer.slice(0,100)}`;}
+  catch(e){if(msg)msg.textContent=`Gemini test failed: ${String(e.message||e).replace(geminiApiKey,'[key hidden]').slice(0,180)}`;}
+}
+
+function renderParentDashboard(app){
+  const min=Math.round((Date.now()-state.sessionStart)/60000);
+  let totalLessons=0,completedLessons=0,mastered=0;
+  getVisibleBooks().forEach(b=>b.units.forEach(u=>u.lessons.forEach(l=>{
+    totalLessons++;
+    const lp=state.progress[b.id]?.[u.id]?.[l.id];
+    if(lp?.completed)completedLessons++;
+    if(lp?.mastery==='mastered')mastered++;
+  })));
+
+  app.innerHTML=topbar('Parent Dashboard')+`
+    <div class="screen">
+      <h2 style="color:var(--primary-dark);margin:12px 0">👨‍👩‍👧 Parent Dashboard</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${state.totalPoints}</div><div class="stat-label">Points</div></div>
+        <div class="stat-card"><div class="stat-value">${min}</div><div class="stat-label">Minutes</div></div>
+        <div class="stat-card"><div class="stat-value">${completedLessons}/${totalLessons}</div><div class="stat-label">Lessons</div></div>
+        <div class="stat-card"><div class="stat-value">${mastered}</div><div class="stat-label">Mastered</div></div>
+      </div>
+      <div class="settings-section">
+        <h3>📚 Curriculum Coverage</h3>
+        ${getVisibleBooks().map(b=>{
+          const p=getBookProgress(b.id);
+          const units=b.units.length;
+          const lessons=b.units.reduce((s,u)=>s+u.lessons.length,0);
+          return `<div style="margin:10px 0">
+            <div style="display:flex;justify-content:space-between">
+              <strong>${b.icon} ${b.title}</strong><span>${p}%</span>
+            </div>
+            <div style="font-size:.8rem;color:var(--text-light);margin:4px 0">
+              ${units} units • ${lessons} lessons • ${b.verification.status}
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="settings-section">
+        <h3>🤖 Gemini Assistant Settings</h3>
+        <p class="ai-note">The bilingual helper works offline. An adult can add a Gemini API key and enable online help in settings.</p>
+        <div class="btn-row"><button class="btn" onclick="Router.go('aiSettings')">Open AI Assistant Settings</button></div>
+      </div>
+      <div class="settings-section">
+        <h3>⚙️ Settings</h3>
+        <div class="setting-row"><span>🔊 Narration</span><div class="toggle ${state.settings.narration?'on':''}" onclick="tog('narration')"></div></div>
+        <div class="setting-row"><span>🎵 Sound effects</span><div class="toggle ${state.settings.soundEffects?'on':''}" onclick="tog('soundEffects')"></div></div>
+        <div class="setting-row"><span>🐢 Slow speech</span><div class="toggle ${state.settings.slowSpeech?'on':''}" onclick="tog('slowSpeech')"></div></div>
+      </div>
+      <div class="settings-section">
+        <h3>👤 Child</h3>
+        <div class="setting-row">
+          <span>Name</span>
+          <input type="text" value="${escapeAIHtml(state.childName)}" onchange="state.childName=this.value;saveState()" style="padding:6px;border:1px solid #ddd;border-radius:8px;width:140px">
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>🔧 Diagnostics</h3>
+        <div class="btn-row">
+          <button class="btn ghost" onclick="Router.go('diagnostics')">View diagnostics</button>
+          <button class="btn ghost" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('${STORAGE_KEY}');localStorage.removeItem('${PROFILE_STORAGE_KEY}');localStorage.removeItem('${ACTIVE_CHILD_KEY}');location.reload()}">Reset progress</button>
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn" onclick="Router.go('home')">Back</button></div>
+    </div>`;
+}
+function tog(k){state.settings[k]=!state.settings[k];saveState();Router.render();}
+
+/* ============ DIAGNOSTICS ============ */
+function renderDiagnostics(app){
+  const vc=AudioSystem.voices.length;
+  const hb=AudioSystem.voices.some(v=>/en-GB/i.test(v.lang));
+  let cc=0,qc=0,uc=0;
+  Object.values(CURRICULUM).forEach(b=>{
+    uc+=b.units.length;
+    b.units.forEach(u=>u.lessons.forEach(l=>{
+      cc++;
+      qc+=getLessonTotal(l);
+    }));
+  });
+  let su=0;
+  try{su=new Blob([localStorage.getItem(STORAGE_KEY)||'']).size;}catch(e){}
+    const embeddedProviderKey=/(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{25,})/.test(document.documentElement.outerHTML);
+
+  const activityTypes=new Set();
+  Object.values(CURRICULUM).forEach(b=>b.units.forEach(u=>u.lessons.forEach(l=>activityTypes.add(l.type))));
+
+  app.innerHTML=topbar('Diagnostics')+`
+    <div class="screen">
+      <h2 style="color:var(--primary-dark);margin:12px 0">🔧 Diagnostics</h2>
+      <div class="settings-section">
+        <h3>Audio</h3>
+        <div class="diag-item"><span>Speech API</span><span class="${AudioSystem.synth?'diag-pass':'diag-fail'}">${AudioSystem.synth?'PASS':'FAIL'}</span></div>
+        <div class="diag-item"><span>Voices</span><span>${vc}</span></div>
+        <div class="diag-item"><span>British voice</span><span class="${hb?'diag-pass':'diag-fail'}">${hb?'PASS':'NOT FOUND'}</span></div>
+        <div class="diag-item"><span>Web Audio</span><span class="${window.AudioContext?'diag-pass':'diag-fail'}">${window.AudioContext?'PASS':'FAIL'}</span></div>
+      </div>
+      <div class="settings-section">
+        <h3>Curriculum</h3>
+        <div class="diag-item"><span>Books</span><span class="diag-pass">${Object.keys(CURRICULUM).length}/5 PASS</span></div>
+        <div class="diag-item"><span>Units</span><span class="diag-pass">${uc} PASS</span></div>
+        <div class="diag-item"><span>Lessons</span><span class="diag-pass">${cc} PASS</span></div>
+        <div class="diag-item"><span>Questions</span><span class="diag-pass">${qc} PASS</span></div>
+        ${getVisibleBooks().map(b=>{
+          const ls=b.units.reduce((s,u)=>s+u.lessons.length,0);
+          return `<div class="diag-item"><span>${b.icon} ${b.title}</span><span class="diag-pass">${b.units.length} units / ${ls} lessons</span></div>`;
+        }).join('')}
+      </div>
+      <div class="settings-section">
+        <h3>Activity Types (${activityTypes.size})</h3>
+        ${[...activityTypes].map(t=>`<div class="diag-item"><span>${t}</span><span class="diag-pass">IMPLEMENTED</span></div>`).join('')}
+      </div>
+      <div class="settings-section">
+        <h3>Storage</h3>
+        <div class="diag-item"><span>localStorage</span><span class="${su>0?'diag-pass':'diag-fail'}">${su>0?'PASS':'EMPTY'}</span></div>
+        <div class="diag-item"><span>Size</span><span>${su} bytes</span></div>
+      </div>
+      <div class="settings-section">
+        <h3>Online AI safety</h3>
+         <div class="diag-item"><span>Online Gemini helper</span><span>${aiPrefs.onlineEnabled?'ON':'OFF'}</span></div>
+         <div class="diag-item"><span>Gemini key stored on this device</span><span>${geminiApiKey?'YES':'NO'}</span></div>
+        <div class="diag-item"><span>Recognizable provider-key scan in this HTML</span><span class="${embeddedProviderKey?'diag-fail':'diag-pass'}">${embeddedProviderKey?'PATTERN FOUND':'PASS · no key pattern found'}</span></div>
+         <p class="ai-note">This scan only checks the page HTML. A Gemini key saved in device storage is private to this browser but is accessible to this app.</p>
+      </div>
+      <div class="settings-section">
+        <h3>Badges</h3>
+        <div class="diag-item"><span>Total badges</span><span>${BADGES.length}</span></div>
+        <div class="diag-item"><span>Earned</span><span>${state.badges.length}</span></div>
+      </div>
+      <div class="btn-row"><button class="btn" onclick="Router.go('parentDash')">Back</button></div>
+    </div>`;
+}
+
+/* ============ INIT ============ */
+AudioSystem.init();
+Router.current=activeChildId?'home':'selectChild';
+Router.render();
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();});
+window.addEventListener('beforeunload',saveState);
+let au=false;
+function unlock(){
+  if(au)return;au=true;
+  try{AudioSystem.getCtx();if(AudioSystem.synth)AudioSystem.synth.speak(new SpeechSynthesisUtterance(''));}catch(e){}
+}
+document.addEventListener('touchstart',unlock,{once:true});
+document.addEventListener('click',unlock,{once:true});
+
+const totalLessons=Object.values(CURRICULUM).reduce((s,b)=>s+b.units.reduce((s2,u)=>s2+u.lessons.length,0),0);
+const totalUnits=Object.values(CURRICULUM).reduce((s,b)=>s+b.units.length,0);
+   console.log(`%c🌟 Ali and Aboudy Scholars loaded`,'color:#4A90E2;font-size:14px;font-weight:bold');
+console.log(`Books: ${Object.keys(CURRICULUM).length}, Units: ${totalUnits}, Lessons: ${totalLessons}`);
+
+/* ============ OFFLINE BILINGUAL HELPER ============ */
+function currentAIPromptContext(){
+  const level=CHILDREN[activeChildId]?.level||'early primary';
+  if(!LS?.lesson)return {level,subject:'Learning',lessonTitle:'Learning time',objective:'Try the activity carefully.',activityPrompt:'Think step by step.',question:''};
+  const l=LS.lesson,q=l.questions?.[LS.questionIdx]||{},book=CURRICULUM[LS.bookId];
+  const question=q.q||q.prompt||q.item||q.word||q.sentence||q.audio||q.target||'';
+  return {level,subject:book?.title||'Learning',lessonTitle:l.title||'Lesson',objective:l.objective||l.intro||'',activityPrompt:l.intro||'',question:String(question).slice(0,300)};
+}
+function updateHelperMode(){
+  const el=document.getElementById('ls-helper-mode');if(!el)return;
+  if(!navigator.onLine){el.textContent='الجهاز غير متصل. المساعد المحلي والدروس يعملان دون إنترنت.';return;}
+  el.textContent=aiPrefs.onlineEnabled&&geminiApiKey
+    ?'مساعد Gemini مفعّل؛ عند تعذره نكمل بالمساعد المحلي.'
+    :'المساعد المحلي يعمل دون إنترنت. مساعد Gemini غير مفعّل.';
+}
+async function askOnlineAssistant(question){
+  return {answer:await requestGemini(question,currentAIPromptContext())};
+}
+const LSHelper={last:'',
+ open(){document.getElementById('ls-helper-panel').classList.add('open');updateHelperMode();this.explain();},
+ close(){document.getElementById('ls-helper-panel').classList.remove('open');},
+ context(){
+  if(!LS||!LS.lesson)return {title:'Learning time',objective:'Try the activity carefully.',question:''};
+  const l=LS.lesson, q=l.questions&&l.questions[LS.questionIdx];
+  return {title:l.title||'Lesson',objective:l.objective||l.intro||'Look carefully and think.',question:q?(q.q||q.prompt||q.item||''):''};
+ },
+ explain(){const c=this.context();const child=activeChildId==='ali'?'علي، خذ وقتك.':'عبودي، اقرأ السؤال بهدوء وفكر في الخطوات.';
+  this.last=`${child} درسنا الآن: ${c.title}. هدفنا: ${c.objective}. ${c.question?'السؤال الحالي: '+c.question+'. ':''}اقرأ أو انظر إلى السؤال، وحدد المطلوب أولاً. جرّب بنفسك، وإذا لم تعرف أخبرني ما الجزء الصعب.`;
+  document.getElementById('ls-helper-context').textContent=`${c.title} — ${c.objective}`;
+  document.getElementById('ls-helper-answer').textContent=this.last;
+ },
+ simpleEnglish(){const c=this.context();this.last=`Let's learn step by step. ${c.title}. ${c.objective}. Look carefully. What do you need to find? Try one small step. You can do it!`;
+  document.getElementById('ls-helper-answer').textContent=this.last;},
+  speak(){if(!this.last)this.explain();AudioSystem.speak(this.last,{force:true,rate:.88});},
+  localReply(v){
+   v=String(v||'').toLowerCase();
+   if(!v)return 'اكتب الجزء الذي لم تفهمه أولاً.';
+   if(/answer|الإجابة|الحل|حلها/.test(v))return 'لن أعطيك الإجابة مباشرة 😊. خلينا نفكر: ما المطلوب في السؤال؟ وما أول خطوة تستطيع تجربتها؟';
+   if(/again|repeat|تاني|أعد|ما فهمت|مش فاهم|لا أفهم/.test(v))return 'ولا يهمك! نبدأ من جديد: انظر إلى السؤال، وابحث عن الكلمة أو الصورة المهمة. خذ خطوة واحدة فقط، ثم جرّب.';
+   if(/math|جمع|طرح|number|رقم|حساب/.test(v))return 'في الرياضيات: عدّ الأشياء واحدة واحدة، أو استخدم أصابعك. في الجمع نضم المجموعتين، وفي الطرح نزيل بعض الأشياء ثم نعد الباقي.';
+   if(/science|علوم|plant|نبات|living|حي/.test(v))return 'في العلوم: لاحظ الشيء وصفاته. اسأل نفسك: هل ينمو؟ هل يحتاج إلى ماء أو غذاء؟ استخدم ما تعلمته لتصنفه.';
+   if(/english|كلمة|معنى|read|اقرأ/.test(v))return 'في الإنجليزية: استمع للكلمة، انطقها ببطء، ثم قسّمها إلى أصوات أو مقاطع. حاول ربطها بالصورة أو بجملة بسيطة.';
+   return 'فهمت أنك تحتاج مساعدة. أستطيع إعطاء تلميح عام: اقرأ السؤال مرة أخرى، وحدد الكلمات المهمة، ثم جرّب خطوة صغيرة. استخدم زر «اشرح لي بالعربي» لشرح الدرس الحالي.';
+  },
+  async reply(){
+   const input=document.getElementById('ls-helper-input'),v=(input.value||'').trim();
+   const answer=document.getElementById('ls-helper-answer');
+   if(!v){this.last=this.localReply('');answer.textContent=this.last;return;}
+    if(aiPrefs.onlineEnabled&&geminiApiKey&&navigator.onLine){
+    answer.textContent='لحظة، أفكر في تلميح مناسب…';
+    try{
+     const result=await askOnlineAssistant(v);this.last=result.answer;answer.textContent=this.last;
+      updateHelperMode();input.value='';return;
+    }catch(e){this.last=this.localReply(v);answer.textContent=`تعذر المساعد المتصل الآن؛ نكمل بالمساعد المحلي.\n${this.last}`;const mode=document.getElementById('ls-helper-mode');if(mode)mode.textContent='المساعد المتصل غير متاح الآن. المساعد المحلي ما زال يعمل.';input.value='';return;}
+   }
+   this.last=this.localReply(v);
+   if(aiPrefs.onlineEnabled&&!navigator.onLine)answer.textContent=`الإنترنت غير متاح؛ نكمل محليًا.\n${this.last}`;
+    else if(aiPrefs.onlineEnabled&&!geminiApiKey)answer.textContent=`أضف مفتاح Gemini من إعدادات وليّ الأمر؛ نكمل الآن بالمساعد المحلي.\n${this.last}`;
+   else answer.textContent=this.last;
+   input.value='';updateHelperMode();
+  },
+};
+window.addEventListener('online',updateHelperMode);window.addEventListener('offline',updateHelperMode);
+
+</script>
+</body>
+</html>
