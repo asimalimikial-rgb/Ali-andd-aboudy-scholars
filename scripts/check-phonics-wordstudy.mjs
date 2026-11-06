@@ -8,12 +8,12 @@ const checks=[
   ['Letter-name control',html.includes('Letter name / اسم الحرف')],
   ['Phonics-sound control',html.includes('Phonics sound / صوت الحرف')],
   ['Example-word control',html.includes('Example word / كلمة المثال')],
-  ['IPA request',html.includes('phoneme:phoneme||undefined') && html.includes('en-GB-Standard-A')],
-  ['Gemini TTS configuration',api.includes('process.env.GEMINI_API_KEY') && api.includes('gemini-3.8-flash-lite-tts') && api.includes('speechMetadata') && api.includes('const PHONEMES = new Set(')],
+  ['IPA request',html.includes('phoneme:phoneme||undefined') && html.includes('en-GB-SoniaNeural')],
+  ['Azure TTS configuration',api.includes('process.env.AZURE_SPEECH_KEY') && api.includes('process.env.AZURE_SPEECH_REGION') && api.includes('tts.speech.microsoft.com') && api.includes('X-Microsoft-OutputFormat') && api.includes('const PHONEMES = new Set(')],
   ['Offline IPA cache key',html.includes('ipa:'+String.fromCharCode(39)+'+phoneme') && html.includes('rate,phoneme),blob')],
   ['Mobile trace canvas size',html.includes('height:210px')],
   ['Wide single-column Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('grid-template-columns:minmax(0,1fr)')],
-  ['TTS language routing',html.includes("language:segment.isArabic?'ar-XA':'en-GB'")],
+  ['Azure TTS language routing',html.includes("language:segment.isArabic?'ar-EG':'en-GB'")],
   ['Android offline TTS bridge',html.includes('window.NativeSpeech.speak(nativeId') && html.includes('window.__nativeSpeechReady') && !html.includes('tts-bridge.js')],
   ['All 42 sound entries mapped',true]
 ];
@@ -29,7 +29,7 @@ checks.push(['Learning sections remain reachable',blending>=0 && study>blending 
 const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
-checks.push(['English question followed by Arabic helper audio',narration.includes('await HybridSpeech.speak(titleText)') && narration.includes('if (helperText) await HybridSpeech.speak(helperText)')]);
+checks.push(['English question only before answer',narration.includes('await HybridSpeech.speak(titleText)') && !narration.includes('helperText') && !narration.includes('getArabicHelper')]);
 checks.push(['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')]);
 checks.push(['Slash-delimited phonemes are spoken as phonics sounds',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')]);
 checks.push(['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')]);
@@ -39,6 +39,6 @@ const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
 checks.push(['Online neural audio is attempted before cached playback',hybrid.indexOf('blob=await fetchClip(')>=0 && hybrid.indexOf('blob=await fetchClip(')<hybrid.indexOf('if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')]);
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
 checks.push(['Local TTS is the final fallback',hybrid.indexOf('await playBlob(blob,rate,token)')>=0 && hybrid.indexOf('await localSpeak(')>hybrid.indexOf('await playBlob(blob,rate,token)')]);
-checks.push(['Feedback speaks English then Arabic separately',html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)')]);
+checks.push(['One Arabic explanation appears after answer only',html.includes("arabicBlock.className = 'arabic-explanation'") && html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && !html.includes("arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q)")]);
 
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
