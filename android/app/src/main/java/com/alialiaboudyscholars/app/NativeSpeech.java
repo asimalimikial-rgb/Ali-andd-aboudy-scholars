@@ -106,7 +106,7 @@ public final class NativeSpeech {
         int bufferBytes = Math.max(minBuffer, 8192 * 4);
         AudioTrack track = new AudioTrack.Builder()
             .setAudioAttributes(new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build())
             .setAudioFormat(new AudioFormat.Builder()
