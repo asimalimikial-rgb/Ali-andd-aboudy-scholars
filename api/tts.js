@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
   const voiceLanguage = VOICES.get(voice);
   const language = typeof body.language === 'string' ? body.language : voiceLanguage;
   const rate = Number(body.rate || 0.95);
-  const safePhonemeSsml = /^<speak><phoneme alphabet="ipa" ph="[^"<>]{1,32}">[^<>]{1,80}<\\/phoneme><\\/speak>$/u.test(text);
+  const safePhonemeSsml = /^<speak><phoneme alphabet="ipa" ph="[^"<>]{1,32}">[^<>]{1,80}<\/phoneme><\/speak>$/u.test(text);
   const containsMarkup = /[<>]/.test(text);
 
   if (!text || text.length > 1000 || !voiceLanguage || language !== voiceLanguage ||
