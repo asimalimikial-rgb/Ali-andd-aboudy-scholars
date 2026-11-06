@@ -9544,17 +9544,20 @@ const App = {
 
     this.answerLocked = true;
     const feedback = document.getElementById('answer-feedback');
-    const explanation = q.explanation || q.hint || 'Keep looking for clues and try the next one.';
     feedback.className = `feedback-banner ${isCorrect ? 'good' : 'coach'}`;
     feedback.style.display = 'block';
-    feedback.textContent = isCorrect ? `That’s right! ${explanation}` : `Good try. ${explanation}`;
+    // Post-answer feedback is encouragement only. Never repeat hints, explanations,
+    // or instructions after the child has submitted an answer.
+    feedback.textContent = isCorrect
+      ? 'That’s right! / أحسنت! إجابة صحيحة!'
+      : 'Good try! / محاولة جميلة!';
     if (isCorrect && q.type === 'spelling') this.saveVocabularyWord(q.target);
 
     const submitBtn = document.getElementById('btn-submit-answer');
     submitBtn.textContent = 'Continue / متابعة';
     submitBtn.onclick = () => this.advanceActivity();
 
-    const spokenFeedback = isCorrect ? `Great job! ${explanation}` : `Good try. ${explanation}`;
+    const spokenFeedback = isCorrect ? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';
     if (isCorrect) {
       SoundEffects.correct();
       this.lessonScore++;
