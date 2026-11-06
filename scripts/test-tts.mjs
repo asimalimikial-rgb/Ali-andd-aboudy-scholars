@@ -14,6 +14,11 @@ assert.equal(html.includes('/api/tts'),false,'No remote TTS endpoint may remain'
 assert.equal(html.includes('freetts.org'),false,'No online speech provider may remain');
 assert.equal(html.includes('fetchClip('),false,'No remote speech clip fetcher may remain');
 assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must use the app-owned native bridge');
+assert.equal(html.includes('const queued = (this._speechQueue || Promise.resolve())'),true,'Speech requests must be serialized instead of canceling each other');
+assert.equal(html.includes('this._speechQueue = Promise.resolve();'),true,'Explicit stop must invalidate queued speech');
+assert.equal(html.includes('const activeScreen = document.querySelector(\'.screen.active\');'),true,'Leaving a screen must stop its narration');
+assert.equal(html.includes('HybridSpeech.stop();\\n    const q = this.currentLesson.questions[this.currentQuestionIndex];'),true,'Changing questions must stop stale narration');
+assert.equal(html.includes('HybridSpeech.stop();\\n    try {\\n      await HybridSpeech.speak(\'Hello! This is the embedded English voice test.\');'),true,'Voice test must start by clearing previous narration');
 assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
 assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
 assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
