@@ -9895,7 +9895,7 @@ const HybridSpeech = (() => {
         Object.entries(value).forEach(([childKey,childValue])=>collectLessonText(childValue,childKey,depth+1));
       }
     }
-    if(window.App&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
+    if(typeof App!=='undefined'&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
       collectLessonText(App.currentLesson.title,'title');
       collectLessonText(App.currentLesson.intro,'intro');
       App.currentLesson.questions.forEach(q=>{
