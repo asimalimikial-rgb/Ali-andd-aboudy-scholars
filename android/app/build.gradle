@@ -1,0 +1,24 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.alialiaboudyscholars.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.alialiaboudyscholars.app'
+        minSdk 23
+        targetSdk 28
+        versionCode 3
+        versionName '1.2.0'
+    }
+
+    buildTypes {
+        release {
+            // Temporary installable build signature. Replace with the original
+            // release key only after its matching signing credentials are verified.
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
