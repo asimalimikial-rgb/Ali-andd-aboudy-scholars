@@ -14,7 +14,9 @@ const checks=[
   ['Mobile trace canvas size',html.includes('height:210px')],
   ['Wide single-column Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('grid-template-columns:minmax(0,1fr)')],
   ['FreeTTS language routing',html.includes("language:segment.isArabic?'ar-EG':'en-GB'")],
-  ['Neural-only speech initialization',html.includes('Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);}') && !html.includes('Speech.init();') && !html.includes('const localSpeak')],
+  ['Local speech is default and Neural is optional',html.includes("speechEngine: 'local'") && html.includes("!['local','neural'].includes(Store.data.settings.speechEngine)") && html.includes('Speech.localSpeak = Speech.speak.bind(Speech)')],
+  ['Android NativeSpeech bridge is initialized',html.includes('Speech.init();') && html.includes('window.NativeSpeech.speak') && html.includes('voice-picker-select') && html.includes('voice-picker-ar-select')],
+  ['Parent can select local or experimental neural engine',html.includes('id="speech-engine-mode"') && html.includes('value="local"') && html.includes('value="neural"')],
   ['All 42 sound entries mapped',true]
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));
@@ -29,7 +31,8 @@ checks.push(['Learning sections remain reachable',blending>=0 && study>blending 
 const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
-checks.push(['English question only before answer',narration.includes('await HybridSpeech.speak(titleText)') && !narration.includes('helperText') && !narration.includes('getArabicHelper')]);
+checks.push(['Arabic helper is rendered before answer choices',html.includes('مساعدة قبل الإجابة: ') && narration.includes('const arabicHelper = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) :')]);
+checks.push(['Arabic helper is spoken before answer selection',narration.includes('if (arabicHelper) await HybridSpeech.speak(arabicHelper, { language: \'ar\' })')]);
 checks.push(['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')]);
 checks.push(['Slash-delimited phonemes are spoken as phonics sounds',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')]);
 checks.push(['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')]);
@@ -38,7 +41,7 @@ const hybridEnd=html.indexOf('async function stats()',hybridStart);
 const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
 checks.push(['Cached audio is reused before new network generation',hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')>=0 && hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')<hybrid.indexOf('blob=await fetchClip(')]);
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
-checks.push(['No local TTS fallback',hybrid.includes("source='unavailable'") && !hybrid.includes('localSpeak(') && !hybrid.includes('speechSynthesis.speak')]);
-checks.push(['One Arabic explanation appears after answer only',html.includes("arabicBlock.className = 'arabic-explanation'") && html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && !html.includes("arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q)")]);
+checks.push(['Local engine dispatches to Android NativeSpeech by default',hybrid.includes("(Store.data.settings.speechEngine || 'local') !== 'neural'") && hybrid.includes('Speech.localSpeak(localText') && html.includes('window.NativeSpeech.speak(nativeId'))];
+checks.push(['No Arabic explanation is repeated after answer',!html.includes('const arabicExplanation = Store.data.settings.arabicSupport') && !html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && html.includes('HybridSpeech.speak(spokenFeedback)')]);
 
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
