@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Gemini TTS migration
+- Replaced the Google Cloud Chirp 3 HD endpoint with Gemini 3.8 Flash-Lite TTS through the Gemini Developer API.
+- Kept IndexedDB caching (80 MB LRU), model-aware cache keys, and local Android/browser TTS fallback.
+- Enabled approved first-name personalization for Ali and Aboudy; learning profiles and progress remain local.
+- Moved the server secret to `GEMINI_API_KEY`; no API key is embedded in the client.
+
+
 ## 1.2.1 — 2026-11-06
 - Rebuilt the Android wrapper with target SDK 35 and Android 15 system-bar inset handling.
 - Preserved package ID `com.alialiaboudyscholars.app`; versionCode 4.
