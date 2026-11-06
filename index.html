@@ -9737,220 +9737,34 @@ const App = {
 };
 
 
-/* Hybrid neural speech: saved clips first, online Chirp 3 HD when missing,
-   then Android/browser local TTS as the fallback. */
-const HybridSpeech = (() => {
-  const DB_NAME = 'ali-aboudy-azure-audio-v2', STORE_NAME = 'clips';
-  const MAX_BYTES = 80 * 1024 * 1024;
-  let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
-  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
-  function openDB() {
-    if (!('indexedDB' in window)) return Promise.resolve(null);
-    if (dbPromise) return dbPromise;
-    dbPromise = new Promise(resolve => {
-      try {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME, { keyPath: 'id' }); };
-        req.onsuccess = () => { if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); resolve(req.result); };
-        req.onerror = req.onblocked = () => resolve(null);
-      } catch (e) { resolve(null); }
-    });
-    return dbPromise;
-  }
-  const reqP = req => new Promise((resolve,reject) => { req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
-  async function getClip(id) {
-    const db=await openDB(); if(!db)return null;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), item=await reqP(store.get(id)); if(item){item.accessedAt=Date.now();store.put(item);} return item||null; } catch(e){return null;}
-  }
-  async function saveClip(id,blob,meta) {
-    const db=await openDB(); if(!db||!blob||!blob.size||blob.size>2*1024*1024)return false;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'); tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text}); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);tx.onabort=()=>j(tx.error)}); await evict(); return true; } catch(e){console.warn('Audio cache save failed',e);return false;}
-  }
-  async function evict() {
-    const db=await openDB(); if(!db)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), items=await reqP(store.getAll()); let total=items.reduce((n,x)=>n+(x.bytes||0),0); if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const x of items){if(total<=MAX_BYTES*.85)break;store.delete(x.id);total-=x.bytes||0;}} } catch(e){}
-  }
-  const idFor=(lang,voice,text,rate,phoneme)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+(phoneme?'ipa:'+phoneme+'::':'')+text;
-  function rateFor(opts){const s=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(s.speechRate)||.95;return Math.max(.75,Math.min(1.25,s.slowSpeech?base*.88:base));}
-  function playBlob(blob,rate,token){
-    return new Promise((resolve,reject)=>{
-      if(token!==generation)return resolve();
-      try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
-    });
-  }
-  let lastFetchError = '';
-  function escapeXml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
-  async function fetchClip(segment,voice,rate,token,phoneme){
-    const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
-    if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
-    const safePhoneme=String(phoneme||'').trim();
-    if(safePhoneme && !/^[^"<>]{1,32}$/u.test(safePhoneme))return null;
-    const synthesisText=safePhoneme
-      ? '<speak><phoneme alphabet="ipa" ph="'+escapeXml(safePhoneme)+'">'+escapeXml(segment.text)+'</phoneme></speak>'
-      : segment.text;
-    controller=typeof AbortController!=='undefined'?new AbortController():null;
-    lastFetchError='';
+/* Embedded-only speech facade. No network requests, cache downloads, or system TTS. */
+const HybridSpeech = {
+  speak(input, opts = {}) {
+    const text = opts.phoneme ? (opts.fallbackText || input) : input;
+    return Speech.localSpeak(text, Object.assign({}, opts, { phoneme: undefined }));
+  },
+  stop() {
+    Speech.stop();
+    this.updateStatus("Audio stopped / تم إيقاف الصوت");
+  },
+  updateStatus(message) {
+    const status = document.getElementById("hybrid-voice-status");
+    if (!status) return;
+    let engineStatus = "";
     try {
-      const response=await fetch(endpoint,{
-        method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:synthesisText,voice,rate,language:segment.isArabic?'ar-EG':'en-GB'}),
-        signal:controller?controller.signal:undefined
-      });
-      if(!response.ok){
-        let details={};
-        try{details=await response.json();}catch(e){}
-        throw new Error('HTTP '+response.status+(details.code?' '+details.code:''));
-      }
-      const blob=await response.blob();
-      if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
-      if(token!==generation)return null;
-      const saved=await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
-      if(!saved)lastFetchError='audio cache could not be persisted';
-      const today=new Date().toISOString().slice(0,10),quotaKey='ali_aboudy_neural_chars_'+today;
-      try{localStorage.setItem(quotaKey,String((Number(localStorage.getItem(quotaKey)||0)||0)+segment.text.length));}catch(e){}
-      return blob;
-    } catch(e) {
-      if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; no local fallback is configured.',e);
-      lastFetchError=e&&e.message?e.message:(e&&e.name==='AbortError'?'request cancelled':'network error');
-      return null;
-    } finally {controller=null;}
+      const state = JSON.parse(window.NativeSpeech.getStatus() || "{}");
+      engineStatus = state.message || "";
+    } catch (e) {}
+    status.textContent = message || engineStatus ||
+      "Embedded offline voice initializes locally on first use / يُحمّل محرك الصوت محلياً عند أول استخدام";
   }
-  async function speak(input,opts){
-    opts=opts||{};
-    if ((Store.data.settings.speechEngine || 'local') !== 'neural') {
-      const localText = opts.phoneme ? (opts.fallbackText || input) : input;
-      return Speech.localSpeak(localText, Object.assign({}, opts, { phoneme: undefined }));
-    }
-    const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';
-    const token=++generation;
-    lastFetchError='';
-    try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
-    currentAudio=null;currentUrl=null;
-    const segments=Speech.prepareSegments(input,opts);
-    if(!segments.length)return [];
-    const settings=Store.data.settings||{},rate=rateFor(opts),results=[];
-    for(const segment of segments){
-      if(token!==generation)return results;
-      const lang=segment.isArabic?'ar-EG':'en-GB';
-      const voice=phoneme?'en-GB-SoniaNeural':(segment.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural'));
-      const id=idFor(lang,voice,segment.text,rate,phoneme);
-      const cached=await getClip(id);
-      let blob=null,source='unavailable',onlineAttempt='not-needed',reason='';
-      // Cache-first: replaying a phrase already synthesized on this device costs
-      // zero provider characters. Generate online only on a cache miss.
-      if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){
-        blob=cached.blob;
-        source='saved';
-        onlineAttempt='cache-hit';
-      }
-      if(!blob&&!opts.forceLocal){
-        if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
-        else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
-        else{
-          onlineAttempt='attempted';
-          blob=await fetchClip(segment,voice,rate,token,phoneme);
-          if(blob){source='online';onlineAttempt='success';}
-          else{onlineAttempt='failed';reason=lastFetchError||'network error';}
-        }
-      }
-      if(token!==generation)return results;
-      if(blob){
-        try{
-          await playBlob(blob,rate,token);
-          updateStatus(source==='saved'?'Playing saved neural audio offline / تشغيل الصوت العصبي المحفوظ دون إنترنت':(lastFetchError==='audio cache could not be persisted'?'Playing online only; device storage unavailable / يعمل عبر الإنترنت فقط؛ التخزين المحلي غير متاح':'Playing neural audio; saved on this device / تشغيل الصوت العصبي وحفظه على الجهاز'));
-          results.push({language:lang,source,onlineAttempt,reason});
-          continue;
-        }catch(e){console.warn('Neural audio playback failed.',e);reason='audio playback failed';}
-      }
-      source='unavailable';
-      updateStatus(reason==='privacy'?'Personal text kept on device / النص الشخصي لا يغادر الجهاز':(phoneme?'This phoneme needs a pre-recorded neural sound clip / هذا الصوت يحتاج مقطعاً عصبيّاً مسجلاً مسبقاً':(navigator.onLine?'Neural audio unavailable. Retry online or download the lesson / الصوت العصبي غير متاح. أعد المحاولة أو نزّل صوت الدرس':'Offline: this phrase is not downloaded yet / دون إنترنت: هذا المقطع لم يُنزّل بعد')));
-      results.push({language:lang,source,onlineAttempt,reason:reason||'no cached or online neural audio'});
-    }
-    return results;
-  }
-  async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
-  async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
-  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{const local=(Store.data.settings.speechEngine||'local')!=='neural';const fallback=local?'Local Android TTS selected / تم اختيار الصوت المحلي':(navigator.onLine?'Neural online generation selected / تم اختيار التوليد العصبي عبر الإنترنت':'Offline neural library / مكتبة الصوت العصبي دون إنترنت');el.textContent=(message||fallback)+' • '+s.count+' saved neural clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
-  function stop(){generation++;Speech._speechGeneration=(Speech._speechGeneration||0)+1;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();if(window.NativeSpeech)window.NativeSpeech.cancel();}catch(e){}if(Speech._nativePending){const pending=Speech._nativePending;Speech._nativePending=null;try{pending.finish();}catch(e){}}controller=null;currentAudio=null;currentUrl=null;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
-  window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
-  async function prefetchLesson(){
-    const lesson=document.getElementById('screen-lesson');
-    if(!lesson)return{message:'Lesson screen not found / لم يتم العثور على شاشة الدرس'};
-    const selectors='.question-title,.arabic-hint,.story-passage,.arabic-explanation,.option-btn,.jolly-sound,.jolly-practice,.visual-model figcaption,.activity-heading,.feedback-banner,.question-instruction';
-    const nodes=[...lesson.querySelectorAll(selectors)];
-    const raw=nodes.map(n=>(n.innerText||n.textContent||'').replace(/\s+/g,' ').trim()).filter(t=>t.length>1&&t.length<=1000);
-    // Include every question and answer choice in the loaded lesson, not only
-    // the currently visible question, so the downloaded pack covers later rounds.
-    function collectLessonText(value,key='',depth=0){
-      if(depth>5||value==null)return;
-      if(typeof value==='string'){
-        if(!/^(id|type|icon|image|photo|url|audio|asset|category|correctIndex)$/i.test(key)&&value.length>1&&value.length<=1000)raw.push(value);
-      }else if(Array.isArray(value)){
-        value.forEach(item=>collectLessonText(item,key,depth+1));
-      }else if(typeof value==='object'){
-        Object.entries(value).forEach(([childKey,childValue])=>collectLessonText(childValue,childKey,depth+1));
-      }
-    }
-    if(typeof App!=='undefined'&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
-      collectLessonText(App.currentLesson.title,'title');
-      collectLessonText(App.currentLesson.intro,'intro');
-      App.currentLesson.questions.forEach(q=>{
-        collectLessonText(q);
-        if(typeof App.getArabicHelper==='function')collectLessonText(App.getArabicHelper(q),'arabicHelper');
-      });
-    }
-    const uniqueRaw=[...new Set(raw)];
-    const segments=[];
-    for(const text of uniqueRaw){for(const seg of Speech.prepareSegments(text,{})){if(seg.text&&seg.text.length<=1000)segments.push(seg);}}
-    for(const node of lesson.querySelectorAll('[data-neural-phoneme][data-neural-text]')){
-      const phoneme=String(node.dataset.neuralPhoneme||'').trim(),textValue=String(node.dataset.neuralText||'').trim();
-      if(phoneme&&textValue){for(const seg of Speech.prepareSegments(textValue,{})){if(seg.text)segments.push(Object.assign({},seg,{phoneme}));}}
-    }
-    if(Store.data.activeChild==='ali'){
-      const alphabet={a:'æ',b:'b',c:'k',d:'d',e:'ɛ',f:'f',g:'ɡ',h:'h',i:'ɪ',j:'dʒ',k:'k',l:'l',m:'m',n:'n',o:'ɒ',p:'p',q:'kw',r:'ɹ',s:'s',t:'t',u:'ʌ',v:'v',w:'w',x:'ks',y:'j',z:'z'};
-      for(const node of lesson.querySelectorAll('.option-btn')){const letter=(node.innerText||node.textContent||'').trim().toLowerCase();if(alphabet[letter])segments.push({text:letter,isArabic:false,phoneme:alphabet[letter]});}
-      if(typeof App!=='undefined'&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
-        for(const q of App.currentLesson.questions){
-          const choices=[...(Array.isArray(q.options)?q.options:[]),...(Array.isArray(q.letters)?q.letters:[]),q.target];
-          for(const choice of choices){const letter=String(choice==null?'':choice).trim().toLowerCase();if(alphabet[letter])segments.push({text:letter,isArabic:false,phoneme:alphabet[letter]});}
-        }
-      }
-    }
-    const unique=[...new Map(segments.map(seg=>[(seg.isArabic?'ar|':'en|')+seg.text+'|'+(seg.phoneme||''),seg])).values()];
-    if(!unique.length)return{message:'Open a lesson first, then download its audio / افتح درساً أولاً ثم نزّل صوته'};
-    if(!navigator.onLine)return{message:'Connect to the internet before downloading this lesson / اتصل بالإنترنت قبل تنزيل صوت الدرس'};
-    const token=++generation,settings=Store.data.settings||{},rate=rateFor({}),today=new Date().toISOString().slice(0,10),quotaKey='ali_aboudy_neural_chars_'+today;
-    let used=0;try{used=Number(localStorage.getItem(quotaKey)||0)||0;}catch(e){}
-    let requests=0,downloaded=0,already=0,skipped=0,chars=0;
-    for(const seg of unique){
-      if(token!==generation)break;
-      if(personalNamePattern.test(seg.text)){skipped++;continue;}
-      const lang=seg.isArabic?'ar-EG':'en-GB',voice=seg.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural');
-      const phoneme=seg.phoneme||'';
-      const id=idFor(lang,voice,seg.text,rate,phoneme);
-      const cached=await getClip(id);
-      if(cached&&cached.blob){already++;continue;}
-      if(requests>=8)break;
-      if(used+seg.text.length>1800)break;
-      const blob=await fetchClip(seg,voice,rate,token,phoneme);
-      requests++;
-      if(blob){const stored=await getClip(id);if(stored&&stored.blob){downloaded++;used+=seg.text.length;chars+=seg.text.length;}else{skipped++;}}
-      else{skipped++;}
-    }
-    const remaining=unique.length-downloaded-already-skipped;
-    const msg='Downloaded '+downloaded+' neural clips; already saved '+already+'. '+(remaining>0?'Pending '+remaining+' clips — repeat after the rate-limit window or daily quota reset. ':'')+'No local TTS fallback. / تم تنزيل '+downloaded+' مقطع عصبي، والمحفوظ مسبقاً '+already+'. '+(remaining>0?'المتبقي '+remaining+' مقطع. ':'')+'لا يوجد رجوع للصوت المحلي.';
-    updateStatus(msg);
-    return{downloaded,already,skipped,remaining,chars,message:msg};
-  }
-  return{speak,stop,clearCache,updateStatus,stats,prefetchLesson};
-})();
+};
 Speech.localSpeak = Speech.speak.bind(Speech);
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
-if(!['local','neural'].includes(Store.data.settings.speechEngine))Store.data.settings.speechEngine='local';
-if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-SoniaNeural';
-if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-EG-SalmaNeural';
+Store.data.settings.speechEngine='embedded';
+delete Store.data.settings.onlineVoiceEn;
+delete Store.data.settings.onlineVoiceAr;
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
