@@ -30,6 +30,7 @@ This application bundles the following components in Android APK builds:
 - Pinned sherpa-onnx model archive: `sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2`
 - SHA-256: `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427`
 - Model license: OpenRAIL-M (see the full license included in the APK at `assets/embedded-tts/supertonic3/LICENSE`).
+- License source revision: `724fb5abbf5502583fb520898d45929e62f02c0b`.
 - The parent must accept the model license in Parent Settings before voice features are enabled.
 
 ## Runtime behavior
