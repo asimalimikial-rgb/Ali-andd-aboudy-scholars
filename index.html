@@ -1045,42 +1045,49 @@ const Speech = {
     this._speechGeneration = generation;
     return new Promise(resolve => {
       const segments = this.prepareSegments(input, opts);
-      if (!segments.length || !('speechSynthesis' in window)) {
+      if (!segments.length || (!('speechSynthesis' in window) && !window.NativeSpeech)) {
         if (input) this.showCaptionBubble(input);
         resolve(); return;
       }
-      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
       if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
       let index = 0;
       const playNext = () => {
         if (generation !== this._speechGeneration) { resolve(); return; }
         if (index >= segments.length) { resolve(); return; }
         const segment = segments[index++];
-        const utterance = new SpeechSynthesisUtterance(segment.text);
+        const utterance = typeof SpeechSynthesisUtterance === 'function' ? new SpeechSynthesisUtterance(segment.text) : { text: segment.text };
         this._utt = utterance;
         const voice = this.getBestVoice(segment.isArabic);
-        if (window.NativeSpeech && !voice) {
-          this.showCaptionBubble(segment.text);
-          finish();
-          return;
-        }
-        if (voice) utterance.voice = voice;
+        if (voice && !window.NativeSpeech) utterance.voice = voice;
         utterance.lang = voice && voice.lang ? voice.lang : (segment.isArabic ? 'ar' : 'en-GB');
         const settings = Store.data.settings || {};
         const baseRate = Number(settings.speechRate) || (Store.data.activeChild === 'ali' ? 0.88 : 0.96);
         utterance.rate = Math.max(0.65, Math.min(1.2, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
         utterance.pitch = opts.pitch || 1.0;
         let finished = false;
-        const startWatchdog = setTimeout(() => {
-          if (!finished) finish();
-        }, 4200);
+        let nativeId = null;
+        let nativeWatchdog = null;
+        const startWatchdog = setTimeout(() => { if (!finished) finish(); }, 4200);
         const finish = () => {
           if (finished) return;
           finished = true;
           clearTimeout(startWatchdog);
+          if (nativeWatchdog) clearTimeout(nativeWatchdog);
+          if (this._nativePending && this._nativePending.id === nativeId) this._nativePending = null;
           if (generation !== this._speechGeneration) { resolve(); return; }
           setTimeout(playNext, 100);
         };
+        if (window.NativeSpeech) {
+          clearTimeout(startWatchdog);
+          nativeId = 'native-' + generation + '-' + index + '-' + Date.now();
+          nativeWatchdog = setTimeout(finish, Math.max(12000, segment.text.length * 350));
+          this._nativePending = { id: nativeId, finish };
+          try {
+            window.NativeSpeech.speak(nativeId, segment.text, utterance.lang, voice ? voice.name : '', utterance.rate, utterance.pitch);
+          } catch (e) { finish(); }
+          return;
+        }
         utterance.onstart = () => {
           if (generation !== this._speechGeneration) return;
           if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
