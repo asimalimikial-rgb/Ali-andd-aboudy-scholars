@@ -8,7 +8,7 @@ const sherpa=fs.readFileSync('android/app/src/main/java/com/k2fsa/sherpa/onnx/Tt
 const prep=fs.readFileSync('scripts/prepare-embedded-tts.sh','utf8');
 
 assert.equal(html.includes('speechSynthesis'),false,'Web Speech API must never be used');
-assert.equal(/<script\\s+src=[\"']tts-config\\.js[\"']/i.test(html),false,'Deleted legacy remote TTS config must not be referenced');
+assert.equal(html.includes('<script src="tts-config.js"></script>'),false,'Deleted legacy remote TTS config must not be referenced');
 assert.equal(html.includes('SpeechSynthesisUtterance'),false,'Browser speech utterances must never be used');
 assert.equal(html.includes('/api/tts'),false,'No remote TTS endpoint may remain');
 assert.equal(html.includes('freetts.org'),false,'No online speech provider may remain');
@@ -32,7 +32,7 @@ assert.equal(html.includes('aiVoiceTermsAccepted'),true,'Parent model-license ac
 assert.equal(html.includes('Speech.stop=function(){HybridSpeech.stop();}'),false,'Speech stop must not recurse through the facade');
 assert.equal(html.includes('أحسنت! إجابة صحيحة!'),true,'Correct answer must receive short praise');
 assert.equal(html.includes('محاولة جميلة!'),true,'Incorrect answer must receive supportive feedback');
-assert.match(html,/const spokenFeedback = isCorrect \\? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';\\s*if \\(isCorrect\\)/,'Post-answer speech must contain encouragement only');
-assert.match(html,/feedback\\.textContent = isCorrect\\s*\\? 'That’s right! \\/ أحسنت! إجابة صحيحة!'\\s*:\\s*'Good try! \\/ محاولة جميلة!';/,'Post-answer text must contain encouragement only');
+assert.equal(html.includes("const spokenFeedback = isCorrect ? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';"),true,'Post-answer speech must contain encouragement only');
+assert.equal(html.includes("feedback.textContent = isCorrect\n      ? 'That’s right! / أحسنت! إجابة صحيحة!'\n      : 'Good try! / محاولة جميلة!';"),true,'Post-answer text must contain encouragement only');
 assert.equal(html.includes('btn-replay-question')&&html.includes('btn-stop-question'),true,'Lesson screen must provide replay and stop controls before answer submission');
 console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
