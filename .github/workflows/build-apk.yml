@@ -1,0 +1,78 @@
+name: Build and publish Ali & Aboudy Scholars APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'tts-config.android.js'
+      - 'api/**'
+      - 'android/**'
+      - 'scripts/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Prepare packaged web app and voice endpoint
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/assets
+          cp index.html android/app/src/main/assets/index.html
+          cp tts-config.android.js android/app/src/main/assets/tts-config.js
+
+      - name: Validate JavaScript
+        run: |
+          node scripts/check-html.mjs
+          node --check api/tts.js
+
+      - name: Build Android APK
+        run: gradle --no-daemon --stacktrace -p android :app:assembleRelease
+
+      - name: Name APK
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          sha256sum dist/Ali-Aboudy-Scholars-v1.2.0.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ali-Aboudy-Scholars-v1.2.0
+          path: dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.0
+          target_commitish: ${{ github.sha }}
+          name: Ali & Aboudy Scholars v1.2.0
+          body_path: CHANGELOG.md
+          files: dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          overwrite_files: true
+          make_latest: true
