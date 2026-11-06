@@ -18,76 +18,74 @@ async function call(method, body, ip) {
   await handler({ method, body, headers: { 'x-forwarded-for': ip }, socket: {} }, res);
   return res;
 }
-const oldKey = process.env.AZURE_SPEECH_KEY;
-const oldRegion = process.env.AZURE_SPEECH_REGION;
 const oldFetch = globalThis.fetch;
 try {
-  process.env.AZURE_SPEECH_KEY = 'test-azure-key';
-  process.env.AZURE_SPEECH_REGION = 'uaenorth';
+  let calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), options });
+    if (String(url) === 'https://freetts.org/api/tts') {
+      return {
+        ok: true, status: 200,
+        async json() { return { file_id: 'a3f7c012-58b4-4e2a-9d1c-0f83abc12345' }; }
+      };
+    }
+    return {
+      ok: true, status: 200,
+      headers: { get(name) { return name === 'content-type' ? 'audio/mpeg' : null; } },
+      async arrayBuffer() { return Uint8Array.from([73,68,51,4,5,6,7,8]).buffer; }
+    };
+  };
+
   let res = await call('OPTIONS', {}, 'test-options');
   assert.equal(res.code, 204);
   res = await call('GET', {}, 'test-get');
   assert.equal(res.code, 405);
 
-  let sent = null;
-  globalThis.fetch = async (url, options) => {
-    sent = { url: String(url), options };
-    return {
-      ok: true, status: 200, headers: { get() { return null; } },
-      async arrayBuffer() { return Uint8Array.from([73,68,51,4,5,6,7,8]).buffer; }
-    };
-  };
-
   res = await call('POST', { text: 'English test', voice: 'en-GB-SoniaNeural', language: 'en-GB', rate: 0.95 }, 'test-en');
   assert.equal(res.code, 200);
   assert.equal(res.headers['content-type'], 'audio/mpeg');
   assert.equal(res.body.length, 8);
-  assert.equal(sent.url, 'https://uaenorth.tts.speech.microsoft.com/cognitiveservices/v1');
-  assert.equal(sent.options.headers['Ocp-Apim-Subscription-Key'], 'test-azure-key');
-  assert.equal(sent.options.headers['Content-Type'], 'application/ssml+xml');
-  assert.match(sent.options.body, /en-GB-SoniaNeural/);
-  assert.match(sent.options.body, /English test/);
+  assert.equal(calls[0].url, 'https://freetts.org/api/tts');
+  assert.equal(JSON.parse(calls[0].options.body).voice, 'en-GB-SoniaNeural');
+  assert.equal(JSON.parse(calls[0].options.body).rate, '-5%');
+  assert.equal(calls[1].url, 'https://freetts.org/api/audio/a3f7c012-58b4-4e2a-9d1c-0f83abc12345');
 
   res = await call('POST', { text: 'اختبار اللغة العربية', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-ar');
   assert.equal(res.code, 200);
-  assert.match(sent.options.body, /xml:lang="ar-EG"/);
-  assert.match(sent.options.body, /ar-EG-SalmaNeural/);
+  assert.equal(JSON.parse(calls[2].options.body).voice, 'ar-EG-SalmaNeural');
 
-  res = await call('POST', { text: 'a', voice: 'en-GB-SoniaNeural', language: 'en-GB', phoneme: 'æ' }, 'test-phoneme');
-  assert.equal(res.code, 200);
-  assert.match(sent.options.body, /<phoneme alphabet="ipa" ph="æ">a<\/phoneme>/);
-
-  const before = sent.url;
+  const beforePrivate = calls.length;
   res = await call('POST', { text: 'أهلاً عبودي', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-private');
   assert.equal(res.code, 400);
   assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
-  assert.equal(sent.url, before);
+  assert.equal(calls.length, beforePrivate);
 
   res = await call('POST', { text: 'Locale mismatch', voice: 'ar-EG-SalmaNeural', language: 'en-GB' }, 'test-mismatch');
   assert.equal(res.code, 400);
   res = await call('POST', { text: 'Unknown voice', voice: 'not-a-voice', language: 'en-GB' }, 'test-voice');
   assert.equal(res.code, 400);
+  res = await call('POST', { text: 'x'.repeat(1001), voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-length');
+  assert.equal(res.code, 400);
 
-  delete process.env.AZURE_SPEECH_KEY;
-  res = await call('POST', { text: 'No key', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-no-key');
-  assert.equal(res.code, 503);
-  process.env.AZURE_SPEECH_KEY = 'test-azure-key';
+  const beforePhoneme = calls.length;
+  res = await call('POST', { text: 'a', voice: 'en-GB-SoniaNeural', language: 'en-GB', phoneme: 'æ' }, 'test-phoneme');
+  assert.equal(res.code, 422);
+  assert.equal(res.body.code, 'PHONEME_UNSUPPORTED');
+  assert.equal(calls.length, beforePhoneme);
 
   globalThis.fetch = async () => ({ ok: false, status: 429, headers: { get(name) { return name === 'retry-after' ? '20' : null; } } });
   res = await call('POST', { text: 'Provider limit test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-provider-limit');
   assert.equal(res.code, 429);
   assert.equal(res.headers['retry-after'], '20');
 
-  globalThis.fetch = async () => ({ ok: false, status: 401, headers: { get() { return null; } } });
-  res = await call('POST', { text: 'Authentication test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-auth');
+  globalThis.fetch = async () => ({
+    ok: true, status: 200, async json() { return { file_id: 'not-a-valid-id' }; }
+  });
+  res = await call('POST', { text: 'Invalid audio id', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-invalid-audio-id');
   assert.equal(res.code, 502);
-  assert.equal(res.body.code, 'PROVIDER_AUTH_FAILED');
+  assert.equal(res.body.code, 'INVALID_AUDIO_REFERENCE');
 
-  console.log('Azure TTS API tests passed: method handling, English, Arabic, IPA phonemes, MP3 response, privacy guard, validation, missing credentials, 429 retry-after, and authentication errors.');
+  console.log('FreeTTS API tests passed: method handling, English, Arabic, MP3 proxy, rate conversion, privacy guard, validation, IPA fallback handling, provider 429, and invalid audio reference.');
 } finally {
   globalThis.fetch = oldFetch;
-  if (oldKey === undefined) delete process.env.AZURE_SPEECH_KEY;
-  else process.env.AZURE_SPEECH_KEY = oldKey;
-  if (oldRegion === undefined) delete process.env.AZURE_SPEECH_REGION;
-  else process.env.AZURE_SPEECH_REGION = oldRegion;
 }
