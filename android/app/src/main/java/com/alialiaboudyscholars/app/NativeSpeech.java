@@ -163,7 +163,7 @@ public final class NativeSpeech {
             String digits = style.replaceAll("[^0-9]", "");
             if (digits.isEmpty()) return 0;
             int index = Integer.parseInt(digits) - 1;
-            if (style.startsWith("F")) index += 5;
+            if (style.startsWith("M")) index += 5;
             return Math.max(0, Math.min(9, index));
         } catch (Exception ignored) { return 0; }
     }
