@@ -53,6 +53,7 @@ jobs:
         run: |
           node scripts/check-html.mjs
           node scripts/check-phonics-wordstudy.mjs
+          node scripts/test-tts.mjs
           node --check api/tts.js
 
       - name: Decode release signing key
