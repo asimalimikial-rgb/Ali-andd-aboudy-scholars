@@ -41,7 +41,7 @@ const hybridEnd=html.indexOf('async function stats()',hybridStart);
 const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
 checks.push(['Cached audio is reused before new network generation',hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')>=0 && hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')<hybrid.indexOf('blob=await fetchClip(')]);
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
-checks.push(['Local engine dispatches to Android NativeSpeech by default',hybrid.includes("(Store.data.settings.speechEngine || 'local') !== 'neural'") && hybrid.includes('Speech.localSpeak(localText') && html.includes('window.NativeSpeech.speak(nativeId'))];
+checks.push(['Local engine dispatches to Android NativeSpeech by default',hybrid.includes("(Store.data.settings.speechEngine || 'local') !== 'neural'") && hybrid.includes('Speech.localSpeak(localText') && html.includes('window.NativeSpeech.speak(nativeId')]);
 checks.push(['No Arabic explanation is repeated after answer',!html.includes('const arabicExplanation = Store.data.settings.arabicSupport') && !html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && html.includes('HybridSpeech.speak(spokenFeedback)')]);
 
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
