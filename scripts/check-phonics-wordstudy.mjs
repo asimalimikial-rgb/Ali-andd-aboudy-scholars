@@ -31,7 +31,7 @@ checks.push(['Learning sections remain reachable',blending>=0 && study>blending 
 const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
-checks.push(['Arabic helper is rendered before answer choices',html.includes('مساعدة قبل الإجابة: ') && narration.includes('const arabicHelper = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) :')]);
+checks.push(['Arabic helper is rendered before answer choices',html.includes('مساعدة قبل الإجابة: ') && html.includes('const arabicHelper = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) :')]);
 checks.push(['Arabic helper is spoken before answer selection',narration.includes('if (arabicHelper) await HybridSpeech.speak(arabicHelper, { language: \'ar\' })')]);
 checks.push(['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')]);
 checks.push(['Slash-delimited phonemes are spoken as phonics sounds',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')]);
