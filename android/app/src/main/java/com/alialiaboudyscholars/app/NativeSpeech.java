@@ -100,9 +100,17 @@ public final class NativeSpeech {
         if (samples == null || samples.length == 0 || sampleRate <= 0) {
             throw new IllegalStateException("The embedded TTS engine returned empty audio.");
         }
+        float peak = 0.0f;
+        for (float sample : samples) {
+            if (Float.isFinite(sample)) peak = Math.max(peak, Math.abs(sample));
+        }
+        if (peak < 0.00001f) {
+            throw new IllegalStateException("The voice model generated silent PCM audio (peak=" + peak + ").");
+        }
+
         int minBuffer = AudioTrack.getMinBufferSize(sampleRate,
             AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT);
-        if (minBuffer <= 0) throw new IllegalStateException("This device cannot play generated PCM audio.");
+        if (minBuffer <= 0) throw new IllegalStateException("This device cannot play generated PCM audio: minBuffer=" + minBuffer);
         int bufferBytes = Math.max(minBuffer, 8192 * 4);
         AudioTrack track = new AudioTrack.Builder()
             .setAudioAttributes(new AudioAttributes.Builder()
@@ -120,23 +128,61 @@ public final class NativeSpeech {
 
         synchronized (audioLock) { activeTrack = track; }
         try {
+            if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+                throw new IllegalStateException("AudioTrack failed to initialize for " + sampleRate + " Hz PCM.");
+            }
+            track.setVolume(1.0f);
             track.play();
+            if (track.getPlayState() != AudioTrack.PLAYSTATE_PLAYING) {
+                throw new IllegalStateException("Android did not start PCM playback.");
+            }
             notifyJs(id, "start");
             final int chunk = 4096;
             for (int offset = 0; offset < samples.length && request == generation.get(); offset += chunk) {
                 int count = Math.min(chunk, samples.length - offset);
                 int writtenTotal = 0;
+                long writeDeadline = android.os.SystemClock.elapsedRealtime() + 5000;
                 while (writtenTotal < count && request == generation.get()) {
                     int written = track.write(samples, offset + writtenTotal,
                         count - writtenTotal, AudioTrack.WRITE_BLOCKING);
                     if (written < 0) throw new IllegalStateException("AudioTrack write failed: " + written);
-                    if (written == 0) continue;
+                    if (written == 0) {
+                        if (android.os.SystemClock.elapsedRealtime() > writeDeadline) {
+                            throw new IllegalStateException("AudioTrack stopped accepting PCM samples.");
+                        }
+                        try { Thread.sleep(10); } catch (InterruptedException interrupted) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException("PCM playback was interrupted.", interrupted);
+                        }
+                        continue;
+                    }
                     writtenTotal += written;
                 }
             }
+
             if (request == generation.get()) {
-                track.stop();
-                notifyJs(id, "end");
+                long playbackDeadline = android.os.SystemClock.elapsedRealtime()
+                    + Math.max(5000L, (samples.length * 1000L) / sampleRate + 5000L);
+                int playedFrames = 0;
+                while (request == generation.get() && playedFrames < samples.length
+                    && android.os.SystemClock.elapsedRealtime() < playbackDeadline) {
+                    playedFrames = track.getPlaybackHeadPosition();
+                    if (track.getPlayState() != AudioTrack.PLAYSTATE_PLAYING) {
+                        throw new IllegalStateException("PCM playback stopped before all generated audio was rendered.");
+                    }
+                    try { Thread.sleep(20); } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException("Waiting for PCM playback was interrupted.", interrupted);
+                    }
+                }
+                if (request == generation.get() && playedFrames < samples.length) {
+                    throw new IllegalStateException("PCM playback timed out: rendered "
+                        + playedFrames + " of " + samples.length + " frames.");
+                }
+                if (request == generation.get()) {
+                    track.stop();
+                    notifyJs(id, "end");
+                }
             } else {
                 try { track.stop(); } catch (Exception ignored) {}
                 notifyJs(id, "end");
