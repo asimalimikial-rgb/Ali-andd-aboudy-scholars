@@ -683,28 +683,36 @@
         <p dir="rtl" style="margin:7px 0;line-height:1.7;">الصوت الشبكي أولاً، مع حفظ المقاطع تلقائياً لإعادة استخدامها دون إنترنت. إذا لم يوجد مقطع محفوظ أو اتصال، يستخدم التطبيق الصوت المحلي.</p>
         <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
         <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="en-GB-Chirp3-HD-Aoede">Aoede — Female, British English (recommended)</option>
-          <option value="en-GB-Chirp3-HD-Achird">Achird — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Kore">Kore — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Charon">Charon — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Zephyr">Zephyr — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Fenrir">Fenrir — Male, British English</option>
+          <option value="Puck">Puck — Upbeat (recommended)</option>
+          <option value="Leda">Leda — Youthful</option>
+          <option value="Aoede">Aoede — Breezy</option>
+          <option value="Zephyr">Zephyr — Bright</option>
+          <option value="Achird">Achird — Friendly</option>
+          <option value="Sulafat">Sulafat — Warm</option>
+          <option value="Kore">Kore — Firm</option>
+          <option value="Charon">Charon — Informative</option>
+          <option value="Fenrir">Fenrir — Excitable</option>
+          <option value="Callirrhoe">Callirrhoe — Easy-going</option>
         </select>
         <label for="online-voice-ar" style="display:block;font-weight:bold;margin-top:10px;">Arabic neural voice / الصوت العربي العصبي</label>
         <select id="online-voice-ar" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="ar-XA-Chirp3-HD-Aoede">Aoede — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Achird">Achird — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Kore">Kore — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Charon">Charon — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Zephyr">Zephyr — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Fenrir">Fenrir — Male, Arabic</option>
+          <option value="Kore">Kore — Firm (recommended)</option>
+          <option value="Puck">Puck — Upbeat</option>
+          <option value="Leda">Leda — Youthful</option>
+          <option value="Aoede">Aoede — Breezy</option>
+          <option value="Zephyr">Zephyr — Bright</option>
+          <option value="Achird">Achird — Friendly</option>
+          <option value="Sulafat">Sulafat — Warm</option>
+          <option value="Charon">Charon — Informative</option>
+          <option value="Fenrir">Fenrir — Excitable</option>
+          <option value="Callirrhoe">Callirrhoe — Easy-going</option>
         </select>
         <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
           <button class="btn btn-accent" id="btn-stop-all-audio" type="button" style="flex:1;">Stop audio / إيقاف الصوت</button>
         </div>
-        <small style="display:block;margin-top:8px;color:var(--text-light);">Saved clips are stored locally (up to approximately 80 MB). Personal names are kept on-device and are not sent to the speech service.</small>
+        <small style="display:block;margin-top:8px;color:var(--text-light);">Saved clips stay on this device (up to approximately 80 MB). As approved by the parent, first names Ali and Aboudy may be included in the spoken text sent to Gemini; learning profiles and progress are never sent.</small>
       </div>
       <div id="samsung-instructions" style="display:none; background: #FFF3CD; padding: 12px; border-radius: var(--radius-sm); margin-top: 12px; font-size: 0.9rem;">
         <strong>Android offline voice setup / إعداد الصوت دون إنترنت:</strong><br>
@@ -719,7 +727,7 @@
 
     <div class="card">
       <h3>Privacy-first learning / تعلّم يحافظ على الخصوصية</h3>
-      <p>Learning, hints and progress run on this device. No Gemini key or cloud hint service is required.</p>
+      <p>Learning, hints and progress stay on this device. Gemini is used only to generate requested speech; first names may be spoken as approved, while profiles and progress remain local. If Gemini is unavailable, the app uses local Android/browser speech.</p>
       <p dir="rtl" style="margin-top:6px;">التعلّم والتلميحات وحفظ التقدم تعمل محلياً على الجهاز، ولا يحتاج التطبيق إلى مفتاح API أو إرسال أسئلة الأطفال إلى خدمة خارجية.</p>
     </div>
     <div class="card">
@@ -8338,8 +8346,8 @@ const App = {
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
 
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-Chirp3-HD-Aoede';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-XA-Chirp3-HD-Aoede';
+    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'Puck';
+    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'Kore';
     document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
     document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
     document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
@@ -9546,89 +9554,138 @@ const App = {
 };
 
 
-/* Hybrid neural speech: saved clips first, online Chirp 3 HD when missing,
-   then Android/browser local TTS as the fallback. */
+/* Gemini neural speech: IndexedDB cache -> Gemini TTS -> local Android/browser TTS.
+   First names in spoken learning prompts are intentionally supported; progress data is never sent. */
 const HybridSpeech = (() => {
-  const DB_NAME = 'ali-aboudy-neural-audio-v1', STORE_NAME = 'clips';
-  const MAX_BYTES = 80 * 1024 * 1024;
-  let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
-  const localSpeak = Speech.speak.bind(Speech);
-  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي/i;
-  function openDB() {
-    if (!('indexedDB' in window)) return Promise.resolve(null);
-    if (dbPromise) return dbPromise;
-    dbPromise = new Promise(resolve => {
-      try {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME, { keyPath: 'id' }); };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = req.onblocked = () => resolve(null);
-      } catch (e) { resolve(null); }
+  const DB_NAME='ali-aboudy-neural-audio-v1', STORE_NAME='clips';
+  const MODEL='gemini-3.8-flash-lite-tts';
+  const MAX_BYTES=80*1024*1024;
+  let dbPromise=null,generation=0,currentAudio=null,currentUrl=null,controller=null;
+  const localSpeak=Speech.speak.bind(Speech);
+  function openDB(){
+    if(!('indexedDB' in window))return Promise.resolve(null);
+    if(dbPromise)return dbPromise;
+    dbPromise=new Promise(resolve=>{
+      try{
+        const req=indexedDB.open(DB_NAME,1);
+        req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(STORE_NAME))req.result.createObjectStore(STORE_NAME,{keyPath:'id'});};
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=req.onblocked=()=>resolve(null);
+      }catch(e){resolve(null);}
     });
     return dbPromise;
   }
-  const reqP = req => new Promise((resolve,reject) => { req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
-  async function getClip(id) {
-    const db=await openDB(); if(!db)return null;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), item=await reqP(store.get(id)); if(item){item.accessedAt=Date.now();store.put(item);} return item||null; } catch(e){return null;}
+  const reqP=req=>new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+  async function getClip(id){
+    const db=await openDB();if(!db)return null;
+    try{const tx=db.transaction(STORE_NAME,'readwrite'),store=tx.objectStore(STORE_NAME),item=await reqP(store.get(id));if(item){item.accessedAt=Date.now();store.put(item);}return item||null;}catch(e){return null;}
   }
-  async function saveClip(id,blob,meta) {
-    const db=await openDB(); if(!db||!blob||!blob.size||blob.size>2*1024*1024)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'); tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text}); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);tx.onabort=()=>j(tx.error)}); await evict(); } catch(e){console.warn('Audio cache save failed',e);}
+  async function saveClip(id,blob,meta){
+    const db=await openDB();if(!db||!blob||!blob.size||blob.size>2*1024*1024)return;
+    try{
+      const tx=db.transaction(STORE_NAME,'readwrite');
+      tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text,model:MODEL});
+      await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+      await evict();
+    }catch(e){console.warn('Gemini audio cache save failed',e);}
   }
-  async function evict() {
-    const db=await openDB(); if(!db)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), items=await reqP(store.getAll()); let total=items.reduce((n,x)=>n+(x.bytes||0),0); if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const x of items){if(total<=MAX_BYTES*.85)break;store.delete(x.id);total-=x.bytes||0;}} } catch(e){}
+  async function evict(){
+    const db=await openDB();if(!db)return;
+    try{
+      const tx=db.transaction(STORE_NAME,'readwrite'),store=tx.objectStore(STORE_NAME),items=await reqP(store.getAll());
+      let total=items.reduce((n,x)=>n+(x.bytes||0),0);
+      if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const item of items){if(total<=MAX_BYTES*.85)break;store.delete(item.id);total-=item.bytes||0;}}
+    }catch(e){}
   }
-  const idFor=(lang,voice,text,rate)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+text;
-  function rateFor(opts){const s=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(s.speechRate)||.95;return Math.max(.75,Math.min(1.25,s.slowSpeech?base*.88:base));}
+  const idFor=(lang,voice,text,rate)=>MODEL+'::'+lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+text;
+  function rateFor(opts){
+    const settings=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(settings.speechRate)||.95;
+    return Math.max(.75,Math.min(1.25,settings.slowSpeech?base*.88:base));
+  }
   function playBlob(blob,rate,token){
     return new Promise((resolve,reject)=>{
       if(token!==generation)return resolve();
-      try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
+      try{
+        if(currentAudio)currentAudio.pause();
+        if(currentUrl)URL.revokeObjectURL(currentUrl);
+        currentUrl=URL.createObjectURL(blob);
+        const audio=new Audio(currentUrl);currentAudio=audio;audio.preload='auto';audio.playbackRate=rate;
+        let done=false;
+        const finish=error=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;error?reject(error):resolve();};
+        audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Gemini audio playback failed'));
+        Promise.resolve(audio.play()).catch(finish);
+      }catch(e){reject(e);}
     });
   }
   async function fetchClip(segment,voice,rate,token){
-    const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
-    if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
+    if(!navigator.onLine)return null;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
-    try {
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate}),signal:controller?controller.signal:undefined});
-      if(!response.ok)throw new Error('Speech service status '+response.status);
-      const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
+    try{
+      const response=await fetch(window.ALI_TTS_API_BASE||'/api/tts',{
+        method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:segment.text,voice,language:segment.isArabic?'ar-XA':'en-GB',rate}),
+        signal:controller?controller.signal:undefined
+      });
+      if(!response.ok)throw new Error('Gemini TTS status '+response.status);
+      const blob=await response.blob();
+      if(!blob.size||!(blob.type.includes('audio')||blob.type==='application/octet-stream'))throw new Error('Invalid Gemini audio response');
       if(token!==generation)return null;
       await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text});
       return blob;
-    } catch(e){if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);return null;}
+    }catch(e){if(e&&e.name!=='AbortError')console.warn('Gemini TTS unavailable; using local speech.',e);return null;}
     finally{controller=null;}
+  }
+  async function stats(){
+    const db=await openDB();if(!db)return{count:0,bytes:0};
+    try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}
   }
   async function speak(input,opts){
     opts=opts||{};const token=++generation;
     try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
-    currentAudio=null;currentUrl=null;const segments=Speech.prepareSegments(input,opts);if(!segments.length)return;
+    currentAudio=null;currentUrl=null;
+    const segments=Speech.prepareSegments(input,opts);if(!segments.length)return;
     const settings=Store.data.settings||{},rate=rateFor(opts);
     for(const segment of segments){
       if(token!==generation)return;
-      const lang=segment.isArabic?'ar-XA':'en-GB',voice=segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede');
-      const id=idFor(lang,voice,segment.text,rate),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
-      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token);if(blob)source='online';}
+      const language=segment.isArabic?'ar-XA':'en-GB';
+      const voice=segment.isArabic?(settings.onlineVoiceAr||'Kore'):(settings.onlineVoiceEn||'Puck');
+      const id=idFor(language,voice,segment.text,rate);
+      const cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
+      if(!blob&&navigator.onLine){blob=await fetchClip(segment,voice,rate,token);if(blob)source='online';}
       if(token!==generation)return;
-      if(blob){try{await playBlob(blob,1,token);updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت العصبي وحفظه');continue;}catch(e){console.warn('Audio playback failed; local fallback used.',e);}}
-      updateStatus(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي');
+      if(blob){
+        try{await playBlob(blob,rate,token);updateStatus(source==='saved'?'Playing saved offline Gemini audio / تشغيل صوت Gemini المحفوظ':'Playing Gemini voice; saved for offline replay / تشغيل صوت Gemini وحفظه دون إنترنت');continue;}
+        catch(e){console.warn('Cached/generated audio failed; local fallback used.',e);}
+      }
+      updateStatus(navigator.onLine?'Gemini unavailable: local voice fallback / تعذر الصوت الشبكي، استخدام الصوت المحلي':'Offline: local voice fallback / دون إنترنت: استخدام الصوت المحلي');
       await localSpeak(segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
     }
   }
-  async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
-  async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
-  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Online-first neural voice ready / الصوت الشبكي جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
-  function stop(){generation++;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}controller=null;currentAudio=null;currentUrl=null;Speech._speechGeneration=(Speech._speechGeneration||0)+1;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
-  window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
+  async function clearCache(){
+    const db=await openDB();if(!db)return;
+    try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});updateStatus('Saved audio cache cleared / تم مسح الأصوات المحفوظة');}catch(e){}
+  }
+  function updateStatus(message){
+    const el=document.getElementById('hybrid-voice-status');if(!el)return;
+    stats().then(s=>{el.textContent=(message||(navigator.onLine?'Gemini voice ready / الصوت الشبكي جاهز':'Offline local voice ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});
+  }
+  function stop(){
+    generation++;
+    try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
+    controller=null;currentAudio=null;currentUrl=null;Speech._speechGeneration=(Speech._speechGeneration||0)+1;
+    if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}
+    updateStatus('Audio stopped / تم إيقاف الصوت');
+  }
+  window.addEventListener('online',()=>updateStatus());
+  window.addEventListener('offline',()=>updateStatus());
   return{speak,stop,clearCache,updateStatus,stats};
 })();
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
-if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-Chirp3-HD-Aoede';
-if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-XA-Chirp3-HD-Aoede';
+Speech.clearCloudCache=function(){return HybridSpeech.clearCache();};
+if(!Store.data.settings.onlineVoiceEn||String(Store.data.settings.onlineVoiceEn).includes('Chirp3-HD'))Store.data.settings.onlineVoiceEn='Puck';
+if(!Store.data.settings.onlineVoiceAr||String(Store.data.settings.onlineVoiceAr).includes('Chirp3-HD'))Store.data.settings.onlineVoiceAr='Kore';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
@@ -9636,7 +9693,7 @@ window.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
 </script>
-<script src="tts-bridge.js"></script>
+
 <script>try { Speech.loadVoices(); window.__refreshAppSpeechVoices = () => Speech.loadVoices(); } catch (e) {}</script>
 </body>
 </html>
