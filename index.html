@@ -1098,6 +1098,7 @@ const Speech = {
     setTimeout(() => { bubble.style.display = 'none'; }, 4500);
   },
   speak(input, opts = {}) {
+    this.stop();
     const generation = (this._speechGeneration || 0) + 1;
     this._speechGeneration = generation;
     if (!Store.data.settings.aiVoiceTermsAccepted) {
@@ -1136,6 +1137,7 @@ const Speech = {
         const pending = {
           id,
           finish: () => { if (!settled && generation === this._speechGeneration) setTimeout(playNext, 80); },
+          cancel: () => { if (!settled) { settled = true; resolve(); } },
           fail
         };
         pending.timeout = setTimeout(() => {
@@ -1161,7 +1163,7 @@ const Speech = {
     this._nativePending = null;
     if (pending) {
       clearTimeout(pending.timeout);
-      try { pending.finish(); } catch (e) {}
+      try { pending.cancel(); } catch (e) {}
     }
     try { if (window.NativeSpeech) window.NativeSpeech.cancel(); } catch (e) {}
   }
@@ -8488,9 +8490,9 @@ const App = {
     document.getElementById('card-aboudy').onclick = () => this.selectProfile('aboudy');
 
     // Header Actions
-    document.getElementById('btn-back-home').onclick = () => { SoundEffects.click(); this.showScreen('screen-home'); };
+    document.getElementById('btn-back-home').onclick = () => { HybridSpeech.stop(); SoundEffects.click(); this.showScreen('screen-home'); };
     document.getElementById('hdr-avatar').onclick = () => {
-      SoundEffects.click(); this.showScreen('screen-profiles');
+      HybridSpeech.stop(); SoundEffects.click(); this.showScreen('screen-profiles');
     };
     document.getElementById('btn-open-parent').onclick = () => this.openParentGate();
     document.getElementById('btn-play-games').onclick = () => this.renderGames();
@@ -8533,6 +8535,7 @@ const App = {
     document.getElementById('chk-ai-voice-terms').onchange = e => {
       Store.data.settings.aiVoiceTermsAccepted = e.target.checked;
       Store.save();
+      if (!e.target.checked) HybridSpeech.stop();
       HybridSpeech.updateStatus(e.target.checked
         ? 'Parent agreement saved. Embedded voice is ready for first use. / تم حفظ موافقة ولي الأمر.'
         : 'Voice paused until a parent accepts the model license. / تم إيقاف الصوت حتى موافقة ولي الأمر.');
@@ -9778,7 +9781,6 @@ const HybridSpeech = {
 };
 Speech.localSpeak = Speech.speak.bind(Speech);
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
-Speech.stop=function(){HybridSpeech.stop();};
 Store.data.settings.speechEngine='embedded';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
