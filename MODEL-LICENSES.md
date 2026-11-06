@@ -11,6 +11,18 @@ This application bundles the following components in Android APK builds:
 - License: Apache License 2.0
 - The full license text is copied into the APK at `assets/embedded-tts/SHERPA-ONNX-LICENSE.txt`.
 
+## ONNX Runtime dependency
+
+- Bundled by the sherpa-onnx Android runtime; v1.28.2.
+- License: MIT.
+- Full license text is copied into the APK at `assets/embedded-tts/ONNXRUNTIME-LICENSE.txt`.
+
+## LLVM C++ runtime dependency
+
+- Android C++ shared runtime included with the native libraries where required.
+- License: Apache License 2.0 with LLVM Exceptions.
+- Full license text is copied into the APK at `assets/embedded-tts/LLVM-LICENSE.txt`.
+
 ## Supertonic 3 multilingual TTS model
 
 - Model publisher: Supertone
