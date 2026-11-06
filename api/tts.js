@@ -49,15 +49,14 @@ module.exports = async function handler(req, res) {
   const voice = typeof body.voice === 'string' ? body.voice : 'en-GB-SoniaNeural';
   const voiceLanguage = VOICES.get(voice);
   const language = typeof body.language === 'string' ? body.language : voiceLanguage;
-  const phoneme = typeof body.phoneme === 'string' ? body.phoneme : '';
   const rate = Number(body.rate || 0.95);
+  const safePhonemeSsml = /^<speak><phoneme alphabet="ipa" ph="[^"<>]{1,32}">[^<>]{1,80}<\\/phoneme><\\/speak>$/u.test(text);
+  const containsMarkup = /[<>]/.test(text);
 
   if (!text || text.length > 1000 || !voiceLanguage || language !== voiceLanguage ||
-      !Number.isFinite(rate) || rate < 0.75 || rate > 1.25) {
-    return res.status(400).json({ error: 'Invalid text, voice, language, or rate', code: 'INVALID_TTS_REQUEST' });
-  }
-  if (phoneme) {
-    return res.status(422).json({ error: 'Free neural provider does not expose IPA phoneme SSML on its free API.', code: 'PHONEME_UNSUPPORTED' });
+      !Number.isFinite(rate) || rate < 0.75 || rate > 1.25 ||
+      (containsMarkup && !safePhonemeSsml)) {
+    return res.status(400).json({ error: 'Invalid text, voice, language, rate, or SSML', code: 'INVALID_TTS_REQUEST' });
   }
   if (PERSONAL_TEXT.test(text)) {
     return res.status(400).json({ error: 'Personal names are kept on this device and cannot be sent to online speech.', code: 'PERSONAL_TEXT_BLOCKED' });
