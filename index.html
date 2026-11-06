@@ -9882,9 +9882,30 @@ const HybridSpeech = (() => {
     if(!lesson)return{message:'Lesson screen not found / لم يتم العثور على شاشة الدرس'};
     const selectors='.question-title,.arabic-hint,.story-passage,.arabic-explanation,.option-btn,.jolly-sound,.jolly-practice,.visual-model figcaption,.activity-heading,.feedback-banner,.question-instruction';
     const nodes=[...lesson.querySelectorAll(selectors)];
-    const raw=[...new Set(nodes.map(n=>(n.innerText||n.textContent||'').replace(/\s+/g,' ').trim()).filter(t=>t.length>1&&t.length<=1000))];
+    const raw=nodes.map(n=>(n.innerText||n.textContent||'').replace(/\s+/g,' ').trim()).filter(t=>t.length>1&&t.length<=1000);
+    // Include every question and answer choice in the loaded lesson, not only
+    // the currently visible question, so the downloaded pack covers later rounds.
+    function collectLessonText(value,key='',depth=0){
+      if(depth>5||value==null)return;
+      if(typeof value==='string'){
+        if(!/^(id|type|icon|image|photo|url|audio|asset|category|correctIndex)$/i.test(key)&&value.length>1&&value.length<=1000)raw.push(value);
+      }else if(Array.isArray(value)){
+        value.forEach(item=>collectLessonText(item,key,depth+1));
+      }else if(typeof value==='object'){
+        Object.entries(value).forEach(([childKey,childValue])=>collectLessonText(childValue,childKey,depth+1));
+      }
+    }
+    if(window.App&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
+      collectLessonText(App.currentLesson.title,'title');
+      collectLessonText(App.currentLesson.intro,'intro');
+      App.currentLesson.questions.forEach(q=>{
+        collectLessonText(q);
+        if(typeof App.getArabicHelper==='function')collectLessonText(App.getArabicHelper(q),'arabicHelper');
+      });
+    }
+    const uniqueRaw=[...new Set(raw)];
     const segments=[];
-    for(const text of raw){for(const seg of Speech.prepareSegments(text,{})){if(seg.text&&seg.text.length<=1000)segments.push(seg);}}
+    for(const text of uniqueRaw){for(const seg of Speech.prepareSegments(text,{})){if(seg.text&&seg.text.length<=1000)segments.push(seg);}}
     for(const node of lesson.querySelectorAll('[data-neural-phoneme][data-neural-text]')){
       const phoneme=String(node.dataset.neuralPhoneme||'').trim(),textValue=String(node.dataset.neuralText||'').trim();
       if(phoneme&&textValue){for(const seg of Speech.prepareSegments(textValue,{})){if(seg.text)segments.push(Object.assign({},seg,{phoneme}));}}
