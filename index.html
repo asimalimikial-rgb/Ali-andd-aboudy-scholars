@@ -8229,19 +8229,20 @@ const App = {
     const root=document.getElementById('jolly-content'); root.innerHTML='';
     if(skill==='sounds' || skill==='formation') {
       JOLLY_SOUND_GROUPS.forEach((group,i)=>{
-        const section=document.createElement('section'); section.className='jolly-group';
-        const heading=document.createElement('h3'); heading.textContent=`Group ${i+1} / المجموعة ${i+1}`; section.appendChild(heading);
-        const grid=document.createElement('div'); grid.className='jolly-sounds';
-        group.forEach(([sound,word,action,ar],j)=>{
-          const card=document.createElement('article'); card.className='jolly-sound';
-          const grapheme=document.createElement('div'); grapheme.className='jolly-grapheme'; grapheme.textContent=sound; card.appendChild(grapheme);
-          const w=document.createElement('div'); w.className='jolly-word'; w.textContent=word; card.appendChild(w);
-          const a=document.createElement('div'); a.className='jolly-ar'; a.textContent=action; card.appendChild(a);
-          const hear=document.createElement('button'); hear.className='btn btn-primary'; hear.textContent='🔊 Hear sound'; hear.onclick=()=>this.playJollyPhoneme(sound,word); card.appendChild(hear);
-          const say=document.createElement('button'); say.className='btn btn-secondary'; say.textContent='Hear example word'; say.onclick=()=>Speech.speak(word); card.appendChild(say);
-          if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-secondary';trace.textContent='Trace '+sound;trace.onclick=()=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<div style="font-size:4rem;text-align:center;font-weight:800;letter-spacing:8px">${sound}</div><p dir="rtl" style="text-align:center">اكتب الحرف في الهواء بإصبعك ثلاث مرات، ثم جرّب كتابته على ورقة.</p>`;root.appendChild(box);};card.appendChild(trace);}
+        const section=document.createElement('section');section.className='jolly-group';
+        const heading=document.createElement('h3');heading.textContent='Group '+(i+1)+' / المجموعة '+(i+1);section.appendChild(heading);
+        const grid=document.createElement('div');grid.className='jolly-sounds';
+        group.forEach(([sound,word,action,ar])=>{
+          const card=document.createElement('article');card.className='jolly-sound';
+          const grapheme=document.createElement('div');grapheme.className='jolly-grapheme';grapheme.textContent=sound;card.appendChild(grapheme);
+          const w=document.createElement('div');w.className='jolly-word';w.textContent=word;card.appendChild(w);
+          const a=document.createElement('div');a.className='jolly-ar';a.dir='rtl';a.textContent=ar+' • '+(JOLLY_ARABIC_WORDS[word.toLowerCase()]||'');card.appendChild(a);
+          const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound);card.appendChild(name);
+          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
+          const say=document.createElement('button');say.className='btn btn-secondary';say.textContent='Example word / كلمة المثال';say.onclick=()=>Speech.speak(word);card.appendChild(say);
+          if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-accent';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,sound);card.appendChild(trace);}
           grid.appendChild(card);
-        }); section.appendChild(grid); root.appendChild(section);
+        });section.appendChild(grid);root.appendChild(section);
       });
     } else if(skill==='blending') {
       const examples=[['s','a','t','sat'],['p','i','n','pin'],['t','a','p','tap'],['n','a','p','nap'],['m','a','p','map'],['s','i','t','sit']];
