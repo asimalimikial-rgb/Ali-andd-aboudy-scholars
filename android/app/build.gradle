@@ -16,6 +16,11 @@ android {
         targetSdk 35
         versionCode 9
         versionName '1.3.0'
+        // Pull-request builds are isolated beta installs; they never replace the stable app.
+        if (System.getenv('GITHUB_EVENT_NAME') == 'pull_request') {
+            applicationIdSuffix '.beta'
+            versionNameSuffix '-beta.1'
+        }
     }
 
     signingConfigs {
