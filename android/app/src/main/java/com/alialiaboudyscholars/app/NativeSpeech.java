@@ -57,8 +57,20 @@ public class NativeSpeech {
         webView.post(() -> {
             try {
                 if (tts == null || !ready) { notifyJs(id, "error"); return; }
-                Locale locale = Locale.forLanguageTag(language == null ? "en-GB" : language);
-                tts.setLanguage(locale);
+                String languageTag = language == null ? "en-GB" : language;
+                Locale locale = Locale.forLanguageTag(languageTag);
+                int languageStatus = tts.setLanguage(locale);
+                if (languageStatus == TextToSpeech.LANG_MISSING_DATA ||
+                    languageStatus == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Locale fallbackLocale = languageTag.toLowerCase().startsWith("ar")
+                        ? new Locale("ar") : Locale.UK;
+                    languageStatus = tts.setLanguage(fallbackLocale);
+                }
+                if (languageStatus == TextToSpeech.LANG_MISSING_DATA ||
+                    languageStatus == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    notifyJs(id, "error");
+                    return;
+                }
                 if (voiceName != null && !voiceName.isEmpty()) {
                     Set<Voice> voices = tts.getVoices();
                     if (voices != null) for (Voice voice : voices) {

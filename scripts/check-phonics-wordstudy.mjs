@@ -9,10 +9,11 @@ const checks=[
   ['Phonics-sound control',html.includes('Phonics sound / صوت الحرف')],
   ['Example-word control',html.includes('Example word / كلمة المثال')],
   ['IPA request',html.includes('phoneme:phoneme||undefined') && html.includes('en-GB-Standard-A')],
-  ['IPA server validation',api.includes('const PHONEMES = new Set(') && api.includes('alphabet="ipa"')],
+  ['Gemini TTS configuration',api.includes('process.env.GEMINI_API_KEY') && api.includes('gemini-3.8-flash-lite-tts') && api.includes('speechMetadata') && api.includes('const PHONEMES = new Set(')],
   ['Offline IPA cache key',html.includes('ipa:'+String.fromCharCode(39)+'+phoneme') && html.includes('rate,phoneme),blob')],
   ['Mobile trace canvas size',html.includes('height:210px')],
-  ['Responsive Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('@media(max-width:600px)')],
+  ['Wide single-column Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('grid-template-columns:minmax(0,1fr)')],
+  ['TTS language routing',html.includes("language:segment.isArabic?'ar-XA':'en-GB'")],
   ['Android offline TTS bridge',html.includes('window.NativeSpeech.speak(nativeId') && html.includes('window.__nativeSpeechReady') && !html.includes('tts-bridge.js')],
   ['All 42 sound entries mapped',true]
 ];

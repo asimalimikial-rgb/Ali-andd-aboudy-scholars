@@ -442,7 +442,7 @@
     .avatar-mini::after { content: '⇄'; position: absolute; right: -6px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; background: white; color: var(--primary-aboudy); font-size: 12px; line-height: 18px; box-shadow: var(--shadow-sm); }
     .avatar-mini:focus-visible { outline: 3px solid var(--primary-aboudy); outline-offset: 3px; }
 
-  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}@media(max-width:600px){.jolly-wordstudy-grid{grid-template-columns:minmax(0,1fr)}}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
+  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
   <script src="tts-config.js"></script>
 </head>
@@ -676,6 +676,7 @@
       <label for="speech-rate-control" style="display:block; font-weight:bold; margin-top:12px;">Speech speed / سرعة النطق</label>
       <input id="speech-rate-control" type="range" min="0.70" max="1.15" step="0.05" value="0.95" style="width:100%; min-height:32px;">
       <button class="btn btn-accent" id="btn-test-voice" style="margin-top: 12px; width: 100%;">🔊 Test English + Arabic / اختبار الصوتين</button>
+      <button class="btn btn-secondary" id="btn-test-local-voice" type="button" style="margin-top:8px;width:100%;">📱 Test local/offline voices / اختبار الصوت المحلي دون إنترنت</button>
 
       <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
         <h3>Neural Voice / الصوت العصبي المحسّن</h3>
@@ -8430,6 +8431,7 @@ const App = {
 
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
+    document.getElementById('btn-test-local-voice').onclick = () => this.testLocalVoiceDoctor();
 
     document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-Chirp3-HD-Aoede';
     document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-XA-Chirp3-HD-Aoede';
@@ -9617,10 +9619,26 @@ const App = {
     }
   },
 
-  testVoiceDoctor() {
-    Speech.speak('English test. The quick brown fox jumps over the lazy dog. Four plus three equals seven.').then(() => {
-      Speech.speak('اختبار اللغة العربية. أهلاً علي وعبودي. أربعة زائد ثلاثة يساوي سبعة.');
-    });
+  async testVoiceDoctor() {
+    const english = await HybridSpeech.speak('English online voice test. Four plus three equals seven.', { forceOnline: true });
+    const arabic = await HybridSpeech.speak('اختبار اللغة العربية. أربعة زائد ثلاثة يساوي سبعة.', { forceOnline: true });
+    const summarize = (label, results) => {
+      const online = results.filter(item => item.onlineAttempt === 'success').length;
+      const saved = results.filter(item => item.source === 'saved').length;
+      const local = results.filter(item => item.source === 'local').length;
+      const failed = results.find(item => item.onlineAttempt === 'failed');
+      const blocked = results.some(item => item.onlineAttempt === 'blocked');
+      return label + ': ' + (online ? 'Online ' + online : saved ? 'Saved ' + saved : 'Local ' + local) +
+        (failed ? ' — API ' + failed.reason : '') + (blocked ? ' — privacy guard' : '');
+    };
+    HybridSpeech.updateStatus('اختبار الشبكة — ' + summarize('English', english) + ' | ' + summarize('العربية', arabic));
+  },
+
+  async testLocalVoiceDoctor() {
+    const english = await HybridSpeech.speak('Local English voice test. Four plus three equals seven.', { forceLocal: true });
+    const arabic = await HybridSpeech.speak('اختبار الصوت العربي المحلي. أربعة زائد ثلاثة يساوي سبعة.', { forceLocal: true });
+    const describe = (label, results) => label + ': ' + (results.length ? 'تم تشغيل ' + results.length + ' مقطع' : 'لا توجد مقاطع قابلة للنطق');
+    HybridSpeech.updateStatus('اختبار الصوت المحلي — ' + describe('English', english) + ' | ' + describe('العربية', arabic));
   },
 
   exportData() {
@@ -9647,7 +9665,7 @@ const HybridSpeech = (() => {
   const MAX_BYTES = 80 * 1024 * 1024;
   let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
   const localSpeak = Speech.speak.bind(Speech);
-  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي/i;
+  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
   function openDB() {
     if (!('indexedDB' in window)) return Promise.resolve(null);
     if (dbPromise) return dbPromise;
@@ -9682,35 +9700,79 @@ const HybridSpeech = (() => {
       try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
     });
   }
+  let lastFetchError = '';
   async function fetchClip(segment,voice,rate,token,phoneme){
     const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
     if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
+    lastFetchError='';
     try {
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate,phoneme:phoneme||undefined}),signal:controller?controller.signal:undefined});
-      if(!response.ok)throw new Error('Speech service status '+response.status);
-      const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
+      const response=await fetch(endpoint,{
+        method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-XA':'en-GB',phoneme:phoneme||undefined}),
+        signal:controller?controller.signal:undefined
+      });
+      if(!response.ok){
+        let details={};
+        try{details=await response.json();}catch(e){}
+        throw new Error('HTTP '+response.status+(details.code?' '+details.code:''));
+      }
+      const blob=await response.blob();
+      if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
       if(token!==generation)return null;
       await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text,phoneme});
       return blob;
-    } catch(e){if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);return null;}
-    finally{controller=null;}
+    } catch(e) {
+      if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);
+      lastFetchError=e&&e.message?e.message:(e&&e.name==='AbortError'?'request cancelled':'network error');
+      return null;
+    } finally {controller=null;}
   }
   async function speak(input,opts){
-    opts=opts||{};const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';const token=++generation;
+    opts=opts||{};
+    const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';
+    const token=++generation;
+    lastFetchError='';
     try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
-    currentAudio=null;currentUrl=null;const segments=Speech.prepareSegments(input,opts);if(!segments.length)return;
-    const settings=Store.data.settings||{},rate=rateFor(opts);
+    currentAudio=null;currentUrl=null;
+    const segments=Speech.prepareSegments(input,opts);
+    if(!segments.length)return [];
+    const settings=Store.data.settings||{},rate=rateFor(opts),results=[];
     for(const segment of segments){
-      if(token!==generation)return;
-      const lang=segment.isArabic?'ar-XA':'en-GB',voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
-      const id=idFor(lang,voice,segment.text,rate,phoneme),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
-      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token,phoneme);if(blob)source='online';}
-      if(token!==generation)return;
-      if(blob){try{await playBlob(blob,1,token);updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت العصبي وحفظه');continue;}catch(e){console.warn('Audio playback failed; local fallback used.',e);}}
-      updateStatus(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي');
+      if(token!==generation)return results;
+      const lang=segment.isArabic?'ar-XA':'en-GB';
+      const voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
+      const id=idFor(lang,voice,segment.text,rate,phoneme);
+      const cached=await getClip(id);
+      let blob=cached&&cached.blob&&!opts.forceOnline&&!opts.forceLocal?cached.blob:null;
+      let source=blob?'saved':'local',onlineAttempt='not-needed',reason='';
+      if(!blob&&!opts.forceLocal){
+        if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
+        else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
+        else{
+          onlineAttempt='attempted';
+          blob=await fetchClip(segment,voice,rate,token,phoneme);
+          if(blob){source='online';onlineAttempt='success';}
+          else{onlineAttempt='failed';reason=lastFetchError||'network error';}
+        }
+      }
+      if(!blob&&cached&&cached.blob&&!opts.forceLocal){blob=cached.blob;source='saved';}
+      if(token!==generation)return results;
+      if(blob){
+        try{
+          await playBlob(blob,rate,token);
+          updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت الشبكي وحفظه');
+          results.push({language:lang,source,onlineAttempt,reason});
+          continue;
+        }catch(e){console.warn('Audio playback failed; local fallback used.',e);reason='audio playback failed';}
+      }
+      source='local';
+      updateStatus(reason==='privacy'?'Personal text kept on device / النص الشخصي لا يغادر الجهاز':(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي'));
       await localSpeak(phoneme?(opts.fallbackText||segment.text):segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
+      results.push({language:lang,source,onlineAttempt,reason:reason||'no cached or online audio'});
     }
+    return results;
   }
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
   async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
