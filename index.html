@@ -9754,7 +9754,7 @@ const HybridSpeech = (() => {
       try {
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME, { keyPath: 'id' }); };
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => { if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); resolve(req.result); };
         req.onerror = req.onblocked = () => resolve(null);
       } catch (e) { resolve(null); }
     });
@@ -9766,8 +9766,8 @@ const HybridSpeech = (() => {
     try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), item=await reqP(store.get(id)); if(item){item.accessedAt=Date.now();store.put(item);} return item||null; } catch(e){return null;}
   }
   async function saveClip(id,blob,meta) {
-    const db=await openDB(); if(!db||!blob||!blob.size||blob.size>2*1024*1024)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'); tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text}); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);tx.onabort=()=>j(tx.error)}); await evict(); } catch(e){console.warn('Audio cache save failed',e);}
+    const db=await openDB(); if(!db||!blob||!blob.size||blob.size>2*1024*1024)return false;
+    try { const tx=db.transaction(STORE_NAME,'readwrite'); tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text}); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);tx.onabort=()=>j(tx.error)}); await evict(); return true; } catch(e){console.warn('Audio cache save failed',e);return false;}
   }
   async function evict() {
     const db=await openDB(); if(!db)return;
@@ -9808,7 +9808,10 @@ const HybridSpeech = (() => {
       const blob=await response.blob();
       if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
       if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
+      const saved=await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
+      if(!saved)lastFetchError='audio cache could not be persisted';
+      const today=new Date().toISOString().slice(0,10),quotaKey='ali_aboudy_neural_chars_'+today;
+      try{localStorage.setItem(quotaKey,String((Number(localStorage.getItem(quotaKey)||0)||0)+segment.text.length));}catch(e){}
       return blob;
     } catch(e) {
       if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; no local fallback is configured.',e);
@@ -9854,7 +9857,7 @@ const HybridSpeech = (() => {
       if(blob){
         try{
           await playBlob(blob,rate,token);
-          updateStatus(source==='saved'?'Playing saved neural audio offline / تشغيل الصوت العصبي المحفوظ دون إنترنت':'Playing neural audio; saved on this device / تشغيل الصوت العصبي وحفظه على الجهاز');
+          updateStatus(source==='saved'?'Playing saved neural audio offline / تشغيل الصوت العصبي المحفوظ دون إنترنت':(lastFetchError==='audio cache could not be persisted'?'Playing online only; device storage unavailable / يعمل عبر الإنترنت فقط؛ التخزين المحلي غير متاح':'Playing neural audio; saved on this device / تشغيل الصوت العصبي وحفظه على الجهاز'));
           results.push({language:lang,source,onlineAttempt,reason});
           continue;
         }catch(e){console.warn('Neural audio playback failed.',e);reason='audio playback failed';}
@@ -9895,7 +9898,7 @@ const HybridSpeech = (() => {
       if(used+seg.text.length>1800)break;
       const blob=await fetchClip(seg,voice,rate,token,'');
       requests++;
-      if(blob){downloaded++;used+=seg.text.length;chars+=seg.text.length;try{localStorage.setItem(quotaKey,String(used));}catch(e){}}
+      if(blob){const stored=await getClip(id);if(stored&&stored.blob){downloaded++;used+=seg.text.length;chars+=seg.text.length;}else{skipped++;}}
       else{skipped++;}
     }
     const remaining=unique.length-downloaded-already-skipped;
