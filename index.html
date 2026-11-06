@@ -9044,7 +9044,7 @@ const App = {
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
-      const phonemeTokens = isAli ? [...titleText.matchAll(/\\/([a-z]{1,2})\\//gi)] : [];
+      const phonemeTokens = isAli ? [...titleText.matchAll(/\/([a-z]{1,2})\//gi)] : [];
       const targetLetter = isAli && /^[a-z]$/i.test(String(q.letter || ''))
         ? String(q.letter).toLowerCase() : '';
       if (phonemeTokens.length) {
