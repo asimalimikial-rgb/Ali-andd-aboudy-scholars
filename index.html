@@ -8284,7 +8284,18 @@ const App = {
         grid.appendChild(card);
       });
       root.appendChild(grid);
-
+    } else if(skill==='blending') {
+      const examples=[['s','a','t','sat'],['p','i','n','pin'],['t','a','p','tap'],['n','a','p','nap'],['m','a','p','map'],['s','i','t','sit']];
+      examples.forEach(parts=>{
+        const box=document.createElement('div');box.className='jolly-practice';
+        const title=document.createElement('h3');title.style.textAlign='center';title.textContent=parts.slice(0,3).join(' + ');box.appendChild(title);
+        const word=document.createElement('p');word.style.textAlign='center';word.style.fontSize='1.8rem';word.textContent='→ '+parts[3];box.appendChild(word);
+        const help=document.createElement('p');help.dir='rtl';help.textContent='اسمع كل صوت منفصلاً، ثم قرّب الأصوات من بعضها حتى تسمع الكلمة.';box.appendChild(help);
+        const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Listen and blend / اسمع وادمج';
+        b.onclick=()=>{parts.slice(0,3).forEach((x,i)=>setTimeout(()=>this.playJollyPhoneme(x,parts[3]),i*650));setTimeout(()=>Speech.speak(parts[3]),2200);};
+        box.appendChild(b);root.appendChild(box);
+      });
+    } else if(skill==='segmenting') {
       [['sun',['s','u','n']],['map',['m','a','p']],['fish',['f','i','sh']],['ship',['sh','i','p']],['chat',['ch','a','t']]].forEach(([word,parts])=>{const box=document.createElement('div');box.className='jolly-practice';const h=document.createElement('h3');h.textContent=word;box.appendChild(h);const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Reveal sounds';b.onclick=()=>{let line=box.querySelector('.segments');if(!line){line=document.createElement('p');line.className='segments';line.style.fontSize='1.5rem';line.style.textAlign='center';box.appendChild(line);}line.textContent=parts.join('  •  ');};box.appendChild(b);root.appendChild(box);});
     } else {
       const box=document.createElement('div');box.className='jolly-group';box.innerHTML='<h3>Common tricky words</h3><p dir="rtl">هذه كلمات شائعة نتعلم التعرف عليها وقراءتها، لأن بعض أجزائها لا تتبع أنماط الأصوات التي تعلمناها بعد.</p>';
