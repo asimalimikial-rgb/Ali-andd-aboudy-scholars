@@ -37,9 +37,9 @@ const checks=[
   ['Parent voice controls retain Arabic, English, speed, test and stop',html.includes('voice-picker-select') && html.includes('voice-picker-ar-select') && html.includes('speech-rate-control') && html.includes('btn-test-voice') && html.includes('btn-stop-all-audio')]
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));
-const soundEntries=[...soundBlock.matchAll(/\\['([^']+)','([^']+)'/g)].map(m=>m[1].toLowerCase()+'|'+m[2].toLowerCase());
+const soundEntries=[...soundBlock.matchAll(/\['([^']+)','([^']+)'/g)].map(m=>m[1].toLowerCase()+'|'+m[2].toLowerCase());
 const phonemeBlock=html.slice(html.indexOf('getJollyPhonemeData(sound, example)'),html.indexOf('  init() {',html.indexOf('getJollyPhonemeData(sound, example)')));
-const phonemeKeys=new Set([...phonemeBlock.matchAll(/'([^']+\\|[^']+)':\\['/g)].map(m=>m[1]));
+const phonemeKeys=new Set([...phonemeBlock.matchAll(/'([^']+\|[^']+)':\['/g)].map(m=>m[1]));
 checks[checks.findIndex(x=>x[0]==='All 42 sound entries mapped')][1]=soundEntries.length===42 && soundEntries.every(k=>phonemeKeys.has(k));
 const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
