@@ -8293,19 +8293,43 @@ const App = {
     this.showScreen('screen-jolly');
   },
 
+  openTracePad(container, target) {
+    const prior=container.querySelector('.trace-pad');if(prior)prior.remove();
+    const box=document.createElement('div');box.className='jolly-practice trace-pad';
+    const title=document.createElement('h3');title.textContent='Trace with your finger / تتبّع بإصبعك';box.appendChild(title);
+    const help=document.createElement('p');help.dir='rtl';help.textContent='اتبع شكل الحرف أو الكلمة بإصبعك داخل المساحة. اضغط مسح إذا أردت المحاولة من جديد.';box.appendChild(help);
+    const canvas=document.createElement('canvas');canvas.width=900;canvas.height=260;canvas.setAttribute('aria-label','Drawing area to trace '+target);
+    canvas.style.cssText='display:block;width:100%;height:auto;max-height:210px;background:#fff;border:3px dashed #9ca3af;border-radius:16px;touch-action:none;cursor:crosshair;';
+    box.appendChild(canvas);
+    const ctx=canvas.getContext('2d');let drawing=false,ink=false;
+    const guide=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#eef2f7';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#c3cbd6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(String(target).length>5?'bold 145px Arial':'bold 190px Arial');ctx.fillText(String(target),canvas.width/2,canvas.height/2);};
+    guide();
+    const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};};
+    canvas.addEventListener('pointerdown',e=>{drawing=true;ink=true;const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+    canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);ctx.lineWidth=13;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#2563eb';ctx.lineTo(p.x,p.y);ctx.stroke();});
+    const status=document.createElement('p');status.dir='rtl';status.textContent='ابدأ من فوق الشكل واتبع مساره.';box.appendChild(status);
+    const stop=()=>{drawing=false;if(ink)status.textContent='أحسنت! أكمل التتبع أو أعد المحاولة ⭐';};
+    canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('pointerleave',stop);
+    const clear=document.createElement('button');clear.type='button';clear.className='btn btn-secondary';clear.textContent='Clear / مسح';clear.onclick=()=>{ink=false;guide();status.textContent='المساحة جاهزة. حاول مرة أخرى!';};box.appendChild(clear);
+    const done=document.createElement('button');done.type='button';done.className='btn btn-primary';done.textContent='Done / انتهيت';done.onclick=()=>{status.textContent=ink?'ممتاز! أكملت التتبع 👏':'ابدأ برسم الحرف أو الكلمة أولاً.';};box.appendChild(done);
+    container.appendChild(box);
+  },
+
   playJollyPhoneme(sound, example) {
-    // Pure /s/ is a sustained unvoiced hiss, not the letter name "ess".
-    // Generate a short, shaped sibilant locally so no TTS engine can turn it into a letter name.
-    if(sound.toLowerCase()==='s') {
-      try {
-        const Ctx=window.AudioContext||window.webkitAudioContext; const ctx=new Ctx();
-        const duration=0.55, frames=Math.floor(ctx.sampleRate*duration), buffer=ctx.createBuffer(1,frames,ctx.sampleRate), data=buffer.getChannelData(0);
-        let seed=17; for(let i=0;i<frames;i++){seed=(seed*16807)%2147483647;const noise=(seed/2147483647)*2-1;const env=Math.min(1,i/(ctx.sampleRate*.035), (frames-i)/(ctx.sampleRate*.09));data[i]=noise*env*.32;}
-        const src=ctx.createBufferSource();src.buffer=buffer;const filter=ctx.createBiquadFilter();filter.type='highpass';filter.frequency.value=3500;const gain=ctx.createGain();gain.gain.value=.75;src.connect(filter).connect(gain).connect(ctx.destination);src.onended=()=>ctx.close();src.start();return;
-      } catch(e) { /* use the spoken example as a safe fallback */ }
-    }
-    // For other phonemes, speak a carefully chosen example word instead of asking TTS to read a bare letter.
-    Speech.speak(example);
+    const key=String(sound).toLowerCase()+'|'+String(example).toLowerCase();
+    const map={
+      's|sun':['s','ssss'],'a|ant':['æ','short a'],'t|tap':['t','tuh'],'i|ink':['ɪ','short i'],'p|pig':['p','puh'],'n|net':['n','nnn'],
+      'c / k|cat • kite':['k','kuh'],'e|egg':['ɛ','short e'],'h|hat':['h','hhh'],'r|red':['ɹ','rrr'],'m|map':['m','mmm'],'d|dog':['d','duh'],
+      'g|goat':['ɡ','guh'],'o|octopus':['ɒ','short o'],'u|up':['ʌ','short u'],'l|leg':['l','lll'],'f|fish':['f','fff'],'b|bag':['b','buh'],
+      'ai|rain':['eɪ','long a'],'j|jam':['dʒ','juh'],'oa|boat':['əʊ','long o'],'ie|tie':['aɪ','long i'],'ee|feet':['iː','long e'],'or|fork':['ɔː','or'],
+      'z|zip':['z','zzz'],'w|web':['w','wuh'],'ng|ring':['ŋ','ng'],'v|van':['v','vvv'],'oo|moon':['uː','long oo'],'oo|book':['ʊ','short oo'],
+      'y|yes':['j','yuh'],'x|box':['ks','ks'],'ch|chip':['tʃ','ch'],'sh|ship':['ʃ','shhh'],'th|this':['ð','voiced th'],'th|thin':['θ','soft th'],
+      'qu|queen':['kw','kw'],'ou|out':['aʊ','ow'],'oi|coin':['ɔɪ','oy'],'ue|blue':['uː','blue'],'er|fern':['ɜː','er'],'ar|farm':['ɑː','ar']
+    };
+    const item=map[key];
+    if(!item){Speech.speak(example);return;}
+    const spoken=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();
+    Speech.speak(spoken,{phoneme:item[0],fallbackText:item[1],rate:0.88});
   },
 
   init() {
