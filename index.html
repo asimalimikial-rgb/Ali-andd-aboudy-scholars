@@ -9646,7 +9646,7 @@ const HybridSpeech = (() => {
     const db=await openDB(); if(!db)return;
     try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), items=await reqP(store.getAll()); let total=items.reduce((n,x)=>n+(x.bytes||0),0); if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const x of items){if(total<=MAX_BYTES*.85)break;store.delete(x.id);total-=x.bytes||0;}} } catch(e){}
   }
-  const idFor=(lang,voice,text,rate)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+text;
+  const idFor=(lang,voice,text,rate,phoneme)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+(phoneme?'ipa:'+phoneme+'::':'')+text;
   function rateFor(opts){const s=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(s.speechRate)||.95;return Math.max(.75,Math.min(1.25,s.slowSpeech?base*.88:base));}
   function playBlob(blob,rate,token){
     return new Promise((resolve,reject)=>{
@@ -9654,12 +9654,12 @@ const HybridSpeech = (() => {
       try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
     });
   }
-  async function fetchClip(segment,voice,rate,token){
+  async function fetchClip(segment,voice,rate,token,phoneme){
     const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
     if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
     try {
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate}),signal:controller?controller.signal:undefined});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate,phoneme:phoneme||undefined}),signal:controller?controller.signal:undefined});
       if(!response.ok)throw new Error('Speech service status '+response.status);
       const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
       if(token!==generation)return null;
@@ -9669,19 +9669,19 @@ const HybridSpeech = (() => {
     finally{controller=null;}
   }
   async function speak(input,opts){
-    opts=opts||{};const token=++generation;
+    opts=opts||{};const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';const token=++generation;
     try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
     currentAudio=null;currentUrl=null;const segments=Speech.prepareSegments(input,opts);if(!segments.length)return;
     const settings=Store.data.settings||{},rate=rateFor(opts);
     for(const segment of segments){
       if(token!==generation)return;
-      const lang=segment.isArabic?'ar-XA':'en-GB',voice=segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede');
-      const id=idFor(lang,voice,segment.text,rate),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
-      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token);if(blob)source='online';}
+      const lang=segment.isArabic?'ar-XA':'en-GB',voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
+      const id=idFor(lang,voice,segment.text,rate,phoneme),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
+      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token,phoneme);if(blob)source='online';}
       if(token!==generation)return;
       if(blob){try{await playBlob(blob,1,token);updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت العصبي وحفظه');continue;}catch(e){console.warn('Audio playback failed; local fallback used.',e);}}
       updateStatus(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي');
-      await localSpeak(segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
+      await localSpeak(phoneme?(opts.fallbackText||segment.text):segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
     }
   }
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
