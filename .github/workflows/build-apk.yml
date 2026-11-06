@@ -5,8 +5,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'tts-config.android.js'
-      - 'api/**'
+      - 'MODEL-LICENSES.md'
       - 'android/**'
       - 'scripts/**'
       - '.github/workflows/build-apk.yml'
