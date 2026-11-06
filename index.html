@@ -9700,7 +9700,7 @@ const App = {
 
   renderVoiceDoctor() {
     const info = document.getElementById('voice-doctor-info');
-    if (info) info.textContent = 'Neural MP3 only / الصوت العصبي المحفوظ فقط — Android local TTS is not used.';
+    if (info) info.textContent = 'Embedded sherpa-onnx voice / محرك sherpa-onnx مستقل ومضمّن داخل التطبيق ويعمل دون إنترنت.';
     HybridSpeech.updateStatus();
   },
 
@@ -9757,8 +9757,6 @@ Speech.localSpeak = Speech.speak.bind(Speech);
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
 Store.data.settings.speechEngine='embedded';
-delete Store.data.settings.onlineVoiceEn;
-delete Store.data.settings.onlineVoiceAr;
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
