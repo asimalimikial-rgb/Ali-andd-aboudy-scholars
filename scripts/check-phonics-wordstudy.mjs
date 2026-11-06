@@ -36,7 +36,7 @@ checks.push(['Single-letter phonics options use sound playback',html.includes('t
 const hybridStart=html.indexOf('async function speak(input,opts)');
 const hybridEnd=html.indexOf('async function stats()',hybridStart);
 const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
-checks.push(['Online neural audio is attempted before cached playback',hybrid.indexOf('blob=await fetchClip(')>=0 && hybrid.indexOf('blob=await fetchClip(')<hybrid.indexOf('if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')]);
+checks.push(['Cached audio is reused before new network generation',hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')>=0 && hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')<hybrid.indexOf('blob=await fetchClip(')]);
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
 checks.push(['Local TTS is the final fallback',hybrid.indexOf('await playBlob(blob,rate,token)')>=0 && hybrid.indexOf('await localSpeak(')>hybrid.indexOf('await playBlob(blob,rate,token)')]);
 checks.push(['One Arabic explanation appears after answer only',html.includes("arabicBlock.className = 'arabic-explanation'") && html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && !html.includes("arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q)")]);
