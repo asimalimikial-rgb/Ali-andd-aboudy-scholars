@@ -750,6 +750,10 @@
         <p dir="rtl" style="margin:7px 0;line-height:1.7;">يُولَّد الصوت العربي والإنجليزي داخل التطبيق نفسه. المحرك والنموذج مضمّنان في ملف APK؛ لا توجد تنزيلات صوتية أو خدمة TTS شبكية أو اعتماد على محرك النطق في نظام أندرويد.</p>
         <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Embedded model initializes locally on first use / يُحمّل المحرك محلياً عند أول استخدام.</div>
         <small style="display:block;margin-top:8px;color:var(--text-light);">Synthetic AI voice, processed on this device. Use only lawfully; do not use it to harm or exploit minors, impersonate anyone without consent, or harass others. / صوت اصطناعي يُعالج على الجهاز؛ يُستخدم بصورة قانونية ومسؤولة، ولا يجوز استخدامه للإضرار بالأطفال أو انتحال شخصية أي شخص دون موافقته أو مضايقة الآخرين.</small>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;line-height:1.6;">
+          <input type="checkbox" id="chk-ai-voice-terms" style="margin-top:5px;">
+          <span>Parent agreement: I accept the included Supertonic 3 model license and its usage restrictions. <a href="embedded-tts/supertonic3/LICENSE" target="_blank" rel="noopener">Read the full model license</a>. / إقرار ولي الأمر: أوافق على ترخيص نموذج Supertonic 3 المضمّن وشروط استخدامه. <a href="embedded-tts/supertonic3/LICENSE" target="_blank" rel="noopener">قراءة الترخيص الكامل</a>.</span>
+        </label>
       </div>
     </div>
     <div class="card" id="parent-insights-card">
@@ -809,6 +813,7 @@ const Store = {
       arabicSupport: true,
       speechRate: 0.95,
       speechEngine: 'embedded',
+      aiVoiceTermsAccepted: false,
       manualVoice: '',
       manualVoiceEn: '',
       manualVoiceAr: ''
@@ -1091,6 +1096,11 @@ const Speech = {
   speak(input, opts = {}) {
     const generation = (this._speechGeneration || 0) + 1;
     this._speechGeneration = generation;
+    if (!Store.data.settings.aiVoiceTermsAccepted) {
+      const message = 'A parent must accept the embedded voice model license in Parent Settings first. / يجب أن يوافق ولي الأمر على ترخيص نموذج الصوت من إعدادات الوالدين أولاً.';
+      if (typeof HybridSpeech !== 'undefined') HybridSpeech.updateStatus(message);
+      return Promise.reject(new Error(message));
+    }
     const spokenText = opts.phoneme ? (opts.fallbackText || input) : input;
     const segments = this.prepareSegments(spokenText, opts);
     if (!segments.length) return Promise.resolve([]);
@@ -8457,6 +8467,8 @@ const App = {
     if (rateControl) rateControl.value = String(s.speechRate || 0.95);
     const localPanel = document.getElementById('local-voice-settings');
     if (localPanel) localPanel.style.display = 'block';
+    const aiTerms = document.getElementById('chk-ai-voice-terms');
+    if (aiTerms) aiTerms.checked = !!s.aiVoiceTermsAccepted;
     Speech.updateVoicePicker();
     const localStatus = document.getElementById('local-voice-status');
     if (localStatus) {
@@ -8514,6 +8526,13 @@ const App = {
     document.getElementById('btn-stop-all-audio').onclick = () => HybridSpeech.stop();
     document.getElementById('voice-picker-select').onchange = e => { Store.data.settings.manualVoiceEn = e.target.value; Store.save(); };
     document.getElementById('voice-picker-ar-select').onchange = e => { Store.data.settings.manualVoiceAr = e.target.value; Store.save(); };
+    document.getElementById('chk-ai-voice-terms').onchange = e => {
+      Store.data.settings.aiVoiceTermsAccepted = e.target.checked;
+      Store.save();
+      HybridSpeech.updateStatus(e.target.checked
+        ? 'Parent agreement saved. Embedded voice is ready for first use. / تم حفظ موافقة ولي الأمر.'
+        : 'Voice paused until a parent accepts the model license. / تم إيقاف الصوت حتى موافقة ولي الأمر.');
+    };
     document.getElementById('chk-arabic-support').onchange = (e) => {
       Store.data.settings.arabicSupport = e.target.checked;
       Store.save();
