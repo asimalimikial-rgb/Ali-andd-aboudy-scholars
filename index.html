@@ -8322,7 +8322,7 @@ const App = {
           const w=document.createElement('div');w.className='jolly-word';w.textContent=word;card.appendChild(w);
           const a=document.createElement('div');a.className='jolly-ar';a.dir='rtl';a.textContent=ar+' • '+(JOLLY_ARABIC_WORDS[word.toLowerCase()]||'');card.appendChild(a);
           const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound.toLowerCase().replace(/[^a-z]/g,' ').trim().split(/\s+/).join(' '));card.appendChild(name);
-          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
+          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';const neuralPhoneme=this.getJollyPhonemeData(sound,word);if(neuralPhoneme){hear.dataset.neuralPhoneme=neuralPhoneme[0];hear.dataset.neuralText=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();}hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
           const say=document.createElement('button');say.className='btn btn-secondary';say.textContent='Example word / كلمة المثال';say.onclick=()=>Speech.speak(word);card.appendChild(say);
           if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-accent';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,sound);card.appendChild(trace);}
           grid.appendChild(card);
@@ -8418,7 +8418,7 @@ const App = {
     return HybridSpeech.speak(key, { phoneme, fallbackText: examples[key], rate: 0.88 });
   },
 
-  playJollyPhoneme(sound, example) {
+  getJollyPhonemeData(sound, example) {
     const key=String(sound).toLowerCase()+'|'+String(example).toLowerCase();
     const map={
       's|sun':['s','ssss'],'a|ant':['æ','short a'],'t|tap':['t','tuh'],'i|ink':['ɪ','short i'],'p|pig':['p','puh'],'n|net':['n','nnn'],
@@ -8430,7 +8430,11 @@ const App = {
       'qu|queen':['kw','kw'],'ou|out':['aʊ','ow'],'oi|coin':['ɔɪ','oy'],'ue|blue':['uː','blue'],'er|fern':['ɜː','er'],'ar|farm':['ɑː','ar']
     };
     const simpleKeys={s:'s|sun',a:'a|ant',t:'t|tap',i:'i|ink',p:'p|pig',n:'n|net',m:'m|map'};
-    const item=map[key]||map[simpleKeys[String(sound).toLowerCase()]||''];
+    return map[key]||map[simpleKeys[String(sound).toLowerCase()]||'']||null;
+  },
+
+  playJollyPhoneme(sound, example) {
+    const item=this.getJollyPhonemeData(sound,example);
     if(!item){Speech.speak(example);return;}
     const spoken=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();
     Speech.speak(spoken,{phoneme:item[0],fallbackText:item[1],rate:0.88});
@@ -8457,7 +8461,7 @@ const App = {
     if (arabicToggle) arabicToggle.checked = s.arabicSupport !== false;
     const rateControl = document.getElementById('speech-rate-control');
     if (rateControl) rateControl.value = String(s.speechRate || 0.95);
-    Speech.updateVoicePicker();
+    // Neural MP3 playback is used; no device-local voice picker is initialized.
   },
 
   bindEvents() {
@@ -9881,7 +9885,15 @@ const HybridSpeech = (() => {
     const raw=[...new Set(nodes.map(n=>(n.innerText||n.textContent||'').replace(/\s+/g,' ').trim()).filter(t=>t.length>1&&t.length<=1000))];
     const segments=[];
     for(const text of raw){for(const seg of Speech.prepareSegments(text,{})){if(seg.text&&seg.text.length<=1000)segments.push(seg);}}
-    const unique=[...new Map(segments.map(seg=>[seg.isArabic?'ar|'+seg.text:'en|'+seg.text,seg])).values()];
+    for(const node of lesson.querySelectorAll('[data-neural-phoneme][data-neural-text]')){
+      const phoneme=String(node.dataset.neuralPhoneme||'').trim(),textValue=String(node.dataset.neuralText||'').trim();
+      if(phoneme&&textValue){for(const seg of Speech.prepareSegments(textValue,{})){if(seg.text)segments.push(Object.assign({},seg,{phoneme}));}}
+    }
+    if(Store.data.activeChild==='ali'){
+      const alphabet={a:'æ',b:'b',c:'k',d:'d',e:'ɛ',f:'f',g:'ɡ',h:'h',i:'ɪ',j:'dʒ',k:'k',l:'l',m:'m',n:'n',o:'ɒ',p:'p',q:'kw',r:'ɹ',s:'s',t:'t',u:'ʌ',v:'v',w:'w',x:'ks',y:'j',z:'z'};
+      for(const node of lesson.querySelectorAll('.option-btn')){const letter=(node.innerText||node.textContent||'').trim().toLowerCase();if(alphabet[letter])segments.push({text:letter,isArabic:false,phoneme:alphabet[letter]});}
+    }
+    const unique=[...new Map(segments.map(seg=>[(seg.isArabic?'ar|':'en|')+seg.text+'|'+(seg.phoneme||''),seg])).values()];
     if(!unique.length)return{message:'Open a lesson first, then download its audio / افتح درساً أولاً ثم نزّل صوته'};
     if(!navigator.onLine)return{message:'Connect to the internet before downloading this lesson / اتصل بالإنترنت قبل تنزيل صوت الدرس'};
     const token=++generation,settings=Store.data.settings||{},rate=rateFor({}),today=new Date().toISOString().slice(0,10),quotaKey='ali_aboudy_neural_chars_'+today;
@@ -9891,12 +9903,13 @@ const HybridSpeech = (() => {
       if(token!==generation)break;
       if(personalNamePattern.test(seg.text)){skipped++;continue;}
       const lang=seg.isArabic?'ar-EG':'en-GB',voice=seg.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural');
-      const id=idFor(lang,voice,seg.text,rate,'');
+      const phoneme=seg.phoneme||'';
+      const id=idFor(lang,voice,seg.text,rate,phoneme);
       const cached=await getClip(id);
       if(cached&&cached.blob){already++;continue;}
       if(requests>=8)break;
       if(used+seg.text.length>1800)break;
-      const blob=await fetchClip(seg,voice,rate,token,'');
+      const blob=await fetchClip(seg,voice,rate,token,phoneme);
       requests++;
       if(blob){const stored=await getClip(id);if(stored&&stored.blob){downloaded++;used+=seg.text.length;chars+=seg.text.length;}else{skipped++;}}
       else{skipped++;}
