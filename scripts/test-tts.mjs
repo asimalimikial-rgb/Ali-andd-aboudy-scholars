@@ -1,103 +1,29 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const handler = require('../api/tts.js');
+import fs from 'node:fs';
 
-function makeResponse() {
-  return {
-    code: 200, headers: {}, body: null,
-    setHeader(k,v) { this.headers[k.toLowerCase()] = v; },
-    status(code) { this.code = code; return this; },
-    json(body) { this.body = body; return this; },
-    send(body) { this.body = body; return this; },
-    end() { return this; }
-  };
-}
-async function call(method, body, ip) {
-  const res = makeResponse();
-  await handler({ method, body, headers: { 'x-forwarded-for': ip }, socket: {} }, res);
-  return res;
-}
-const oldFetch = globalThis.fetch;
-try {
-  let calls = [];
-  globalThis.fetch = async (url, options) => {
-    calls.push({ url: String(url), options });
-    if (String(url) === 'https://freetts.org/api/tts') {
-      return {
-        ok: true, status: 200,
-        async json() { return { file_id: 'a3f7c012-58b4-4e2a-9d1c-0f83abc12345' }; }
-      };
-    }
-    return {
-      ok: true, status: 200,
-      headers: { get(name) { return name === 'content-type' ? 'audio/mpeg' : null; } },
-      async arrayBuffer() { return Uint8Array.from([73,68,51,4,5,6,7,8]).buffer; }
-    };
-  };
+const html=fs.readFileSync('index.html','utf8');
+const native=fs.readFileSync('android/app/src/main/java/com/alialiaboudyscholars/app/NativeSpeech.java','utf8');
+const engine=fs.readFileSync('android/app/src/main/java/com/alialiaboudyscholars/app/EmbeddedTtsEngine.java','utf8');
+const sherpa=fs.readFileSync('android/app/src/main/java/com/k2fsa/sherpa/onnx/Tts.kt','utf8');
+const prep=fs.readFileSync('scripts/prepare-embedded-tts.sh','utf8');
 
-  let res = await call('OPTIONS', {}, 'test-options');
-  assert.equal(res.code, 204);
-  res = await call('GET', {}, 'test-get');
-  assert.equal(res.code, 405);
-
-  res = await call('POST', { text: 'English test', voice: 'en-GB-SoniaNeural', language: 'en-GB', rate: 0.95 }, 'test-en');
-  assert.equal(res.code, 200);
-  assert.equal(res.headers['content-type'], 'audio/mpeg');
-  assert.equal(res.body.length, 8);
-  assert.equal(calls[0].url, 'https://freetts.org/api/tts');
-  assert.equal(JSON.parse(calls[0].options.body).voice, 'en-GB-SoniaNeural');
-  assert.equal(JSON.parse(calls[0].options.body).rate, '-5%');
-  assert.equal(calls[1].url, 'https://freetts.org/api/audio/a3f7c012-58b4-4e2a-9d1c-0f83abc12345');
-
-  res = await call('POST', { text: 'اختبار اللغة العربية', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-ar');
-  assert.equal(res.code, 200);
-  assert.equal(JSON.parse(calls[2].options.body).voice, 'ar-EG-SalmaNeural');
-
-  const beforePrivate = calls.length;
-  res = await call('POST', { text: 'أهلاً عبودي', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-private');
-  assert.equal(res.code, 400);
-  assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
-  assert.equal(calls.length, beforePrivate);
-
-  res = await call('POST', { text: 'Ali is learning today', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-private-en');
-  assert.equal(res.code, 400);
-  assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
-  assert.equal(calls.length, beforePrivate);
-
-  res = await call('POST', { text: 'Locale mismatch', voice: 'ar-EG-SalmaNeural', language: 'en-GB' }, 'test-mismatch');
-  assert.equal(res.code, 400);
-  res = await call('POST', { text: 'Unknown voice', voice: 'not-a-voice', language: 'en-GB' }, 'test-voice');
-  assert.equal(res.code, 400);
-  res = await call('POST', { text: 'x'.repeat(1001), voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-length');
-  assert.equal(res.code, 400);
-
-  const beforePhoneme = calls.length;
-  const phonemeSsml = '<speak><phoneme alphabet="ipa" ph="æ">a</phoneme></speak>';
-  res = await call('POST', { text: phonemeSsml, voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-phoneme');
-  assert.equal(res.code, 200);
-  assert.equal(calls.length, beforePhoneme + 2);
-  assert.equal(JSON.parse(calls[beforePhoneme].options.body).text, phonemeSsml);
-
-  const beforeUnsafeSsml = calls.length;
-  res = await call('POST', { text: '<speak><audio src="https://example.com/x.mp3"/></speak>', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-unsafe-ssml');
-  assert.equal(res.code, 400);
-  assert.equal(res.body.code, 'INVALID_TTS_REQUEST');
-  assert.equal(calls.length, beforeUnsafeSsml);
-
-  globalThis.fetch = async () => ({ ok: false, status: 429, headers: { get(name) { return name === 'retry-after' ? '20' : null; } } });
-  res = await call('POST', { text: 'Provider limit test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-provider-limit');
-  assert.equal(res.code, 429);
-  assert.equal(res.headers['retry-after'], '20');
-
-  globalThis.fetch = async () => ({
-    ok: true, status: 200, async json() { return { file_id: 'not-a-valid-id' }; }
-  });
-  res = await call('POST', { text: 'Invalid audio id', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-invalid-audio-id');
-  assert.equal(res.code, 502);
-  assert.equal(res.body.code, 'INVALID_AUDIO_REFERENCE');
-
-  console.log('FreeTTS API tests passed: method handling, English, Arabic, MP3 proxy, rate conversion, privacy guard, validation, IPA SSML handling, provider 429, and invalid audio reference.');
-} finally {
-  globalThis.fetch = oldFetch;
-}
+assert.equal(html.includes('speechSynthesis'),false,'Web Speech API must never be used');
+assert.equal(html.includes('SpeechSynthesisUtterance'),false,'Browser speech utterances must never be used');
+assert.equal(html.includes('/api/tts'),false,'No remote TTS endpoint may remain');
+assert.equal(html.includes('freetts.org'),false,'No online speech provider may remain');
+assert.equal(html.includes('fetchClip('),false,'No remote speech clip fetcher may remain');
+assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must use the app-owned native bridge');
+assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
+assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
+assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
+assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');
+assert.equal(native.includes('HttpURLConnection'),false,'Native TTS must not make HTTP calls');
+assert.equal(engine.includes('OfflineTtsSupertonicModelConfig'),true,'Embedded engine must load Supertonic model');
+assert.equal(engine.includes('Collections.singletonMap("lang", language)'),true,'Arabic/English language code must be passed to model');
+assert.equal(sherpa.includes('System.loadLibrary("sherpa-onnx-jni")'),true,'Bundled sherpa JNI runtime must load');
+assert.equal(prep.includes('SHERPA_SHA256=')&&prep.includes('MODEL_SHA256='),true,'Runtime/model versions must be pinned');
+assert.equal(prep.includes('sha256sum --check'),true,'Runtime/model downloads must be hash-verified');
+assert.equal(prep.includes('supertonic3/LICENSE'),true,'Model license must be bundled');
+assert.equal(html.includes('أحسنت! إجابة صحيحة!'),true,'Correct answer must receive short praise');
+assert.equal(html.includes('محاولة جميلة!'),true,'Incorrect answer must receive supportive feedback');
+console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
