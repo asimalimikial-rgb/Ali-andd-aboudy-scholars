@@ -6,11 +6,11 @@ const VOICES = new Map([
   ['ar-SA-ZariyahNeural', 'ar-SA'],
   ['ar-SA-HamedNeural', 'ar-SA']
 ]);
-const PHONEMES = new Set(['s','æ','t','ɪ','p','n','k','ɛ','h','ɹ','m','d','ɡ','ɒ','ʌ','l','f','b','eɪ','dʒ','əʊ','aɪ','iː','ɔː','z','w','ŋ','v','uː','ʊ','j','ks','tʃ','ʃ','ð','θ','kw','aʊ','ɔɪ','ɜː','ɑː']);
-const PERSONAL_TEXT = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
+const PERSONAL_TEXT = /\\b(?:ali|aboudy|aboudi)\\b|علي|عبودي|عبودى/i;
 const RATE_BUCKETS = new Map();
+let providerWindow = { start: 0, count: 0 };
 
-function allowedRequest(ip) {
+function allowRequest(ip) {
   const now = Date.now();
   let bucket = RATE_BUCKETS.get(ip);
   if (!bucket || now - bucket.start >= 60000) bucket = { start: now, count: 0 };
@@ -19,22 +19,17 @@ function allowedRequest(ip) {
   if (RATE_BUCKETS.size > 5000) {
     for (const [key, value] of RATE_BUCKETS) if (now - value.start >= 120000) RATE_BUCKETS.delete(key);
   }
-  return bucket.count <= 18;
+  if (bucket.count > 15) return false;
+
+  // Keep this Vercel instance below FreeTTS' published 20 requests/minute/IP cap.
+  if (now - providerWindow.start >= 60000) providerWindow = { start: now, count: 0 };
+  providerWindow.count += 1;
+  return providerWindow.count <= 15;
 }
 
-function escapeXml(value) {
-  return String(value).replace(/[<>&"']/g, character => ({
-    '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'
-  })[character]);
-}
-
-function buildSsml(text, voice, language, rate, phoneme) {
-  const content = phoneme
-    ? '<phoneme alphabet="ipa" ph="' + escapeXml(phoneme) + '">' + escapeXml(text) + '</phoneme>'
-    : escapeXml(text);
-  const percent = Math.round(rate * 100);
-  return '<speak version="1.0" xml:lang="' + language + '"><voice name="' + voice +
-    '"><prosody rate="' + percent + '%">' + content + '</prosody></voice></speak>';
+function rateString(rate) {
+  const offset = Math.round((rate - 1) * 100);
+  return (offset >= 0 ? '+' : '') + offset + '%';
 }
 
 module.exports = async function handler(req, res) {
@@ -46,15 +41,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
 
   const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (!allowedRequest(ip)) {
+  if (!allowRequest(ip)) {
     res.setHeader('Retry-After', '60');
-    return res.status(429).json({ error: 'Application speech request limit reached', code: 'APP_RATE_LIMITED' });
-  }
-
-  const key = process.env.AZURE_SPEECH_KEY;
-  const region = String(process.env.AZURE_SPEECH_REGION || '').trim().toLowerCase();
-  if (!key || !/^[a-z0-9]+$/.test(region)) {
-    return res.status(503).json({ error: 'Azure Speech is not configured', code: 'TTS_NOT_CONFIGURED' });
+    return res.status(429).json({ error: 'Speech request limit reached. Please wait one minute.', code: 'APP_RATE_LIMITED' });
   }
 
   let body = req.body || {};
@@ -68,10 +57,12 @@ module.exports = async function handler(req, res) {
   const phoneme = typeof body.phoneme === 'string' ? body.phoneme : '';
   const rate = Number(body.rate || 0.95);
 
-  if (!text || text.length > 600 || !voiceLanguage || language !== voiceLanguage ||
-      !Number.isFinite(rate) || rate < 0.75 || rate > 1.25 ||
-      (phoneme && (!PHONEMES.has(phoneme) || language !== 'en-GB'))) {
-    return res.status(400).json({ error: 'Invalid text, voice, language, rate, or phoneme', code: 'INVALID_TTS_REQUEST' });
+  if (!text || text.length > 1000 || !voiceLanguage || language !== voiceLanguage ||
+      !Number.isFinite(rate) || rate < 0.75 || rate > 1.25) {
+    return res.status(400).json({ error: 'Invalid text, voice, language, or rate', code: 'INVALID_TTS_REQUEST' });
+  }
+  if (phoneme) {
+    return res.status(422).json({ error: 'Free neural provider does not expose IPA phoneme SSML on its free API.', code: 'PHONEME_UNSUPPORTED' });
   }
   if (PERSONAL_TEXT.test(text)) {
     return res.status(400).json({ error: 'Personal names are kept on this device and cannot be sent to online speech.', code: 'PERSONAL_TEXT_BLOCKED' });
@@ -80,43 +71,56 @@ module.exports = async function handler(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
   try {
-    const endpoint = 'https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1';
-    const ssml = buildSsml(text, voice, language, rate, phoneme);
-    const upstream = await fetch(endpoint, {
+    const upstream = await fetch('https://freetts.org/api/tts', {
       method: 'POST',
-      headers: {
-        'Ocp-Apim-Subscription-Key': key,
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-        'User-Agent': 'AliAboudyScholars/1.3.0'
-      },
-      body: ssml,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice, rate: rateString(rate), pitch: '+0Hz' }),
       signal: controller.signal
     });
 
     if (!upstream.ok) {
       const status = upstream.status;
       const retryAfter = upstream.headers?.get?.('retry-after');
-      if (status === 429) res.setHeader('Retry-After', retryAfter || '15');
+      if (status === 429) res.setHeader('Retry-After', retryAfter || '60');
       return res.status(status === 429 ? 429 : 502).json({
-        error: 'Azure Speech provider unavailable',
-        code: status === 429 ? 'PROVIDER_RATE_LIMITED' :
-          (status === 401 || status === 403 ? 'PROVIDER_AUTH_FAILED' :
-          (status === 400 ? 'PROVIDER_REQUEST_REJECTED' : 'PROVIDER_ERROR')),
+        error: 'Free neural speech provider unavailable',
+        code: status === 429 ? 'PROVIDER_RATE_LIMITED' : 'PROVIDER_ERROR',
         providerStatus: status
       });
     }
 
-    const audio = Buffer.from(await upstream.arrayBuffer());
-    if (!audio.length) return res.status(502).json({ error: 'Azure returned empty audio', code: 'EMPTY_AUDIO_RESPONSE' });
+    const generated = await upstream.json();
+    const fileId = generated && typeof generated.file_id === 'string' ? generated.file_id : '';
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(fileId)) {
+      return res.status(502).json({ error: 'Speech provider returned an invalid audio reference', code: 'INVALID_AUDIO_REFERENCE' });
+    }
+
+    const audioResponse = await fetch('https://freetts.org/api/audio/' + fileId, { signal: controller.signal });
+    if (!audioResponse.ok) {
+      const status = audioResponse.status;
+      const retryAfter = audioResponse.headers?.get?.('retry-after');
+      if (status === 429) res.setHeader('Retry-After', retryAfter || '60');
+      return res.status(status === 429 ? 429 : 502).json({
+        error: 'Generated audio could not be downloaded',
+        code: status === 429 ? 'PROVIDER_RATE_LIMITED' : 'AUDIO_DOWNLOAD_FAILED',
+        providerStatus: status
+      });
+    }
+
+    const contentType = String(audioResponse.headers?.get?.('content-type') || 'audio/mpeg');
+    if (!contentType.includes('audio')) {
+      return res.status(502).json({ error: 'Speech provider returned a non-audio response', code: 'INVALID_AUDIO_RESPONSE' });
+    }
+    const audio = Buffer.from(await audioResponse.arrayBuffer());
+    if (!audio.length) return res.status(502).json({ error: 'Speech provider returned empty audio', code: 'EMPTY_AUDIO_RESPONSE' });
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', String(audio.length));
     return res.status(200).send(audio);
   } catch (error) {
     const timedOut = error && error.name === 'AbortError';
-    console.error('Azure Speech request failed:', timedOut ? 'timeout' : (error?.message || 'unknown error'));
+    console.error('Free neural speech request failed:', timedOut ? 'timeout' : (error?.message || 'unknown error'));
     return res.status(timedOut ? 504 : 502).json({
-      error: timedOut ? 'Speech request timed out' : 'Azure Speech synthesis failed',
+      error: timedOut ? 'Speech request timed out' : 'Free neural speech synthesis failed',
       code: timedOut ? 'TTS_TIMEOUT' : 'TTS_UPSTREAM_FAILURE'
     });
   } finally {
