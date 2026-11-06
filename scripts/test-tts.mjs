@@ -16,6 +16,7 @@ assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must us
 assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
 assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
 assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
+assert.equal(native.includes('if (style.startsWith(\"M\")) index += 5;'),true,'Supertonic SID order must map F1-F5 to 0-4 and M1-M5 to 5-9');
 assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');
 assert.equal(native.includes('HttpURLConnection'),false,'Native TTS must not make HTTP calls');
 assert.equal(engine.includes('OfflineTtsSupertonicModelConfig'),true,'Embedded engine must load Supertonic model');
