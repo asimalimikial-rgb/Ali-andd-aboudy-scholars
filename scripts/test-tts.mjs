@@ -19,6 +19,11 @@ assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must no
 assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
 assert.equal(native.includes('if (style.startsWith(\"M\")) index += 5;'),true,'Supertonic SID order must map F1-F5 to 0-4 and M1-M5 to 5-9');
 assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');
+assert.equal(native.includes('peak < 0.00001f'),true,'Silent generated PCM must be rejected instead of reported as success');
+assert.equal(native.includes('getPlaybackHeadPosition()'),true,'Speech completion must wait for PCM frames to reach the playback head');
+assert.equal(native.includes('track.setVolume(1.0f)'),true,'PCM playback must use full AudioTrack volume');
+assert.equal(native.includes('track.getState() != AudioTrack.STATE_INITIALIZED'),true,'Uninitialized AudioTrack must fail visibly');
+assert.equal(native.includes('PCM playback timed out'),true,'Playback timeout must be reported instead of false success');
 assert.equal(native.includes('HttpURLConnection'),false,'Native TTS must not make HTTP calls');
 assert.equal(engine.includes('OfflineTtsSupertonicModelConfig'),true,'Embedded engine must load Supertonic model');
 assert.equal(engine.includes('Collections.singletonMap("lang", language)'),true,'Arabic/English language code must be passed to model');
