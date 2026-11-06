@@ -8512,8 +8512,8 @@ const App = {
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
     document.getElementById('btn-test-local-voice').onclick = () => this.testLocalVoiceDoctor();
 
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-Chirp3-HD-Aoede';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-XA-Chirp3-HD-Aoede';
+    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-SoniaNeural';
+    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-EG-SalmaNeural';
     document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
     document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
     document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
@@ -8624,30 +8624,33 @@ const App = {
       ? '✅ Daily Challenge / تحدي اليوم'
       : '🔥 Daily Challenge / تحدي اليوم';
 
-    // Render Books
+    // One clear entry point per subject; all original books and lessons remain intact.
     const container = document.getElementById('books-container');
+    container.className = 'subject-grid';
     container.innerHTML = '';
-
-    books.forEach(book => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.display = 'flex';
-      card.style.alignItems = 'center';
-      card.style.gap = '15px';
-      card.style.cursor = 'pointer';
-
+    const categories = [
+      { id:'English', title:'English & Phonics', ar:'اللغة الإنجليزية والأصوات', icon:'🔤' },
+      { id:'Maths', title:'Mathematics', ar:'الرياضيات', icon:'🔢' },
+      { id:'Science', title:'Science & Discovery', ar:'العلوم والاستكشاف', icon:'🔬' }
+    ];
+    const child = Store.getChild();
+    categories.forEach(category => {
+      const sourceBooks = books.filter(book => String(book.category || '').toLowerCase() === category.id.toLowerCase());
+      if (!sourceBooks.length) return;
+      const lessons = sourceBooks.reduce((all, book) => all.concat(book.lessons || []), []);
+      const completed = lessons.filter(lesson => child.completedLessons && child.completedLessons[lesson.id] !== undefined).length;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card subject-card';
+      card.setAttribute('aria-label', category.title + '. ' + category.ar + '. ' + lessons.length + ' lessons.');
       card.innerHTML = `
-        <div style="font-size: 3rem;">${book.icon}</div>
-        <div style="flex: 1;">
-          <h3 style="font-size: 1.2rem;">${book.title}</h3>
-          <p style="color: var(--text-light); font-size: 0.9rem;">${book.category} • ${book.lessons.length} Lessons</p>
-        </div>
-        <div style="font-size: 1.5rem;">➔</div>
-      `;
-
+        <span class="subject-icon" aria-hidden="true">${category.icon}</span>
+        <span class="subject-title">${category.title}</span>
+        <span class="subject-ar" dir="rtl">${category.ar}</span>
+        <span class="subject-meta">${lessons.length} lessons • ${completed} completed</span>`;
       card.onclick = () => {
         SoundEffects.click();
-        this.renderMap(book);
+        this.renderMap({ id:'merged_' + category.id.toLowerCase(), title:category.title + ' / ' + category.ar, lessons, sourceBooks });
       };
       container.appendChild(card);
     });
@@ -9006,41 +9009,38 @@ const App = {
     document.getElementById('map-book-title').textContent = book.title;
     const container = document.getElementById('units-map-container');
     container.innerHTML = '';
-
     const child = Store.getChild();
+    const sourceBooks = Array.isArray(book.sourceBooks) && book.sourceBooks.length ? book.sourceBooks : [book];
 
-    book.lessons.forEach((lesson, index) => {
-      const isCompleted = child.completedLessons[lesson.id] !== undefined;
-      const isUnlocked = index === 0 || child.completedLessons[book.lessons[index - 1].id] !== undefined;
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.opacity = isUnlocked ? '1' : '0.6';
-      card.style.borderLeft = isCompleted ? '6px solid var(--success)' : (isUnlocked ? '6px solid var(--accent)' : '6px solid #CBD5E0');
-      card.style.display = 'flex';
-      card.style.alignItems = 'center';
-      card.style.justifySpaceBetween = 'space-between';
-
-      card.innerHTML = `
-        <div style="flex:1;">
-          <h4>Lesson ${index + 1}: ${lesson.title}</h4>
-          <p style="font-size: 0.85rem; color: var(--text-light);">${lesson.questions.length} Questions</p>
-        </div>
-        <div>
-          ${isCompleted ? '⭐ ' + child.completedLessons[lesson.id] + '/3' : (isUnlocked ? '<button class="btn btn-primary">Start</button>' : '🔒 Locked')}
-        </div>
-      `;
-
-      if (isUnlocked) {
-        card.onclick = () => this.startLesson(lesson);
-      }
-
-      container.appendChild(card);
+    sourceBooks.forEach((sourceBook) => {
+      const heading = document.createElement('div');
+      heading.className = 'lesson-group-title';
+      heading.textContent = sourceBook.title;
+      container.appendChild(heading);
+      sourceBook.lessons.forEach((lesson, index) => {
+        const isCompleted = child.completedLessons[lesson.id] !== undefined;
+        const isUnlocked = index === 0 || child.completedLessons[sourceBook.lessons[index - 1].id] !== undefined;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.opacity = isUnlocked ? '1' : '0.58';
+        card.style.borderLeft = isCompleted ? '5px solid #35BFA5' : (isUnlocked ? '5px solid #F3C45F' : '5px solid #CBD5E0');
+        card.style.display = 'flex';
+        card.style.alignItems = 'center';
+        card.style.justifyContent = 'space-between';
+        card.innerHTML = `
+          <div style="flex:1;min-width:0;">
+            <h4>Lesson ${index + 1}: ${lesson.title}</h4>
+            <p style="font-size:.84rem;color:var(--text-light);margin-top:4px;">${lesson.questions.length} questions</p>
+          </div>
+          <div style="margin-left:10px;white-space:nowrap;">
+            ${isCompleted ? '⭐ ' + child.completedLessons[lesson.id] + '/3' : (isUnlocked ? '<span style="font-weight:800;color:#397CC7;">Start →</span>' : '🔒 Locked')}
+          </div>`;
+        if (isUnlocked) card.onclick = () => this.startLesson(lesson);
+        container.appendChild(card);
+      });
     });
-
     this.showScreen('screen-map');
   },
-
   startLesson(lesson, mode = 'lesson') {
     this.currentLesson = lesson;
     this.currentMode = mode;
@@ -9081,26 +9081,13 @@ const App = {
       story.textContent = q.story;
       card.appendChild(story);
     }
-    if (q.hint) {
-      const hint = document.createElement('div');
-      hint.className = 'arabic-hint';
-      hint.textContent = 'Hint: ' + q.hint;
-      card.appendChild(hint);
-    }
-    if (Store.data.settings.arabicSupport !== false) {
-      const arabic = document.createElement('div');
-      arabic.className = 'arabic-explanation';
-      arabic.dir = 'rtl';
-      arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q);
-      card.appendChild(arabic);
-    }
     area.appendChild(card);
 
     if (q.visual) this.renderVisualModel(q.visual, area);
 
     // Speak the English prompt first, then the Arabic helper explanation.
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
-    const helperText = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
+    // Arabic explanation is deliberately deferred until after answer validation.
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
@@ -9133,7 +9120,6 @@ const App = {
       } else {
         await HybridSpeech.speak(titleText);
       }
-      if (helperText) await HybridSpeech.speak(helperText);
     };
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
@@ -9517,9 +9503,14 @@ const App = {
     feedback.className = `feedback-banner ${isCorrect ? 'good' : 'coach'}`;
     feedback.style.display = 'block';
     const arabicExplanation = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
-    feedback.textContent = isCorrect
-      ? `That’s right! ${explanation}${arabicExplanation ? ' / أحسنت! ' + arabicExplanation : ' / أحسنت!'}`
-      : `Good try. ${explanation}${arabicExplanation ? ' / محاولة جميلة. ' + arabicExplanation : ' / محاولة جميلة.'}`;
+    feedback.textContent = isCorrect ? `That’s right! ${explanation}` : `Good try. ${explanation}`;
+    if (arabicExplanation) {
+      const arabicBlock = document.createElement('div');
+      arabicBlock.className = 'arabic-explanation';
+      arabicBlock.dir = 'rtl';
+      arabicBlock.textContent = (isCorrect ? 'أحسنت! ' : 'محاولة جميلة. ') + arabicExplanation;
+      feedback.appendChild(arabicBlock);
+    }
     if (isCorrect && q.type === 'spelling') this.saveVocabularyWord(q.target);
 
     const submitBtn = document.getElementById('btn-submit-answer');
@@ -9782,7 +9773,7 @@ const App = {
 /* Hybrid neural speech: saved clips first, online Chirp 3 HD when missing,
    then Android/browser local TTS as the fallback. */
 const HybridSpeech = (() => {
-  const DB_NAME = 'ali-aboudy-neural-audio-v1', STORE_NAME = 'clips';
+  const DB_NAME = 'ali-aboudy-azure-audio-v2', STORE_NAME = 'clips';
   const MAX_BYTES = 80 * 1024 * 1024;
   let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
   const localSpeak = Speech.speak.bind(Speech);
@@ -9831,7 +9822,7 @@ const HybridSpeech = (() => {
       const response=await fetch(endpoint,{
         method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-XA':'en-GB',phoneme:phoneme||undefined}),
+        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-EG':'en-GB',phoneme:phoneme||undefined}),
         signal:controller?controller.signal:undefined
       });
       if(!response.ok){
@@ -9842,7 +9833,7 @@ const HybridSpeech = (() => {
       const blob=await response.blob();
       if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
       if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text,phoneme});
+      await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
       return blob;
     } catch(e) {
       if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);
@@ -9862,8 +9853,8 @@ const HybridSpeech = (() => {
     const settings=Store.data.settings||{},rate=rateFor(opts),results=[];
     for(const segment of segments){
       if(token!==generation)return results;
-      const lang=segment.isArabic?'ar-XA':'en-GB';
-      const voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
+      const lang=segment.isArabic?'ar-EG':'en-GB';
+      const voice=phoneme?'en-GB-SoniaNeural':(segment.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural'));
       const id=idFor(lang,voice,segment.text,rate,phoneme);
       const cached=await getClip(id);
       let blob=null,source='local',onlineAttempt='not-needed',reason='';
@@ -9905,8 +9896,8 @@ const HybridSpeech = (() => {
 })();
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
-if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-Chirp3-HD-Aoede';
-if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-XA-Chirp3-HD-Aoede';
+if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-SoniaNeural';
+if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-EG-SalmaNeural';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
