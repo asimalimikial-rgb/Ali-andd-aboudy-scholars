@@ -727,7 +727,7 @@
     </div>
 
     <div class="card">
-      <h3>Microsoft Azure AI Speech / صوت مايكروسوفت العصبي</h3>
+      <h3>Free Neural Speech / الصوت الشبكي المجاني</h3>
       <div id="voice-doctor-info" style="font-size: 0.95rem; line-height: 1.7; margin: 10px 0;">Loading speech diagnosis...</div>
       <label for="voice-picker-select" style="display:block; font-weight: bold; margin-top: 10px;">English voice / الصوت الإنجليزي:</label>
       <select id="voice-picker-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
@@ -740,9 +740,9 @@
       <button class="btn btn-secondary" id="btn-test-local-voice" type="button" style="margin-top:8px;width:100%;">📱 Test local/offline voices / اختبار الصوت المحلي دون إنترنت</button>
 
       <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
-        <h3>Microsoft Azure AI Speech / الصوت الشبكي</h3>
-        <p style="margin:7px 0;line-height:1.6;">Azure neural voice first. Successful clips are saved on this device for offline replay. If the network and saved clip are unavailable, the app uses the local Android voice.</p>
-        <p dir="rtl" style="margin:7px 0;line-height:1.7;">صوت Microsoft Azure الشبكي أولاً، مع حفظ المقاطع الناجحة لإعادة استخدامها دون إنترنت. إذا تعذّر الاتصال ولم يوجد مقطع محفوظ، ينتقل التطبيق إلى صوت Android المحلي.</p>
+        <h3>Free Neural Speech / الصوت الشبكي المجاني</h3>
+        <p style="margin:7px 0;line-height:1.6;">Saved neural clips play first without consuming the daily quota. New phrases use the free neural speech service and are cached on this device. If the network and saved clip are unavailable, the app uses the local Android voice.</p>
+        <p dir="rtl" style="margin:7px 0;line-height:1.7;">تُشغّل المقاطع المحفوظة أولاً دون استهلاك الحصة اليومية. النصوص الجديدة تُحوّل إلى صوت عصبي مجاني وتُحفظ على الجهاز. إذا تعذّر الاتصال ولم يوجد مقطع محفوظ، ينتقل التطبيق إلى صوت Android المحلي.</p>
         <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
         <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
           <option value="en-GB-SoniaNeural">Sonia — British English (recommended)</option>
@@ -9863,19 +9863,24 @@ const HybridSpeech = (() => {
       const id=idFor(lang,voice,segment.text,rate,phoneme);
       const cached=await getClip(id);
       let blob=null,source='local',onlineAttempt='not-needed',reason='';
-      // Connected devices always try the neural network first. Saved clips are the
-      // offline/cache fallback; local device TTS is the final fallback only.
-      if(!opts.forceLocal){
+      // Cache-first: replaying a phrase already synthesized on this device costs
+      // zero provider characters. Generate online only on a cache miss.
+      if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){
+        blob=cached.blob;
+        source='saved';
+        onlineAttempt='cache-hit';
+      }
+      if(!blob&&!opts.forceLocal){
         if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
         else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
+        else if(phoneme){onlineAttempt='skipped';reason='free-provider-does-not-support-ipa-ssml';}
         else{
           onlineAttempt='attempted';
-          blob=await fetchClip(segment,voice,rate,token,phoneme);
+          blob=await fetchClip(segment,voice,rate,token,'');
           if(blob){source='online';onlineAttempt='success';}
           else{onlineAttempt='failed';reason=lastFetchError||'network error';}
         }
       }
-      if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){blob=cached.blob;source='saved';}
       if(token!==generation)return results;
       if(blob){
         try{
@@ -9894,7 +9899,7 @@ const HybridSpeech = (() => {
   }
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
   async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
-  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Online-first neural voice ready / الصوت الشبكي جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
+  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Free neural speech ready / الصوت الشبكي المجاني جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
   function stop(){generation++;Speech._speechGeneration=(Speech._speechGeneration||0)+1;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();if(window.NativeSpeech)window.NativeSpeech.cancel();}catch(e){}if(Speech._nativePending){const pending=Speech._nativePending;Speech._nativePending=null;try{pending.finish();}catch(e){}}controller=null;currentAudio=null;currentUrl=null;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
   window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
   return{speak,stop,clearCache,updateStatus,stats};
