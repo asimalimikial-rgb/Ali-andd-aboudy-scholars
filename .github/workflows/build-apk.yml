@@ -42,19 +42,18 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Prepare packaged web app and voice endpoint
+      - name: Prepare packaged web app and embedded offline TTS
         shell: bash
         run: |
           mkdir -p android/app/src/main/assets
           cp index.html android/app/src/main/assets/index.html
-          cp tts-config.android.js android/app/src/main/assets/tts-config.js
+          bash scripts/prepare-embedded-tts.sh
 
       - name: Validate JavaScript
         run: |
           node scripts/check-html.mjs
           node scripts/check-phonics-wordstudy.mjs
           node scripts/test-tts.mjs
-          node --check api/tts.js
 
       - name: Decode release signing key
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
