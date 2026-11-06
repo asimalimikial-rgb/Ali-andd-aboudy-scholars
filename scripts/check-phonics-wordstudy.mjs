@@ -43,5 +43,10 @@ checks.push(['Cached audio is reused before new network generation',hybrid.index
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
 checks.push(['Local engine dispatches to Android NativeSpeech by default',hybrid.includes("(Store.data.settings.speechEngine || 'local') !== 'neural'") && hybrid.includes('Speech.localSpeak(localText') && html.includes('window.NativeSpeech.speak(nativeId')]);
 checks.push(['No Arabic explanation is repeated after answer',!html.includes('const arabicExplanation = Store.data.settings.arabicSupport') && !html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && html.includes('HybridSpeech.speak(spokenFeedback)')]);
+const answerStart=html.indexOf('  evaluateAnswer(q) {');
+const answerEnd=html.indexOf('  advanceActivity() {',answerStart);
+const answerHandler=answerStart>=0&&answerEnd>answerStart?html.slice(answerStart,answerEnd):'';
+checks.push(['Post-answer feedback contains no hints or explanations',answerHandler.length>0&&!answerHandler.includes('q.explanation')&&!answerHandler.includes('q.hint')&&!answerHandler.includes('explanation')]);
+checks.push(['Correct and incorrect answers use encouragement only',answerHandler.includes('أحسنت! إجابة صحيحة!')&&answerHandler.includes('محاولة جميلة!')&&answerHandler.includes("'Great job! أحسنت!'")&&answerHandler.includes("'Good try! محاولة جميلة!'")]);
 
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
