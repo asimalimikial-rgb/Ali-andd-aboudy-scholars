@@ -1098,9 +1098,16 @@ const Speech = {
     setTimeout(() => { bubble.style.display = 'none'; }, 4500);
   },
   speak(input, opts = {}) {
-    this.stop();
-    const generation = (this._speechGeneration || 0) + 1;
-    this._speechGeneration = generation;
+    // Serialize utterances. A new phrase must not cancel a phrase already in progress.
+    const generation = this._speechGeneration || 0;
+    const queued = (this._speechQueue || Promise.resolve()).catch(() => {}).then(() => {
+      if (generation !== (this._speechGeneration || 0)) return [];
+      return this._speakNow(input, opts, generation);
+    });
+    this._speechQueue = queued.catch(() => {});
+    return queued;
+  },
+  _speakNow(input, opts = {}, generation) {
     if (!Store.data.settings.aiVoiceTermsAccepted) {
       const message = 'A parent must accept the embedded voice model license in Parent Settings first. / يجب أن يوافق ولي الأمر على ترخيص نموذج الصوت من إعدادات الوالدين أولاً.';
       if (typeof HybridSpeech !== 'undefined') HybridSpeech.updateStatus(message);
@@ -1158,7 +1165,9 @@ const Speech = {
     });
   },
   stop() {
+    // Explicit stop/navigation invalidates the active utterance and all queued utterances.
     this._speechGeneration = (this._speechGeneration || 0) + 1;
+    this._speechQueue = Promise.resolve();
     const pending = this._nativePending;
     this._nativePending = null;
     if (pending) {
@@ -8581,6 +8590,10 @@ const App = {
   },
 
   showScreen(screenId) {
+    const activeScreen = document.querySelector('.screen.active');
+    if (activeScreen && activeScreen.id !== screenId && typeof HybridSpeech !== 'undefined') {
+      HybridSpeech.stop();
+    }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(screenId);
     if (target) target.classList.add('active');
@@ -9068,6 +9081,8 @@ const App = {
   },
 
   renderCurrentQuestion() {
+    // A new question owns the narration channel; do not let the previous question continue.
+    HybridSpeech.stop();
     const q = this.currentLesson.questions[this.currentQuestionIndex];
     const total = this.currentLesson.questions.length;
     this.answerLocked = false;
@@ -9745,6 +9760,7 @@ const App = {
   },
 
   async testVoiceDoctor() {
+    HybridSpeech.stop();
     try {
       await HybridSpeech.speak('Hello! This is the embedded English voice test.');
       await HybridSpeech.speak('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' });
