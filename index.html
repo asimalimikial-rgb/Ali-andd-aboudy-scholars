@@ -728,21 +728,15 @@
 
     <div class="card">
       <h3>Free Neural Speech / الصوت الشبكي المجاني</h3>
-      <div id="voice-doctor-info" style="font-size: 0.95rem; line-height: 1.7; margin: 10px 0;">Loading speech diagnosis...</div>
-      <label for="voice-picker-select" style="display:block; font-weight: bold; margin-top: 10px;">English voice / الصوت الإنجليزي:</label>
-      <select id="voice-picker-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
-      <label for="voice-picker-ar-select" style="display:block; font-weight: bold; margin-top: 10px;">Arabic voice / الصوت العربي:</label>
-      <select id="voice-picker-ar-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
+      <div id="voice-doctor-info" style="font-size:0.95rem;line-height:1.7;margin:10px 0;">Neural audio only / الصوت العصبي فقط — no Android local TTS fallback.</div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:12px;"><input type="checkbox" id="chk-arabic-support" checked> Arabic learning explanations / إظهار الشرح العربي المساعد</label>
       <label for="speech-rate-control" style="display:block; font-weight:bold; margin-top:12px;">Speech speed / سرعة النطق</label>
       <input id="speech-rate-control" type="range" min="0.70" max="1.15" step="0.05" value="0.95" style="width:100%; min-height:32px;">
       <button class="btn btn-accent" id="btn-test-voice" style="margin-top: 12px; width: 100%;">🔊 Test English + Arabic / اختبار الصوتين</button>
-      <button class="btn btn-secondary" id="btn-test-local-voice" type="button" style="margin-top:8px;width:100%;">📱 Test local/offline voices / اختبار الصوت المحلي دون إنترنت</button>
-
       <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
         <h3>Free Neural Speech / الصوت الشبكي المجاني</h3>
-        <p style="margin:7px 0;line-height:1.6;">Saved neural clips play first without consuming the daily quota. New phrases use the free neural speech service and are cached on this device. If the network and saved clip are unavailable, the app uses the local Android voice.</p>
-        <p dir="rtl" style="margin:7px 0;line-height:1.7;">تُشغّل المقاطع المحفوظة أولاً دون استهلاك الحصة اليومية. النصوص الجديدة تُحوّل إلى صوت عصبي مجاني وتُحفظ على الجهاز. إذا تعذّر الاتصال ولم يوجد مقطع محفوظ، ينتقل التطبيق إلى صوت Android المحلي.</p>
+        <p style="margin:7px 0;line-height:1.6;">Neural MP3 clips are downloaded and stored on this device. Once a lesson is downloaded, its saved clips play offline without any local TTS engine.</p>
+        <p dir="rtl" style="margin:7px 0;line-height:1.7;">يتم تنزيل المقاطع العصبية بصيغة MP3 وحفظها في الجهاز. بعد تنزيل صوت الدرس، تعمل المقاطع المحفوظة دون إنترنت ومن غير استخدام محرك الصوت المحلي.</p>
         <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
         <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
           <option value="en-GB-SoniaNeural">Sonia — British English (recommended)</option>
@@ -756,16 +750,13 @@
           <option value="ar-SA-HamedNeural">Hamed — Arabic (Saudi Arabia)</option>
         </select></select>
         <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
+        <button class="btn btn-primary" id="btn-download-lesson-audio" type="button" style="width:100%;margin-top:12px;">⬇️ Download this lesson's neural audio for offline / تنزيل صوت هذا الدرس للاستخدام دون إنترنت</button>
+        <div id="lesson-audio-download-status" role="status" aria-live="polite" style="margin-top:8px;line-height:1.6;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
           <button class="btn btn-accent" id="btn-stop-all-audio" type="button" style="flex:1;">Stop audio / إيقاف الصوت</button>
         </div>
-        <small style="display:block;margin-top:8px;color:var(--text-light);">Free tier: 2,000 characters/day (published limit), with a short spoken FreeTTS watermark. Saved clips stay on this device. Personal names are never sent to the speech service.</small>
-      </div>
-      <div id="samsung-instructions" style="display:none; background: #FFF3CD; padding: 12px; border-radius: var(--radius-sm); margin-top: 12px; font-size: 0.9rem;">
-        <strong>Android offline voice setup / إعداد الصوت دون إنترنت:</strong><br>
-        Settings → General management → Text-to-speech → Preferred engine → Install voice data. Install English and Arabic voice data, then use the Play test.
-        <p dir="rtl" style="margin-top:8px;">من إعدادات الهاتف افتح الإدارة العامة ثم تحويل النص إلى كلام، واختر محرك Google أو Samsung وثبّت بيانات الصوت للإنجليزية والعربية.</p>
+        <small style="display:block;margin-top:8px;color:var(--text-light);">Free tier: up to 2,000 characters/day and 20 requests/minute. Saved MP3 clips stay on this device. Personal names are blocked from online synthesis. Download each lesson before going offline.</small>
       </div>
     </div>
     <div class="card" id="parent-insights-card">
@@ -8515,7 +8506,7 @@ const App = {
 
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
-    document.getElementById('btn-test-local-voice').onclick = () => this.testLocalVoiceDoctor();
+    document.getElementById('btn-download-lesson-audio').onclick = () => this.downloadCurrentLessonAudio();
 
     document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-SoniaNeural';
     document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-EG-SalmaNeural';
@@ -8523,15 +8514,6 @@ const App = {
     document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
     document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
     document.getElementById('btn-stop-all-audio').onclick = () => HybridSpeech.stop();
-    document.getElementById('voice-picker-select').onchange = (e) => {
-      Store.data.settings.manualVoiceEn = e.target.value;
-      Store.data.settings.manualVoice = e.target.value;
-      Store.save();
-    };
-    document.getElementById('voice-picker-ar-select').onchange = (e) => {
-      Store.data.settings.manualVoiceAr = e.target.value;
-      Store.save();
-    };
     document.getElementById('chk-arabic-support').onchange = (e) => {
       Store.data.settings.arabicSupport = e.target.checked;
       Store.save();
@@ -9714,26 +9696,9 @@ const App = {
   },
 
   renderVoiceDoctor() {
-    const total = Speech.voices.length;
-    const localVoices = Speech.voices.filter(v => v.localService).length;
-    const enVoice = Speech.getBestVoice(false);
-    const arVoice = Speech.getBestVoice(true);
-
     const info = document.getElementById('voice-doctor-info');
-    info.innerHTML = `
-      • Voices detected: <strong>${total}</strong><br>
-      • Voices marked local: <strong>${localVoices}</strong><br>
-      • English voice: <strong>${enVoice ? enVoice.name + ' (' + enVoice.lang + ')' : 'No offline English voice detected'}</strong><br>
-      • Arabic voice: <strong>${arVoice ? arVoice.name + ' (' + arVoice.lang + ')' : 'No offline Arabic voice detected'}</strong><br>
-      • Engine: <strong>${Speech.unlocked ? 'Ready after user gesture' : 'Tap a button to unlock'}</strong><br>
-      <span dir="rtl">يجب اختبار الصوتين عملياً؛ وجود اسم الصوت في القائمة لا يضمن جودة النطق أو عمله دون إنترنت.</span>
-    `;
-
-    if (total === 0 || !localVoices) {
-      document.getElementById('samsung-instructions').style.display = 'block';
-    } else {
-      document.getElementById('samsung-instructions').style.display = 'none';
-    }
+    if (info) info.textContent = 'Neural MP3 only / الصوت العصبي المحفوظ فقط — Android local TTS is not used.';
+    HybridSpeech.updateStatus();
   },
 
   async testVoiceDoctor() {
@@ -9751,11 +9716,11 @@ const App = {
     HybridSpeech.updateStatus('اختبار الشبكة — ' + summarize('English', english) + ' | ' + summarize('العربية', arabic));
   },
 
-  async testLocalVoiceDoctor() {
-    const english = await HybridSpeech.speak('Local English voice test. Four plus three equals seven.', { forceLocal: true });
-    const arabic = await HybridSpeech.speak('اختبار الصوت العربي المحلي. أربعة زائد ثلاثة يساوي سبعة.', { forceLocal: true });
-    const describe = (label, results) => label + ': ' + (results.length ? 'تم تشغيل ' + results.length + ' مقطع' : 'لا توجد مقاطع قابلة للنطق');
-    HybridSpeech.updateStatus('اختبار الصوت المحلي — ' + describe('English', english) + ' | ' + describe('العربية', arabic));
+  async downloadCurrentLessonAudio() {
+    const status = document.getElementById('lesson-audio-download-status');
+    if (status) status.textContent = 'Preparing neural audio pack… / جارٍ تجهيز الحزمة الصوتية العصبية…';
+    const result = await HybridSpeech.prefetchLesson();
+    if (status) status.textContent = result.message;
   },
 
   exportData() {
@@ -9781,7 +9746,6 @@ const HybridSpeech = (() => {
   const DB_NAME = 'ali-aboudy-azure-audio-v2', STORE_NAME = 'clips';
   const MAX_BYTES = 80 * 1024 * 1024;
   let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
-  const localSpeak = Speech.speak.bind(Speech);
   const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
   function openDB() {
     if (!('indexedDB' in window)) return Promise.resolve(null);
@@ -9841,7 +9805,7 @@ const HybridSpeech = (() => {
       await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
       return blob;
     } catch(e) {
-      if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);
+      if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; no local fallback is configured.',e);
       lastFetchError=e&&e.message?e.message:(e&&e.name==='AbortError'?'request cancelled':'network error');
       return null;
     } finally {controller=null;}
@@ -9862,7 +9826,7 @@ const HybridSpeech = (() => {
       const voice=phoneme?'en-GB-SoniaNeural':(segment.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural'));
       const id=idFor(lang,voice,segment.text,rate,phoneme);
       const cached=await getClip(id);
-      let blob=null,source='local',onlineAttempt='not-needed',reason='';
+      let blob=null,source='unavailable',onlineAttempt='not-needed',reason='';
       // Cache-first: replaying a phrase already synthesized on this device costs
       // zero provider characters. Generate online only on a cache miss.
       if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){
@@ -9873,7 +9837,7 @@ const HybridSpeech = (() => {
       if(!blob&&!opts.forceLocal){
         if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
         else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
-        else if(phoneme){onlineAttempt='skipped';reason='free-provider-does-not-support-ipa-ssml';}
+        else if(phoneme){onlineAttempt='skipped';reason='neural-provider-does-not-support-the-required-IPA-phoneme-mode';}
         else{
           onlineAttempt='attempted';
           blob=await fetchClip(segment,voice,rate,token,'');
@@ -9885,24 +9849,56 @@ const HybridSpeech = (() => {
       if(blob){
         try{
           await playBlob(blob,rate,token);
-          updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت الشبكي وحفظه');
+          updateStatus(source==='saved'?'Playing saved neural audio offline / تشغيل الصوت العصبي المحفوظ دون إنترنت':'Playing neural audio; saved on this device / تشغيل الصوت العصبي وحفظه على الجهاز');
           results.push({language:lang,source,onlineAttempt,reason});
           continue;
-        }catch(e){console.warn('Audio playback failed; local fallback used.',e);reason='audio playback failed';}
+        }catch(e){console.warn('Neural audio playback failed.',e);reason='audio playback failed';}
       }
-      source='local';
-      updateStatus(reason==='privacy'?'Personal text kept on device / النص الشخصي لا يغادر الجهاز':(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي'));
-      await localSpeak(phoneme?(opts.fallbackText||segment.text):segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
-      results.push({language:lang,source,onlineAttempt,reason:reason||'no cached or online audio'});
+      source='unavailable';
+      updateStatus(reason==='privacy'?'Personal text kept on device / النص الشخصي لا يغادر الجهاز':(phoneme?'This phoneme needs a pre-recorded neural sound clip / هذا الصوت يحتاج مقطعاً عصبيّاً مسجلاً مسبقاً':(navigator.onLine?'Neural audio unavailable. Retry online or download the lesson / الصوت العصبي غير متاح. أعد المحاولة أو نزّل صوت الدرس':'Offline: this phrase is not downloaded yet / دون إنترنت: هذا المقطع لم يُنزّل بعد')));
+      results.push({language:lang,source,onlineAttempt,reason:reason||'no cached or online neural audio'});
     }
     return results;
   }
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
   async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
-  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Free neural speech ready / الصوت الشبكي المجاني جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
+  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Neural online generation available / التوليد العصبي عبر الإنترنت متاح':'Offline neural library / مكتبة الصوت العصبي دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
   function stop(){generation++;Speech._speechGeneration=(Speech._speechGeneration||0)+1;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();if(window.NativeSpeech)window.NativeSpeech.cancel();}catch(e){}if(Speech._nativePending){const pending=Speech._nativePending;Speech._nativePending=null;try{pending.finish();}catch(e){}}controller=null;currentAudio=null;currentUrl=null;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
   window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
-  return{speak,stop,clearCache,updateStatus,stats};
+  async function prefetchLesson(){
+    const lesson=document.getElementById('screen-lesson');
+    if(!lesson)return{message:'Lesson screen not found / لم يتم العثور على شاشة الدرس'};
+    const selectors='.question-title,.arabic-hint,.story-passage,.arabic-explanation,.option-btn,.jolly-sound,.jolly-practice,.visual-model figcaption,.activity-heading,.feedback-banner,.question-instruction';
+    const nodes=[...lesson.querySelectorAll(selectors)];
+    const raw=[...new Set(nodes.map(n=>(n.innerText||n.textContent||'').replace(/\s+/g,' ').trim()).filter(t=>t.length>1&&t.length<=1000))];
+    const segments=[];
+    for(const text of raw){for(const seg of Speech.prepareSegments(text,{})){if(seg.text&&seg.text.length<=1000)segments.push(seg);}}
+    const unique=[...new Map(segments.map(seg=>[seg.isArabic?'ar|'+seg.text:'en|'+seg.text,seg])).values()];
+    if(!unique.length)return{message:'Open a lesson first, then download its audio / افتح درساً أولاً ثم نزّل صوته'};
+    if(!navigator.onLine)return{message:'Connect to the internet before downloading this lesson / اتصل بالإنترنت قبل تنزيل صوت الدرس'};
+    const token=++generation,settings=Store.data.settings||{},rate=rateFor({}),today=new Date().toISOString().slice(0,10),quotaKey='ali_aboudy_neural_chars_'+today;
+    let used=0;try{used=Number(localStorage.getItem(quotaKey)||0)||0;}catch(e){}
+    let requests=0,downloaded=0,already=0,skipped=0,chars=0;
+    for(const seg of unique){
+      if(token!==generation)break;
+      if(personalNamePattern.test(seg.text)){skipped++;continue;}
+      const lang=seg.isArabic?'ar-EG':'en-GB',voice=seg.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural');
+      const id=idFor(lang,voice,seg.text,rate,'');
+      const cached=await getClip(id);
+      if(cached&&cached.blob){already++;continue;}
+      if(requests>=8)break;
+      if(used+seg.text.length>1800)break;
+      const blob=await fetchClip(seg,voice,rate,token,'');
+      requests++;
+      if(blob){downloaded++;used+=seg.text.length;chars+=seg.text.length;try{localStorage.setItem(quotaKey,String(used));}catch(e){}}
+      else{skipped++;}
+    }
+    const remaining=unique.length-downloaded-already-skipped;
+    const msg='Downloaded '+downloaded+' neural clips; already saved '+already+'. '+(remaining>0?'Pending '+remaining+' clips — repeat after the rate-limit window or daily quota reset. ':'')+'No local TTS fallback. / تم تنزيل '+downloaded+' مقطع عصبي، والمحفوظ مسبقاً '+already+'. '+(remaining>0?'المتبقي '+remaining+' مقطع. ':'')+'لا يوجد رجوع للصوت المحلي.';
+    updateStatus(msg);
+    return{downloaded,already,skipped,remaining,chars,message:msg};
+  }
+  return{speak,stop,clearCache,updateStatus,stats,prefetchLesson};
 })();
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
@@ -9916,6 +9912,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<script>try { Speech.loadVoices(); window.__refreshAppSpeechVoices = () => Speech.loadVoices(); } catch (e) {}</script>
+
 </body>
 </html>
