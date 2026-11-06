@@ -19,12 +19,12 @@ function allowRequest(ip) {
   if (RATE_BUCKETS.size > 5000) {
     for (const [key, value] of RATE_BUCKETS) if (now - value.start >= 120000) RATE_BUCKETS.delete(key);
   }
-  if (bucket.count > 15) return false;
+  if (bucket.count > 9) return false;
 
   // Keep this Vercel instance below FreeTTS' published 20 requests/minute/IP cap.
   if (now - providerWindow.start >= 60000) providerWindow = { start: now, count: 0 };
   providerWindow.count += 1;
-  return providerWindow.count <= 15;
+  return providerWindow.count <= 9;
 }
 
 function rateString(rate) {
@@ -41,11 +41,6 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
 
   const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (!allowRequest(ip)) {
-    res.setHeader('Retry-After', '60');
-    return res.status(429).json({ error: 'Speech request limit reached. Please wait one minute.', code: 'APP_RATE_LIMITED' });
-  }
-
   let body = req.body || {};
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
@@ -66,6 +61,10 @@ module.exports = async function handler(req, res) {
   }
   if (PERSONAL_TEXT.test(text)) {
     return res.status(400).json({ error: 'Personal names are kept on this device and cannot be sent to online speech.', code: 'PERSONAL_TEXT_BLOCKED' });
+  }
+  if (!allowRequest(ip)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Speech request limit reached. Please wait one minute.', code: 'APP_RATE_LIMITED' });
   }
 
   const controller = new AbortController();
