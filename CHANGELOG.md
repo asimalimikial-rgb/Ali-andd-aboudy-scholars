@@ -1,3 +1,10 @@
+## Unreleased — Neural audio offline packs
+
+- Added a parent-control action to download audio for the currently loaded lesson into IndexedDB.
+- Removed Android/browser local speech fallback: uncached speech is unavailable offline instead of silently switching voices.
+- Added neural IPA phoneme SSML synthesis so phonics clips can also be cached as neural MP3.
+- Added persistent-storage request and explicit cache-storage failure reporting.
+
 ## Unreleased — Free Neural Speech & Cache-first Audio
 
 - Replaced Azure-dependent network speech with the free FreeTTS Neural TTS API through the existing Vercel proxy.
