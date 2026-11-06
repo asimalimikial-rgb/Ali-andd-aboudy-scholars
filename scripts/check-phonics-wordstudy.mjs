@@ -53,6 +53,6 @@ checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encourageme
 const blending=html.indexOf("else if(skill==='blending')");
 const study=html.indexOf("else if(skill==='wordstudy')");
 const segmenting=html.indexOf("else if(skill==='segmenting')");
-checks.push(['Question replay and stop controls disappear after answer',html.includes("id = 'question-audio-controls'") && html.includes("id = 'btn-replay-question'") && html.includes("id = 'btn-stop-question'") && answer.includes("document.getElementById('question-audio-controls')")]);
+checks.push(['Question replay and stop controls disappear after answer',html.includes("audioControls.id = 'question-audio-controls'") && html.includes('id="btn-replay-question"') && html.includes('id="btn-stop-question"') && answer.includes("document.getElementById('question-audio-controls')")]);
 checks.push(['Learning sections remain reachable',blending>=0&&study>blending&&segmenting>study]);
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
