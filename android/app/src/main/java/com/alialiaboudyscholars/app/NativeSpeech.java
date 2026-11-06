@@ -37,9 +37,10 @@ public final class NativeSpeech {
         JSONArray voices = new JSONArray();
         try {
             for (String language : new String[]{"en", "ar"}) {
-                for (int sid = 0; sid < 10; sid++) {
+                String[] styles = new String[]{"M1", "M2", "M3", "M4", "M5", "F1", "F2", "F3", "F4", "F5"};
+            for (String style : styles) {
                     JSONObject voice = new JSONObject();
-                    voice.put("name", "Embedded voice " + (sid + 1));
+                    voice.put("name", style);
                     voice.put("lang", language.equals("ar") ? "ar" : "en");
                     voice.put("localService", true);
                     voices.put(voice);
@@ -151,8 +152,12 @@ public final class NativeSpeech {
     private int parseVoiceId(String name) {
         if (name == null) return 0;
         try {
-            String digits = name.replaceAll("[^0-9]", "");
-            return digits.isEmpty() ? 0 : Math.max(0, Math.min(9, Integer.parseInt(digits) - 1));
+            String style = name.trim().toUpperCase();
+            String digits = style.replaceAll("[^0-9]", "");
+            if (digits.isEmpty()) return 0;
+            int index = Integer.parseInt(digits) - 1;
+            if (style.startsWith("F")) index += 5;
+            return Math.max(0, Math.min(9, index));
         } catch (Exception ignored) { return 0; }
     }
 
