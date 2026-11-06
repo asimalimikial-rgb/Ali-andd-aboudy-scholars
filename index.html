@@ -9665,7 +9665,7 @@ const HybridSpeech = (() => {
   const MAX_BYTES = 80 * 1024 * 1024;
   let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
   const localSpeak = Speech.speak.bind(Speech);
-  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي/i;
+  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
   function openDB() {
     if (!('indexedDB' in window)) return Promise.resolve(null);
     if (dbPromise) return dbPromise;
