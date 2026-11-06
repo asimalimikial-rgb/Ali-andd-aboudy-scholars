@@ -8205,6 +8205,9 @@ const JOLLY_SOUND_GROUPS = [
   [['qu','queen','make a tiny crown','صوت qu كما في queen'],['ou','out','point outside','صوت ou في out'],['oi','coin','pretend to find a coin','صوت oi'],['ue','blue','point to something blue','صوت ue في blue'],['er','fern','draw a small fern','صوت er'],['ar','farm','pretend to drive a tractor','صوت ar']]
 ];
 const JOLLY_TRICKY = ['I','the','he','she','we','me','be','was','to','do','are','all','you','your','come','some','said','here','there','they','go','no','so','one','by','my','only'];
+const JOLLY_ARABIC_WORDS = {
+  sun:'شمس',ant:'نملة',tap:'نقرة',ink:'حبر',pig:'خنزير',net:'شبكة',cat:'قطة',kite:'طائرة ورقية',egg:'بيضة',hat:'قبعة',red:'أحمر',map:'خريطة',dog:'كلب',goat:'ماعز',octopus:'أخطبوط',up:'أعلى',leg:'ساق',fish:'سمكة',bag:'حقيبة',rain:'مطر',jam:'مربّى',boat:'قارب',tie:'ربطة عنق',feet:'أقدام',fork:'شوكة',zip:'سحّاب',web:'شبكة عنكبوت',ring:'خاتم',van:'سيارة نقل',moon:'قمر',book:'كتاب',yes:'نعم',box:'صندوق',chip:'رقاقة',ship:'سفينة',this:'هذا',thin:'رفيع',queen:'ملكة',out:'خارج',coin:'عملة',blue:'أزرق',fern:'سرخس',farm:'مزرعة'
+};
 
 const App = {
   currentLesson: null,
@@ -8219,30 +8222,68 @@ const App = {
 
   renderJollyPhonics(skill = 'sounds') {
     const skills = [
-      ['sounds','🔊 Letter sounds','أصوات الحروف'],['formation','✍️ Letter formation','كتابة الحروف'],['blending','🧩 Blending','دمج الأصوات'],['segmenting','👂 Segmenting','تقسيم الكلمات'],['tricky','⭐ Tricky words','الكلمات الشائعة']
+      ['sounds','🔊 Letter sounds','أصوات الحروف'],['formation','✍️ Letter formation','كتابة الحروف'],['wordstudy','📚 Word Study','دراسة الكلمات'],['blending','🧩 Blending','دمج الأصوات'],['segmenting','👂 Segmenting','تقسيم الكلمات'],['tricky','⭐ Tricky words','الكلمات الشائعة']
     ];
     const bar = document.getElementById('jolly-skills'); bar.innerHTML = '';
     skills.forEach(([id,en,ar]) => { const b=document.createElement('button'); b.className='btn '+(id===skill?'btn-primary':'btn-secondary'); b.textContent=en+' / '+ar; b.onclick=()=>this.renderJollyPhonics(id); bar.appendChild(b); });
     const root=document.getElementById('jolly-content'); root.innerHTML='';
     if(skill==='sounds' || skill==='formation') {
       JOLLY_SOUND_GROUPS.forEach((group,i)=>{
-        const section=document.createElement('section'); section.className='jolly-group';
-        const heading=document.createElement('h3'); heading.textContent=`Group ${i+1} / المجموعة ${i+1}`; section.appendChild(heading);
-        const grid=document.createElement('div'); grid.className='jolly-sounds';
-        group.forEach(([sound,word,action,ar],j)=>{
-          const card=document.createElement('article'); card.className='jolly-sound';
-          const grapheme=document.createElement('div'); grapheme.className='jolly-grapheme'; grapheme.textContent=sound; card.appendChild(grapheme);
-          const w=document.createElement('div'); w.className='jolly-word'; w.textContent=word; card.appendChild(w);
-          const a=document.createElement('div'); a.className='jolly-ar'; a.textContent=action; card.appendChild(a);
-          const hear=document.createElement('button'); hear.className='btn btn-primary'; hear.textContent='🔊 Hear sound'; hear.onclick=()=>this.playJollyPhoneme(sound,word); card.appendChild(hear);
-          const say=document.createElement('button'); say.className='btn btn-secondary'; say.textContent='Hear example word'; say.onclick=()=>Speech.speak(word); card.appendChild(say);
-          if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-secondary';trace.textContent='Trace '+sound;trace.onclick=()=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<div style="font-size:4rem;text-align:center;font-weight:800;letter-spacing:8px">${sound}</div><p dir="rtl" style="text-align:center">اكتب الحرف في الهواء بإصبعك ثلاث مرات، ثم جرّب كتابته على ورقة.</p>`;root.appendChild(box);};card.appendChild(trace);}
+        const section=document.createElement('section');section.className='jolly-group';
+        const heading=document.createElement('h3');heading.textContent='Group '+(i+1)+' / المجموعة '+(i+1);section.appendChild(heading);
+        const grid=document.createElement('div');grid.className='jolly-sounds';
+        group.forEach(([sound,word,action,ar])=>{
+          const card=document.createElement('article');card.className='jolly-sound';
+          const grapheme=document.createElement('div');grapheme.className='jolly-grapheme';grapheme.textContent=sound;card.appendChild(grapheme);
+          const w=document.createElement('div');w.className='jolly-word';w.textContent=word;card.appendChild(w);
+          const a=document.createElement('div');a.className='jolly-ar';a.dir='rtl';a.textContent=ar+' • '+(JOLLY_ARABIC_WORDS[word.toLowerCase()]||'');card.appendChild(a);
+          const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound.toLowerCase().replace(/[^a-z]/g,' ').trim().split(/\s+/).join(' '));card.appendChild(name);
+          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
+          const say=document.createElement('button');say.className='btn btn-secondary';say.textContent='Example word / كلمة المثال';say.onclick=()=>Speech.speak(word);card.appendChild(say);
+          if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-accent';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,sound);card.appendChild(trace);}
           grid.appendChild(card);
-        }); section.appendChild(grid); root.appendChild(section);
+        });section.appendChild(grid);root.appendChild(section);
       });
     } else if(skill==='blending') {
       const examples=[['s','a','t','sat'],['p','i','n','pin'],['t','a','p','tap'],['n','a','p','nap'],['m','a','p','map'],['s','i','t','sit']];
       examples.forEach(parts=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<h3 style="text-align:center">${parts.slice(0,3).join('  +  ')}</h3><p style="text-align:center;font-size:1.8rem;margin:8px">→ ${parts[3]}</p><p dir="rtl" style="text-align:center">اسمع كل صوت منفصلاً، ثم قرّب الأصوات من بعضها حتى تسمع الكلمة.</p>`;const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Listen and blend';b.onclick=()=>{parts.slice(0,3).forEach((x,i)=>setTimeout(()=>this.playJollyPhoneme(x,parts[3]),i*650));setTimeout(()=>Speech.speak(parts[3]),2200);};box.appendChild(b);root.appendChild(box);});
+    } else if(skill==='wordstudy') {
+      const ali=Store.data.activeChild==='ali';
+      const words=ali?[
+        ['sun','شمس','s · u · n','ثلاثة أصوات قصيرة تكوّن كلمة sun.'],
+        ['cat','قطة','c · a · t','ابدأ بصوت c ثم a ثم t.'],
+        ['map','خريطة','m · a · p','ادمج الأصوات بهدوء لتقرأ map.'],
+        ['dog','كلب','d · o · g','استمع إلى الصوت الأول ثم أكمل.'],
+        ['pen','قلم','p · e · n','لاحظ صوت e القصير في وسط الكلمة.'],
+        ['fish','سمكة','f · i · sh','الحرفان sh يعملان معاً كصوت واحد.'],
+        ['hat','قبعة','h · a · t','ثلاثة أصوات؛ اقرأها من اليسار إلى اليمين.'],
+        ['bag','حقيبة','b · a · g','استمع إلى b في بداية الكلمة.']
+      ]:[
+        ['garden','حديقة','gar · den','اقرأ الكلمة في مقطعين: gar ثم den.'],
+        ['bright','مشرق / لامع','br · igh · t','مجموعة igh تمثل صوتاً طويلاً واحداً.'],
+        ['because','لأن','be · cause','اقرأ الكلمة على جزأين، ثم اربطها بالمعنى.'],
+        ['friend','صديق','fr · ie · nd','انتبه إلى نمط ie في هذه الكلمة.'],
+        ['train','قطار','tr · ai · n','الحرفان ai يمثلان صوت المد في train.'],
+        ['careful','حذر','care · ful','لاحظ نهاية ful في الكلمة.'],
+        ['window','نافذة','win · dow','اقرأ المقطعين ثم قل المعنى بالعربية.'],
+        ['enough','كافٍ','e · nough','هذه كلمة شائعة؛ تدرب على شكلها ونطقها.']
+      ];
+      const intro=document.createElement('div');intro.className='jolly-practice';
+      const introTitle=document.createElement('h3');introTitle.textContent='Word Study / دراسة الكلمات';intro.appendChild(introTitle);
+      const introText=document.createElement('p');introText.dir='rtl';introText.textContent='اختر كلمة، اسمع نطقها، اقرأ معناها بالعربية، ثم تتبّعها بإصبعك. الكلمات مناسبة لمستوى الطفل المختار.';intro.appendChild(introText);root.appendChild(intro);
+      const grid=document.createElement('div');grid.className='jolly-sounds';
+      words.forEach(item=>{
+        const card=document.createElement('article');card.className='jolly-sound';
+        const word=document.createElement('div');word.className='jolly-grapheme';word.textContent=item[0];card.appendChild(word);
+        const meaning=document.createElement('div');meaning.className='jolly-ar';meaning.dir='rtl';meaning.textContent='المعنى: '+item[1];card.appendChild(meaning);
+        const parts=document.createElement('p');parts.style.textAlign='center';parts.style.fontWeight='700';parts.textContent=item[2];card.appendChild(parts);
+        const help=document.createElement('p');help.dir='rtl';help.className='jolly-ar';help.textContent=item[3];card.appendChild(help);
+        const listen=document.createElement('button');listen.className='btn btn-primary';listen.textContent='Listen / اسمع';listen.onclick=()=>Speech.speak(item[0]);card.appendChild(listen);
+        const trace=document.createElement('button');trace.className='btn btn-secondary';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,item[0]);card.appendChild(trace);
+        const save=document.createElement('button');save.className='btn btn-accent';save.textContent='Save word / احفظ الكلمة';save.onclick=()=>{this.saveVocabularyWord(item[0]);save.textContent='Saved / تم الحفظ';};card.appendChild(save);
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
     } else if(skill==='segmenting') {
       [['sun',['s','u','n']],['map',['m','a','p']],['fish',['f','i','sh']],['ship',['sh','i','p']],['chat',['ch','a','t']]].forEach(([word,parts])=>{const box=document.createElement('div');box.className='jolly-practice';const h=document.createElement('h3');h.textContent=word;box.appendChild(h);const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Reveal sounds';b.onclick=()=>{let line=box.querySelector('.segments');if(!line){line=document.createElement('p');line.className='segments';line.style.fontSize='1.5rem';line.style.textAlign='center';box.appendChild(line);}line.textContent=parts.join('  •  ');};box.appendChild(b);root.appendChild(box);});
     } else {
@@ -8252,19 +8293,44 @@ const App = {
     this.showScreen('screen-jolly');
   },
 
+  openTracePad(container, target) {
+    const prior=container.querySelector('.trace-pad');if(prior)prior.remove();
+    const box=document.createElement('div');box.className='jolly-practice trace-pad';
+    const title=document.createElement('h3');title.textContent='Trace with your finger / تتبّع بإصبعك';box.appendChild(title);
+    const help=document.createElement('p');help.dir='rtl';help.textContent='اتبع شكل الحرف أو الكلمة بإصبعك داخل المساحة. اضغط مسح إذا أردت المحاولة من جديد.';box.appendChild(help);
+    const canvas=document.createElement('canvas');canvas.width=900;canvas.height=260;canvas.setAttribute('aria-label','Drawing area to trace '+target);
+    canvas.style.cssText='display:block;width:100%;height:210px;background:#fff;border:3px dashed #9ca3af;border-radius:16px;touch-action:none;cursor:crosshair;';
+    box.appendChild(canvas);
+    const ctx=canvas.getContext('2d');let drawing=false,ink=false;
+    const guide=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#eef2f7';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#c3cbd6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(String(target).length>5?'bold 145px Arial':'bold 190px Arial');ctx.fillText(String(target),canvas.width/2,canvas.height/2);};
+    guide();
+    const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};};
+    canvas.addEventListener('pointerdown',e=>{drawing=true;ink=true;const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+    canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);ctx.lineWidth=13;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#2563eb';ctx.lineTo(p.x,p.y);ctx.stroke();});
+    const status=document.createElement('p');status.dir='rtl';status.textContent='ابدأ من فوق الشكل واتبع مساره.';box.appendChild(status);
+    const stop=()=>{drawing=false;if(ink)status.textContent='أحسنت! أكمل التتبع أو أعد المحاولة ⭐';};
+    canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('pointerleave',stop);
+    const clear=document.createElement('button');clear.type='button';clear.className='btn btn-secondary';clear.textContent='Clear / مسح';clear.onclick=()=>{ink=false;guide();status.textContent='المساحة جاهزة. حاول مرة أخرى!';};box.appendChild(clear);
+    const done=document.createElement('button');done.type='button';done.className='btn btn-primary';done.textContent='Done / انتهيت';done.onclick=()=>{status.textContent=ink?'ممتاز! أكملت التتبع 👏':'ابدأ برسم الحرف أو الكلمة أولاً.';};box.appendChild(done);
+    container.appendChild(box);
+  },
+
   playJollyPhoneme(sound, example) {
-    // Pure /s/ is a sustained unvoiced hiss, not the letter name "ess".
-    // Generate a short, shaped sibilant locally so no TTS engine can turn it into a letter name.
-    if(sound.toLowerCase()==='s') {
-      try {
-        const Ctx=window.AudioContext||window.webkitAudioContext; const ctx=new Ctx();
-        const duration=0.55, frames=Math.floor(ctx.sampleRate*duration), buffer=ctx.createBuffer(1,frames,ctx.sampleRate), data=buffer.getChannelData(0);
-        let seed=17; for(let i=0;i<frames;i++){seed=(seed*16807)%2147483647;const noise=(seed/2147483647)*2-1;const env=Math.min(1,i/(ctx.sampleRate*.035), (frames-i)/(ctx.sampleRate*.09));data[i]=noise*env*.32;}
-        const src=ctx.createBufferSource();src.buffer=buffer;const filter=ctx.createBiquadFilter();filter.type='highpass';filter.frequency.value=3500;const gain=ctx.createGain();gain.gain.value=.75;src.connect(filter).connect(gain).connect(ctx.destination);src.onended=()=>ctx.close();src.start();return;
-      } catch(e) { /* use the spoken example as a safe fallback */ }
-    }
-    // For other phonemes, speak a carefully chosen example word instead of asking TTS to read a bare letter.
-    Speech.speak(example);
+    const key=String(sound).toLowerCase()+'|'+String(example).toLowerCase();
+    const map={
+      's|sun':['s','ssss'],'a|ant':['æ','short a'],'t|tap':['t','tuh'],'i|ink':['ɪ','short i'],'p|pig':['p','puh'],'n|net':['n','nnn'],
+      'c / k|cat • kite':['k','kuh'],'e|egg':['ɛ','short e'],'h|hat':['h','hhh'],'r|red':['ɹ','rrr'],'m|map':['m','mmm'],'d|dog':['d','duh'],
+      'g|goat':['ɡ','guh'],'o|octopus':['ɒ','short o'],'u|up':['ʌ','short u'],'l|leg':['l','lll'],'f|fish':['f','fff'],'b|bag':['b','buh'],
+      'ai|rain':['eɪ','long a'],'j|jam':['dʒ','juh'],'oa|boat':['əʊ','long o'],'ie|tie':['aɪ','long i'],'ee|feet':['iː','long e'],'or|fork':['ɔː','or'],
+      'z|zip':['z','zzz'],'w|web':['w','wuh'],'ng|ring':['ŋ','ng'],'v|van':['v','vvv'],'oo|moon':['uː','long oo'],'oo|book':['ʊ','short oo'],
+      'y|yes':['j','yuh'],'x|box':['ks','ks'],'ch|chip':['tʃ','ch'],'sh|ship':['ʃ','shhh'],'th|this':['ð','voiced th'],'th|thin':['θ','soft th'],
+      'qu|queen':['kw','kw'],'ou|out':['aʊ','ow'],'oi|coin':['ɔɪ','oy'],'ue|blue':['uː','blue'],'er|fern':['ɜː','er'],'ar|farm':['ɑː','ar']
+    };
+    const simpleKeys={s:'s|sun',a:'a|ant',t:'t|tap',i:'i|ink',p:'p|pig',n:'n|net',m:'m|map'};
+    const item=map[key]||map[simpleKeys[String(sound).toLowerCase()]||''];
+    if(!item){Speech.speak(example);return;}
+    const spoken=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();
+    Speech.speak(spoken,{phoneme:item[0],fallbackText:item[1],rate:0.88});
   },
 
   init() {
@@ -8805,8 +8871,9 @@ const App = {
       const row = document.createElement('div'); row.className = 'card vocabulary-row';
       const meta = document.createElement('div'); meta.className = 'word-meta';
       const word = document.createElement('strong'); word.textContent = entry.word;
+      const meaning = document.createElement('small'); meaning.dir='rtl'; meaning.textContent = JOLLY_ARABIC_WORDS[String(entry.word||'').toLowerCase()] || 'كلمة جديدة';
       const date = document.createElement('small'); date.textContent = entry.date || '';
-      meta.append(word, document.createElement('br'), date);
+      meta.append(word, document.createElement('br'), meaning, document.createElement('br'), date);
       const speak = document.createElement('button'); speak.className = 'btn btn-accent'; speak.type = 'button'; speak.textContent = '🔊';
       speak.setAttribute('aria-label', `Speak ${entry.word}`); speak.onclick = () => Speech.speak(entry.word);
       row.append(meta, speak); list.appendChild(row);
@@ -9580,7 +9647,7 @@ const HybridSpeech = (() => {
     const db=await openDB(); if(!db)return;
     try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), items=await reqP(store.getAll()); let total=items.reduce((n,x)=>n+(x.bytes||0),0); if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const x of items){if(total<=MAX_BYTES*.85)break;store.delete(x.id);total-=x.bytes||0;}} } catch(e){}
   }
-  const idFor=(lang,voice,text,rate)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+text;
+  const idFor=(lang,voice,text,rate,phoneme)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+(phoneme?'ipa:'+phoneme+'::':'')+text;
   function rateFor(opts){const s=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(s.speechRate)||.95;return Math.max(.75,Math.min(1.25,s.slowSpeech?base*.88:base));}
   function playBlob(blob,rate,token){
     return new Promise((resolve,reject)=>{
@@ -9588,34 +9655,34 @@ const HybridSpeech = (() => {
       try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
     });
   }
-  async function fetchClip(segment,voice,rate,token){
+  async function fetchClip(segment,voice,rate,token,phoneme){
     const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
     if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
     try {
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate}),signal:controller?controller.signal:undefined});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate,phoneme:phoneme||undefined}),signal:controller?controller.signal:undefined});
       if(!response.ok)throw new Error('Speech service status '+response.status);
       const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
       if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text});
+      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text,phoneme});
       return blob;
     } catch(e){if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);return null;}
     finally{controller=null;}
   }
   async function speak(input,opts){
-    opts=opts||{};const token=++generation;
+    opts=opts||{};const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';const token=++generation;
     try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
     currentAudio=null;currentUrl=null;const segments=Speech.prepareSegments(input,opts);if(!segments.length)return;
     const settings=Store.data.settings||{},rate=rateFor(opts);
     for(const segment of segments){
       if(token!==generation)return;
-      const lang=segment.isArabic?'ar-XA':'en-GB',voice=segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede');
-      const id=idFor(lang,voice,segment.text,rate),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
-      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token);if(blob)source='online';}
+      const lang=segment.isArabic?'ar-XA':'en-GB',voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
+      const id=idFor(lang,voice,segment.text,rate,phoneme),cached=await getClip(id);let blob=cached&&cached.blob?cached.blob:null,source=blob?'saved':'local';
+      if(!blob&&navigator.onLine&&!personalNamePattern.test(segment.text)){blob=await fetchClip(segment,voice,rate,token,phoneme);if(blob)source='online';}
       if(token!==generation)return;
       if(blob){try{await playBlob(blob,1,token);updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت العصبي وحفظه');continue;}catch(e){console.warn('Audio playback failed; local fallback used.',e);}}
       updateStatus(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي');
-      await localSpeak(segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
+      await localSpeak(phoneme?(opts.fallbackText||segment.text):segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
     }
   }
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}

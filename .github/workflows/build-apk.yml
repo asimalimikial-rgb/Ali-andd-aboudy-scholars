@@ -10,6 +10,8 @@ on:
       - 'android/**'
       - 'scripts/**'
       - '.github/workflows/build-apk.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -50,6 +52,7 @@ jobs:
       - name: Validate JavaScript
         run: |
           node scripts/check-html.mjs
+          node scripts/check-phonics-wordstudy.mjs
           node --check api/tts.js
 
       - name: Decode release signing key
@@ -70,17 +73,26 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle --no-daemon --stacktrace -p android :app:assembleRelease
 
+      - name: Verify release signing certificate
+        shell: bash
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          SIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          DIGEST=$("$SIGNER" verify --print-certs "$APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}' | tr -d ':')
+          EXPECTED=00c86a79b851f848a20203a74d07397ff67eb09182a614609c20e17d603408e1
+          test "$DIGEST" = "$EXPECTED" || { echo "Release signer mismatch; refusing to publish."; exit 1; }
+
       - name: Name APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.2.1.apk
-          sha256sum dist/Ali-Aboudy-Scholars-v1.2.1.apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.2.2.apk
+          sha256sum dist/Ali-Aboudy-Scholars-v1.2.2.apk
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ali-Aboudy-Scholars-v1.2.1
-          path: dist/Ali-Aboudy-Scholars-v1.2.1.apk
+          name: Ali-Aboudy-Scholars-v1.2.2
+          path: dist/Ali-Aboudy-Scholars-v1.2.2.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -88,10 +100,10 @@ jobs:
         if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.1
+          tag_name: v1.2.2
           target_commitish: ${{ github.sha }}
-          name: Ali & Aboudy Scholars v1.2.1
+          name: Ali & Aboudy Scholars v1.2.2
           body_path: CHANGELOG.md
-          files: dist/Ali-Aboudy-Scholars-v1.2.1.apk
+          files: dist/Ali-Aboudy-Scholars-v1.2.2.apk
           overwrite_files: true
           make_latest: true

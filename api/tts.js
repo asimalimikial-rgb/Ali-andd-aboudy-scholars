@@ -1,9 +1,10 @@
 const VOICES = new Set([
   'en-GB-Chirp3-HD-Aoede','en-GB-Chirp3-HD-Achird','en-GB-Chirp3-HD-Kore',
-  'en-GB-Chirp3-HD-Charon','en-GB-Chirp3-HD-Zephyr','en-GB-Chirp3-HD-Fenrir',
+  'en-GB-Chirp3-HD-Charon','en-GB-Chirp3-HD-Zephyr','en-GB-Chirp3-HD-Fenrir','en-GB-Standard-A',
   'ar-XA-Chirp3-HD-Aoede','ar-XA-Chirp3-HD-Achird','ar-XA-Chirp3-HD-Kore',
   'ar-XA-Chirp3-HD-Charon','ar-XA-Chirp3-HD-Zephyr','ar-XA-Chirp3-HD-Fenrir'
-]);
+]); 
+const PHONEMES = new Set(['s','æ','t','ɪ','p','n','k','ɛ','h','ɹ','m','d','ɡ','ɒ','ʌ','l','f','b','eɪ','dʒ','əʊ','aɪ','iː','ɔː','z','w','ŋ','v','uː','ʊ','j','ks','tʃ','ʃ','ð','θ','kw','aʊ','ɔɪ','ɜː','ɑː']);
 const RATE_BUCKETS = new Map();
 function allowedRequest(ip) {
   const now = Date.now();
@@ -27,10 +28,13 @@ module.exports = async function handler(req, res) {
   const body = req.body || {};
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   const voice = typeof body.voice === 'string' ? body.voice : '';
-  if (!text || text.length > 500 || !VOICES.has(voice)) {
-    return res.status(400).json({ error: 'Invalid text or voice selection' });
+  const phoneme = typeof body.phoneme === 'string' ? body.phoneme : '';
+  const isPhoneme = !!phoneme && PHONEMES.has(phoneme);
+  if (!text || text.length > 500 || (phoneme && !isPhoneme) || !(VOICES.has(voice) || (isPhoneme && voice === 'en-GB-Standard-A')) || (isPhoneme && !/^[A-Za-z /-]{1,12}$/.test(text))) {
+    return res.status(400).json({ error: 'Invalid text, voice, or phoneme selection' });
   }
   const languageCode = voice.startsWith('ar-XA-') ? 'ar-XA' : 'en-GB';
+  const safePhonemeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');
   const rate = Number(body.rate);
   const speakingRate = Number.isFinite(rate) ? Math.max(0.75, Math.min(1.25, rate)) : 0.95;
   try {
@@ -38,7 +42,7 @@ module.exports = async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        input: { text },
+        input: isPhoneme ? { ssml: '<speak><phoneme alphabet="ipa" ph="' + phoneme + '">' + safePhonemeText + '</phoneme></speak>' } : { text },
         voice: { languageCode, name: voice },
         audioConfig: { audioEncoding: 'MP3', speakingRate }
       })
