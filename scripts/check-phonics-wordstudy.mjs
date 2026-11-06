@@ -12,6 +12,8 @@ const checks=[
   ['IPA server validation',api.includes('const PHONEMES = new Set(') && api.includes('alphabet="ipa"')],
   ['Offline IPA cache key',html.includes('ipa:'+String.fromCharCode(39)+'+phoneme') && html.includes('rate,phoneme),blob')],
   ['Mobile trace canvas size',html.includes('height:210px')],
+  ['Responsive Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('@media(max-width:600px)')],
+  ['Android offline TTS bridge',html.includes('window.NativeSpeech.speak(nativeId') && html.includes('window.__nativeSpeechReady') && !html.includes('tts-bridge.js')],
   ['All 42 sound entries mapped',true]
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));

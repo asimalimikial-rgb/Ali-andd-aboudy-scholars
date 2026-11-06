@@ -442,7 +442,7 @@
     .avatar-mini::after { content: '⇄'; position: absolute; right: -6px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; background: white; color: var(--primary-aboudy); font-size: 12px; line-height: 18px; box-shadow: var(--shadow-sm); }
     .avatar-mini:focus-visible { outline: 3px solid var(--primary-aboudy); outline-offset: 3px; }
 
-  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
+  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}@media(max-width:600px){.jolly-wordstudy-grid{grid-template-columns:minmax(0,1fr)}}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
   <script src="tts-config.js"></script>
 </head>
@@ -903,8 +903,19 @@ const SoundEffects = {
 const Speech = {
   voices: [], unlocked: false, _utt: null, keepAliveTimer: null,
   init() {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
+    if (window.NativeSpeech) {
+      window.__nativeSpeechReady = () => this.loadVoices();
+      window.__nativeSpeechEvent = (id, event) => {
+        const pending = this._nativePending;
+        if (pending && pending.id === id && (event === 'end' || event === 'error')) {
+          this._nativePending = null;
+          pending.finish();
+        }
+      };
+    }
     this.loadVoices();
+    if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
     }
@@ -923,8 +934,17 @@ const Speech = {
     ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, unlock, { once: true }));
   },
   loadVoices() {
-    if (!('speechSynthesis' in window)) return;
-    try { this.voices = window.speechSynthesis.getVoices() || []; } catch (e) { this.voices = []; }
+    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
+    let browserVoices = [];
+    let nativeVoices = [];
+    try { if (window.speechSynthesis) browserVoices = window.speechSynthesis.getVoices() || []; } catch (e) {}
+    try {
+      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === 'function') {
+        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || '[]');
+      }
+    } catch (e) { nativeVoices = []; }
+    const known = new Set(browserVoices.map(v => v.name));
+    this.voices = browserVoices.concat(nativeVoices.filter(v => v && v.name && !known.has(v.name)));
     this.updateVoicePicker();
   },
   updateVoicePicker() {
@@ -1025,42 +1045,49 @@ const Speech = {
     this._speechGeneration = generation;
     return new Promise(resolve => {
       const segments = this.prepareSegments(input, opts);
-      if (!segments.length || !('speechSynthesis' in window)) {
+      if (!segments.length || (!('speechSynthesis' in window) && !window.NativeSpeech)) {
         if (input) this.showCaptionBubble(input);
         resolve(); return;
       }
-      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
       if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
       let index = 0;
       const playNext = () => {
         if (generation !== this._speechGeneration) { resolve(); return; }
         if (index >= segments.length) { resolve(); return; }
         const segment = segments[index++];
-        const utterance = new SpeechSynthesisUtterance(segment.text);
+        const utterance = typeof SpeechSynthesisUtterance === 'function' ? new SpeechSynthesisUtterance(segment.text) : { text: segment.text };
         this._utt = utterance;
         const voice = this.getBestVoice(segment.isArabic);
-        if (window.NativeSpeech && !voice) {
-          this.showCaptionBubble(segment.text);
-          finish();
-          return;
-        }
-        if (voice) utterance.voice = voice;
+        if (voice && !window.NativeSpeech) utterance.voice = voice;
         utterance.lang = voice && voice.lang ? voice.lang : (segment.isArabic ? 'ar' : 'en-GB');
         const settings = Store.data.settings || {};
         const baseRate = Number(settings.speechRate) || (Store.data.activeChild === 'ali' ? 0.88 : 0.96);
         utterance.rate = Math.max(0.65, Math.min(1.2, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
         utterance.pitch = opts.pitch || 1.0;
         let finished = false;
-        const startWatchdog = setTimeout(() => {
-          if (!finished) finish();
-        }, 4200);
+        let nativeId = null;
+        let nativeWatchdog = null;
+        const startWatchdog = setTimeout(() => { if (!finished) finish(); }, 4200);
         const finish = () => {
           if (finished) return;
           finished = true;
           clearTimeout(startWatchdog);
+          if (nativeWatchdog) clearTimeout(nativeWatchdog);
+          if (this._nativePending && this._nativePending.id === nativeId) this._nativePending = null;
           if (generation !== this._speechGeneration) { resolve(); return; }
           setTimeout(playNext, 100);
         };
+        if (window.NativeSpeech) {
+          clearTimeout(startWatchdog);
+          nativeId = 'native-' + generation + '-' + index + '-' + Date.now();
+          nativeWatchdog = setTimeout(finish, Math.max(12000, segment.text.length * 350));
+          this._nativePending = { id: nativeId, finish };
+          try {
+            window.NativeSpeech.speak(nativeId, segment.text, utterance.lang, voice ? voice.name : '', utterance.rate, utterance.pitch);
+          } catch (e) { finish(); }
+          return;
+        }
         utterance.onstart = () => {
           if (generation !== this._speechGeneration) return;
           if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
@@ -8271,7 +8298,7 @@ const App = {
       const intro=document.createElement('div');intro.className='jolly-practice';
       const introTitle=document.createElement('h3');introTitle.textContent='Word Study / دراسة الكلمات';intro.appendChild(introTitle);
       const introText=document.createElement('p');introText.dir='rtl';introText.textContent='اختر كلمة، اسمع نطقها، اقرأ معناها بالعربية، ثم تتبّعها بإصبعك. الكلمات مناسبة لمستوى الطفل المختار.';intro.appendChild(introText);root.appendChild(intro);
-      const grid=document.createElement('div');grid.className='jolly-sounds';
+      const grid=document.createElement('div');grid.className='jolly-wordstudy-grid';
       words.forEach(item=>{
         const card=document.createElement('article');card.className='jolly-sound';
         const word=document.createElement('div');word.className='jolly-grapheme';word.textContent=item[0];card.appendChild(word);
@@ -9688,7 +9715,7 @@ const HybridSpeech = (() => {
   async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
   async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
   function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Online-first neural voice ready / الصوت الشبكي جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
-  function stop(){generation++;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}controller=null;currentAudio=null;currentUrl=null;Speech._speechGeneration=(Speech._speechGeneration||0)+1;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
+  function stop(){generation++;Speech._speechGeneration=(Speech._speechGeneration||0)+1;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();if(window.NativeSpeech)window.NativeSpeech.cancel();}catch(e){}if(Speech._nativePending){const pending=Speech._nativePending;Speech._nativePending=null;try{pending.finish();}catch(e){}}controller=null;currentAudio=null;currentUrl=null;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
   window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
   return{speak,stop,clearCache,updateStatus,stats};
 })();
@@ -9703,7 +9730,7 @@ window.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
 </script>
-<script src="tts-bridge.js"></script>
+
 <script>try { Speech.loadVoices(); window.__refreshAppSpeechVoices = () => Speech.loadVoices(); } catch (e) {}</script>
 </body>
 </html>
