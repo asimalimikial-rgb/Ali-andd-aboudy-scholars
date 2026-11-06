@@ -442,7 +442,7 @@
     .avatar-mini::after { content: '⇄'; position: absolute; right: -6px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; background: white; color: var(--primary-aboudy); font-size: 12px; line-height: 18px; box-shadow: var(--shadow-sm); }
     .avatar-mini:focus-visible { outline: 3px solid var(--primary-aboudy); outline-offset: 3px; }
 
-  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
+  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}@media(max-width:600px){.jolly-wordstudy-grid{grid-template-columns:minmax(0,1fr)}}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
   <script src="tts-config.js"></script>
 </head>
@@ -8271,7 +8271,7 @@ const App = {
       const intro=document.createElement('div');intro.className='jolly-practice';
       const introTitle=document.createElement('h3');introTitle.textContent='Word Study / دراسة الكلمات';intro.appendChild(introTitle);
       const introText=document.createElement('p');introText.dir='rtl';introText.textContent='اختر كلمة، اسمع نطقها، اقرأ معناها بالعربية، ثم تتبّعها بإصبعك. الكلمات مناسبة لمستوى الطفل المختار.';intro.appendChild(introText);root.appendChild(intro);
-      const grid=document.createElement('div');grid.className='jolly-sounds';
+      const grid=document.createElement('div');grid.className='jolly-wordstudy-grid';
       words.forEach(item=>{
         const card=document.createElement('article');card.className='jolly-sound';
         const word=document.createElement('div');word.className='jolly-grapheme';word.textContent=item[0];card.appendChild(word);
@@ -9703,7 +9703,7 @@ window.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
 </script>
-<script src="tts-bridge.js"></script>
+
 <script>try { Speech.loadVoices(); window.__refreshAppSpeechVoices = () => Speech.loadVoices(); } catch (e) {}</script>
 </body>
 </html>
