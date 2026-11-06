@@ -9663,7 +9663,7 @@ const HybridSpeech = (() => {
       if(!response.ok)throw new Error('Speech service status '+response.status);
       const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
       if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text});
+      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text,phoneme});
       return blob;
     } catch(e){if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);return null;}
     finally{controller=null;}
