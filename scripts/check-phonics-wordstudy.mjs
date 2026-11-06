@@ -34,7 +34,7 @@ const checks=[
   ['Model and runtime licenses are bundled',prep.includes('SHERPA-ONNX-LICENSE.txt') && prep.includes('ONNXRUNTIME-LICENSE.txt') && prep.includes('LLVM-LICENSE.txt') && prep.includes('supertonic3/LICENSE')],
   ['Android build includes Kotlin and uncompressed ONNX assets',gradle.includes("org.jetbrains.kotlin.android") && gradle.includes("noCompress += ['onnx', 'bin']")],
   ['APK workflow prepares embedded runtime before build',workflow.includes('bash scripts/prepare-embedded-tts.sh')],
-  ['Parent voice controls retain Arabic, English, speed, test and stop',html.includes('voice-picker-select') && html.includes('voice-picker-ar-select') && html.includes('speech-rate-control') && html.includes('btn-test-voice') && html.includes('btn-stop-all-audio')]
+  ['Parent voice controls retain Arabic, English, speed, test and stop',html.includes('voice-picker-select') && html.includes('voice-picker-ar-select') && html.includes('speech-rate-control') && html.includes('btn-test-voice') && html.includes('btn-stop-all-audio') && html.includes('btn-replay-question') && html.includes('btn-stop-question')]
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));
 const soundEntries=[...soundBlock.matchAll(/\['([^']+)','([^']+)'/g)].map(m=>m[1].toLowerCase()+'|'+m[2].toLowerCase());
@@ -53,5 +53,6 @@ checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encourageme
 const blending=html.indexOf("else if(skill==='blending')");
 const study=html.indexOf("else if(skill==='wordstudy')");
 const segmenting=html.indexOf("else if(skill==='segmenting')");
+checks.push(['Question replay and stop controls disappear after answer',html.includes("id = 'question-audio-controls'") && html.includes("id = 'btn-replay-question'") && html.includes("id = 'btn-stop-question'") && answer.includes("document.getElementById('question-audio-controls')")]);
 checks.push(['Learning sections remain reachable',blending>=0&&study>blending&&segmenting>study]);
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
