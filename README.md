@@ -1,28 +1,57 @@
-# Ali & Aboudy Scholars
+# Ali & Aboudy Scholars — v1.2.0
 
-تطبيق تعليمي تفاعلي Offline-first بمسارين KG2 وGrade 2.
+تطبيق تعليمي متكامل لعلي (KG2) وعبودي (Grade 2)، بملفي تعلم منفصلين ومحتوى تفاعلي متعدد المستويات.
 
-## النسخة العامة
-`index.html` نسخة عامة آمنة للتجربة، وتستخدم أيقونة كتاب عامة بدلاً من الصور العائلية الخاصة. النسخة المحلية الشخصية التي تحتفظ بصور الطفلين الأصلية تُسلّم بصورة منفصلة ولا تُرفع إلى هذا المستودع العام.
+## محتويات المشروع
 
-## المزايا
-- ملفات تعليمية منفصلة لعلي (KG2) وعبودي (Grade 2).
-- المناهج والكتب والدروس وPlay & Learn وDaily Challenge والمكافآت.
-- My Learning World بتسع مناطق.
-- Smart Learning Coach، Phonics Studio، Reading Adventure، Math Playground، Little Science Lab، My Word Collector.
-- Adventure Arcade: ألعاب ذاكرة وأنماط ومفردات واستماع ومنطق ورياضيات وعلوم.
-- Sibling Team Quest، Virtual Pet، Mystery Box، Achievement Vault.
-- Parent Learning Report، تخزين محلي، تصدير واستيراد نسخة احتياطية.
-- جسر Android Native TTS مضمّن داخل HTML.
-- واجهة Responsive ومحتوى مضمّن دون مكتبات CDN.
+- `index.html`: تطبيق الويب الأساسي، مع ملفات الطفلين وصورهما الأصلية بناءً على موافقة صاحب المشروع.
+- `api/tts.js`: خادم وسيط آمن للصوت العصبي Google Cloud Text-to-Speech Chirp 3 HD.
+- `tts-config.js`: إعداد مسار خدمة الصوت للويب.
+- `android/`: غلاف Android WebView مع Android Native Text-to-Speech كخيار محلي.
+- `.github/workflows/build-apk.yml`: فحص JavaScript وبناء APK آلياً ونشره كـ GitHub Release.
+- `tts-config.android.js`: عنوان API الذي يحقن في نسخة Android.
 
-## التشغيل
-افتح `index.html` في متصفح حديث. في Android WebView يجب أن يحقن التطبيق كائن `NativeSpeech` قبل تحميل الصفحة إذا أُريد استخدام Android Native TTS.
+## الميزات التعليمية
 
-## الخصوصية
-- لا يحتوي هذا المستودع على صور الطفلين الأصلية أو APK أو مفاتيح توقيع.
-- لا ترفع ملفات JKS أو كلمات المرور أو بيانات التقدم الشخصية.
-- النسخة الشخصية الكاملة التي تحتوي الصور الأصلية يجب أن تبقى في التخزين الخاص وعلى أجهزة الطفلين.
+- ملفات منفصلة لعلي KG2 وعبودي Grade 2.
+- الكتب والمناهج والدروس وPlay & Learn وDaily Challenge والمكافآت.
+- My Learning World وSmart Learning Coach.
+- Phonics Studio وJolly Phonics pathway وReading Adventure.
+- Math Playground وLittle Science Lab وMy Word Collector.
+- Adventure Arcade وSibling Team Quest وVirtual Pet وMystery Box وAchievement Vault.
+- Parent Learning Report، النسخ الاحتياطي والاستعادة، وحفظ التقدم محلياً.
+- واجهة مناسبة للهاتف والأجهزة اللوحية والكمبيوتر.
 
-## حالة البناء
-هذه نسخة HTML قابلة للتجربة. لم يُنشأ APK جديد في هذا التحديث؛ يلزم Android source project الأصلي والتحقق من استمرارية التوقيع قبل إصدار APK.
+## نظام الصوت الهجين
+
+1. تشغيل المقطع المحفوظ في IndexedDB إذا سبق توليده.
+2. إذا لم يكن محفوظاً وكان الإنترنت متاحاً، طلب MP3 من Chirp 3 HD ثم حفظه محلياً.
+3. عند عدم الاتصال وعدم وجود نسخة محفوظة، الرجوع إلى Android Native TTS أو Web Speech المحلي.
+4. تخزين المقاطع حتى نحو 80 MB مع حذف الأقدم عند الحاجة.
+5. لا يرسل التطبيق اسم الطفل أو ملفه أو تقدمه إلى خدمة الصوت؛ يتم إرسال النص المطلوب نطقه والـ voice ID فقط. النصوص التي تحتوي أسماء الطفلين تُحوّل إلى الصوت المحلي ولا تُرسل للخدمة.
+
+### تفعيل Google Cloud TTS
+
+أنشئ Google Cloud API key مقيّداً بخدمة Cloud Text-to-Speech، وفعّل Cloud Text-to-Speech في المشروع. ثم أضف المتغير التالي في Vercel Project Settings → Environment Variables:
+
+`GOOGLE_TTS_API_KEY` (Sensitive)
+
+لا تضع المفتاح في HTML أو GitHub أو APK. Chirp 3 HD لا يدعم SSML أو معامل سرعة النطق من جهة Google؛ سرعة التشغيل تضبط محلياً عبر مشغل الصوت.
+
+الأصوات الافتراضية:
+- English: `en-GB-Chirp3-HD-Aoede`
+- Arabic: `ar-XA-Chirp3-HD-Aoede`
+
+يمكن اختيار أصوات أخرى من الإعدادات.
+
+## بناء APK
+
+يُبنى APK من مجلد `android/` عبر GitHub Actions. البناء الحالي يستخدم debug signing لتوفير APK قابل للتثبيت دون نشر أو كشف مفتاح التوقيع الخاص. لذلك لا يمكن تثبيته كتحديث فوق نسخة موقعة بمفتاح مختلف؛ صدّر بيانات التعلم من النسخة القديمة أولاً، ثم أزلها وثبّت APK الجديد، وبعدها استورد النسخة الاحتياطية.
+
+لإصدار تحديث يحافظ على إمكانية التثبيت فوق APK سابق، يجب توقيع البناء بالمفتاح الأصلي المطابق. لا ترفع ملف JKS أو كلمة مروره إلى المستودع.
+
+## ملاحظات تشغيل
+
+- GitHub Pages يستضيف واجهة الويب فقط؛ endpoint الصوت يحتاج نشر Vercel.
+- إذا لم يتم إعداد `GOOGLE_TTS_API_KEY`، يستجيب endpoint برسالة غير مهيأ، ويستخدم التطبيق الصوت المحلي تلقائياً.
+- لا تُعد جودة Android TTS أو العمل دون إنترنت مختبراً على جهاز فعلي إلا بعد إجراء الاختبار.
