@@ -61,6 +61,18 @@ try {
 
   res = await call('POST', { text: 'Mismatch', voice: 'ar-XA-Chirp3-HD-Aoede', language: 'en-GB' }, 'test-mismatch');
   assert.equal(res.code, 400);
+
+  const savedKey = process.env.GEMINI_API_KEY;
+  delete process.env.GEMINI_API_KEY;
+  res = await call('POST', { text: 'No key', voice: 'en-GB-Chirp3-HD-Aoede', language: 'en-GB' }, 'test-no-key');
+  assert.equal(res.code, 503);
+  process.env.GEMINI_API_KEY = savedKey;
+
+  globalThis.fetch = async () => ({ ok: false, status: 429, headers: { get(name) { return name === 'retry-after' ? '20' : null; } } });
+  res = await call('POST', { text: 'Provider limit test', voice: 'en-GB-Chirp3-HD-Aoede', language: 'en-GB' }, 'test-provider-limit');
+  assert.equal(res.code, 429);
+  assert.equal(res.headers['retry-after'], '20');
+
   console.log('TTS API tests passed: method handling, English, Arabic, PCM/WAV conversion, privacy guard, and locale validation.');
 } finally {
   globalThis.fetch = oldFetch;
