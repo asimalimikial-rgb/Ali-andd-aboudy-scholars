@@ -9557,7 +9557,7 @@ const App = {
 /* Gemini neural speech: IndexedDB cache -> Gemini TTS -> local Android/browser TTS.
    First names in spoken learning prompts are intentionally supported; progress data is never sent. */
 const HybridSpeech = (() => {
-  const DB_NAME='ali-aboudy-gemini-audio-v2', STORE_NAME='clips';
+  const DB_NAME='ali-aboudy-neural-audio-v1', STORE_NAME='clips';
   const MODEL='gemini-3.8-flash-lite-tts';
   const MAX_BYTES=80*1024*1024;
   let dbPromise=null,generation=0,currentAudio=null,currentUrl=null,controller=null;
