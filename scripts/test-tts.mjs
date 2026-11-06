@@ -79,7 +79,7 @@ function makeSpeechEnv() {
     }
   };
   vm.createContext(env);
-  vm.runInContext(speechSource + '\\nglobalThis.Speech = Speech;', env);
+  vm.runInContext(speechSource + '\nglobalThis.Speech = Speech;', env);
   env.Speech.getBestVoice = () => null;
   env.Speech.init();
   return {
@@ -122,11 +122,11 @@ function makeSpeechEnv() {
 
 {
   const { env } = makeSpeechEnv();
-  const guardSource = html.match(/const QuestionNarration = \\{[\\s\\S]*?\\n\\};/);
+  const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
   assert.ok(guardSource, 'Question narration token guard must exist');
   const guardEnv = {};
   vm.createContext(guardEnv);
-  vm.runInContext(guardSource[0] + '\\nglobalThis.Guard = QuestionNarration;', guardEnv);
+  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', guardEnv);
   const token = guardEnv.Guard.begin();
   assert.equal(guardEnv.Guard.isCurrent(token), true);
   guardEnv.Guard.invalidate();
@@ -140,11 +140,11 @@ function makeSpeechEnv() {
     'The profile welcome narration must handle rejected promises');
 }
 
-assert.ok(native.includes('if (request != generation.get()) {\\n                    notifyJs(requestId, "end");\\n                    return;\\n                }'),
+assert.ok(native.includes('if (request != generation.get()) {\n                    notifyJs(requestId, "end");\n                    return;\n                }'),
   'Stale native requests must not overwrite engine readiness or report current-request errors');
 assert.ok(native.includes('public void prewarm()'),
   'Native bridge must support background model prewarming');
-assert.ok(native.includes('if (request != generation.get()) {\\n                    notifyJs(id, "end");\\n                    return;\\n                }'),
+assert.ok(native.includes('if (request != generation.get()) {\n                    notifyJs(id, "end");\n                    return;\n                }'),
   'AudioTrack must not be registered for a stale generation');
 
 console.log('Speech runtime regression checks passed: timeout cancellation, stop, stale callback, narration invalidation, native prewarm, and stale-request handling.');
