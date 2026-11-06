@@ -445,6 +445,67 @@
   .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
   <script src="tts-config.js"></script>
+
+  <style id="scholars-v130-design">
+    :root{--primary-ali:#F06B67;--secondary-ali:#35B9AE;--primary-aboudy:#397CC7;--bg-ali:#FFF8F3;--bg-aboudy:#F3F7FC;--accent:#F7C95B;--text-dark:#203047;--text-light:#718096;--card-bg:#fff;--radius-lg:24px;--radius-md:18px;--shadow-sm:0 8px 24px rgba(32,48,71,.07);--shadow-md:0 14px 34px rgba(32,48,71,.12)}
+    body{background:#EEF3F8;color:var(--text-dark)}
+    #app-container{max-width:760px;min-height:100dvh;background:#F7F9FC;box-shadow:0 16px 60px rgba(24,44,70,.10)}
+    .app-header{padding:12px 18px;background:rgba(255,255,255,.96);border-bottom:1px solid #E7EDF4;box-shadow:0 4px 18px rgba(32,48,71,.04)}
+    .avatar-mini{position:relative;width:46px;height:46px;border:3px solid #fff}
+    .stats-pill{background:#F1F5FA;color:#33445B;border:1px solid #E5ECF4}
+    .screen{padding:clamp(14px,3.5vw,26px);gap:10px}
+    .card{background:#fff;border:1px solid #E8EEF5;border-radius:22px;box-shadow:var(--shadow-sm)}
+    .btn{border-radius:17px;box-shadow:0 3px 0 rgba(25,45,70,.12);font-weight:750}
+    .btn-primary{background:#397CC7;color:#fff}.btn-secondary{background:#35AFA5;color:#fff}.btn-accent{background:#F7CF70;color:#344054}
+    #screen-profiles{justify-content:center;background:radial-gradient(circle at 15% 10%,#E4F7F3 0,transparent 35%),radial-gradient(circle at 90% 90%,#FFF0E7 0,transparent 36%)}
+    #screen-profiles>div:first-child{margin:0 0 24px!important}
+    #screen-profiles h1{color:#24496E!important;font-size:clamp(1.8rem,6vw,2.35rem)!important;letter-spacing:-.04em}
+    #screen-profiles>div:nth-of-type(2){gap:14px!important}
+    #card-ali,#card-aboudy{border-radius:28px;padding:22px!important;box-shadow:var(--shadow-md);background:rgba(255,255,255,.94);transition:transform .18s ease,box-shadow .18s ease}
+    #card-ali:active,#card-aboudy:active{transform:scale(.985)}
+    .profile-avatar{width:116px;height:116px;border-width:4px}
+    #screen-home{gap:12px}
+    #screen-home>.card:first-child{border:0;border-radius:24px;padding:22px;background:linear-gradient(125deg,#397CC7,#36B5A7)!important;box-shadow:0 12px 28px rgba(57,124,199,.18)}
+    #home-greeting{font-size:1.55rem}
+    #screen-home>.card:nth-child(2){align-items:center;padding:14px 18px;border-radius:22px}
+    #mascot-home{flex:0 0 76px;width:76px;height:76px;margin:0}
+    .mascot-photo{width:76px;height:76px;object-fit:cover;border-radius:50%}
+    .section-heading{margin:10px 0 2px}.section-heading h3{font-size:1.2rem;color:#263D57}
+    .section-heading p{margin-top:3px;color:#7B8A9D;font-size:.9rem}
+    #books-container.subject-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .subject-card{min-width:0;min-height:160px;margin:0!important;padding:16px!important;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;text-align:left;border:1px solid #E3EAF3;border-radius:22px;background:linear-gradient(145deg,#fff,#F7FAFD);box-shadow:var(--shadow-sm);color:var(--text-dark);cursor:pointer}
+    .subject-card:active{transform:translateY(2px)}.subject-icon{font-size:2.25rem;line-height:1}
+    .subject-title{font-size:1.05rem;font-weight:850;margin-top:12px}.subject-ar{direction:rtl;text-align:left;color:#60758D;font-size:.88rem;margin-top:3px}
+    .subject-meta{font-size:.78rem;color:#7A8A9D;margin-top:8px}
+    #btn-daily-challenge,#btn-rewards,#btn-play-games,#btn-learning-world{border-radius:17px;box-shadow:none;min-height:50px}
+    #btn-play-games{background:#E7F4F2;color:#246B65;border:1px solid #D3EAE6}
+    #btn-learning-world{background:#EDF3FC;color:#355D91;border:1px solid #DCE7F6}
+    #screen-map .card{margin:0;padding:16px;border-radius:18px}#screen-map h2{font-size:1.2rem}
+    .lesson-group-title{margin:16px 2px 8px;color:#47617F;font-size:.92rem;font-weight:850}
+    #screen-lesson{gap:12px}.activity-heading{padding:4px 2px}.activity-heading h2{font-size:1.18rem}
+    #screen-lesson .question-card{padding:clamp(18px,4vw,28px);background:#fff;border:1px solid #E4EBF3;box-shadow:var(--shadow-sm);border-radius:24px}
+    .question-title{font-size:clamp(1.2rem,4.5vw,1.55rem);line-height:1.5;color:#253D58}
+    .options-grid{gap:10px}.option-btn{min-height:68px;border:2px solid #E1E9F2;border-radius:18px;box-shadow:0 3px 0 #E7EDF4}
+    .option-btn.selected{border-color:#397CC7;background:#EDF5FF;color:#244F82}
+    #answer-feedback{padding:16px;border-radius:18px}
+    #answer-feedback .arabic-explanation{margin-top:12px;background:#F0F7FF;border-right:4px solid #397CC7;border-radius:12px;padding:12px 14px;color:#27486A;line-height:1.8}
+    #screen-parent .card{padding:18px;border-radius:20px}
+    #screen-parent select,#screen-parent input:not([type=checkbox]):not([type=range]){border:1px solid #DCE5EF!important;border-radius:12px!important;padding:10px;background:#FBFCFE;color:#26384D}
+    #screen-world .world-zone,#screen-games .game-card{border-radius:19px;border:1px solid #E4EBF3;box-shadow:var(--shadow-sm)}
+    #screen-celebration{align-items:center}
+    button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #397CC7;outline-offset:3px}
+    @media(max-width:430px){
+      #books-container.subject-grid{grid-template-columns:1fr}
+      .subject-card{min-height:112px;display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;column-gap:12px}
+      .subject-icon{grid-row:1/span 3;font-size:2.35rem}.subject-title{margin-top:0}
+      .subject-ar,.subject-meta{grid-column:2}
+      #screen-home>div[style*="display: flex; gap: 10px"]{flex-wrap:wrap}
+      #screen-home>div[style*="display: flex; gap: 10px"] .btn{flex:1 1 44%!important}
+      .screen{padding:14px}#screen-profiles h1{font-size:1.85rem!important}
+    }
+    @media(min-width:700px){#app-container{margin:18px auto;min-height:calc(100dvh - 36px);border-radius:28px;overflow:hidden}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+  </style>
 </head>
 <body>
 
@@ -508,7 +569,7 @@
       </div>
     </div>
 
-    <h3 style="margin: 15px 0 10px;">Your Learning Books</h3>
+    <div class="section-heading"><h3>Choose a subject / اختر المادة</h3><p dir="rtl">كل دروس المادة مجمّعة في مكان واحد، اختر وابدأ التعلّم.</p></div>
     <div id="books-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
 
     <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -666,7 +727,7 @@
     </div>
 
     <div class="card">
-      <h3>Voice Studio / استوديو الصوت</h3>
+      <h3>Microsoft Azure AI Speech / صوت مايكروسوفت العصبي</h3>
       <div id="voice-doctor-info" style="font-size: 0.95rem; line-height: 1.7; margin: 10px 0;">Loading speech diagnosis...</div>
       <label for="voice-picker-select" style="display:block; font-weight: bold; margin-top: 10px;">English voice / الصوت الإنجليزي:</label>
       <select id="voice-picker-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
@@ -679,27 +740,21 @@
       <button class="btn btn-secondary" id="btn-test-local-voice" type="button" style="margin-top:8px;width:100%;">📱 Test local/offline voices / اختبار الصوت المحلي دون إنترنت</button>
 
       <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
-        <h3>Neural Voice / الصوت العصبي المحسّن</h3>
-        <p style="margin:7px 0;line-height:1.6;">Online voice first, automatically saved on this device for replay offline. If no saved clip or connection is available, the app uses the local Android voice.</p>
-        <p dir="rtl" style="margin:7px 0;line-height:1.7;">الصوت الشبكي أولاً، مع حفظ المقاطع تلقائياً لإعادة استخدامها دون إنترنت. إذا لم يوجد مقطع محفوظ أو اتصال، يستخدم التطبيق الصوت المحلي.</p>
+        <h3>Microsoft Azure AI Speech / الصوت الشبكي</h3>
+        <p style="margin:7px 0;line-height:1.6;">Azure neural voice first. Successful clips are saved on this device for offline replay. If the network and saved clip are unavailable, the app uses the local Android voice.</p>
+        <p dir="rtl" style="margin:7px 0;line-height:1.7;">صوت Microsoft Azure الشبكي أولاً، مع حفظ المقاطع الناجحة لإعادة استخدامها دون إنترنت. إذا تعذّر الاتصال ولم يوجد مقطع محفوظ، ينتقل التطبيق إلى صوت Android المحلي.</p>
         <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
         <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="en-GB-Chirp3-HD-Aoede">Aoede — Female, British English (recommended)</option>
-          <option value="en-GB-Chirp3-HD-Achird">Achird — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Kore">Kore — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Charon">Charon — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Zephyr">Zephyr — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Fenrir">Fenrir — Male, British English</option>
-        </select>
+          <option value="en-GB-SoniaNeural">Sonia — British English (recommended)</option>
+          <option value="en-GB-RyanNeural">Ryan — British English</option>
+        </select></select>
         <label for="online-voice-ar" style="display:block;font-weight:bold;margin-top:10px;">Arabic neural voice / الصوت العربي العصبي</label>
         <select id="online-voice-ar" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="ar-XA-Chirp3-HD-Aoede">Aoede — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Achird">Achird — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Kore">Kore — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Charon">Charon — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Zephyr">Zephyr — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Fenrir">Fenrir — Male, Arabic</option>
-        </select>
+          <option value="ar-EG-SalmaNeural">Salma — Arabic (Egypt)</option>
+          <option value="ar-EG-ShakirNeural">Shakir — Arabic (Egypt)</option>
+          <option value="ar-SA-ZariyahNeural">Zariyah — Arabic (Saudi Arabia)</option>
+          <option value="ar-SA-HamedNeural">Hamed — Arabic (Saudi Arabia)</option>
+        </select></select>
         <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
@@ -759,7 +814,7 @@
 
 // Global State / Store
 const Store = {
-  KEY: 'ali_aboudy_scholars_v1',
+  KEY: 'ali_aboudy_scholars_v2',
   data: {
     activeChild: 'ali', // 'ali' or 'aboudy'
     teamQuest: {},
@@ -827,6 +882,16 @@ const Store = {
         if (!Array.isArray(this.data.profiles.aboudy.vocabulary)) this.data.profiles.aboudy.vocabulary = [];
         if (!Array.isArray(this.data.profiles.ali.learningHistory)) this.data.profiles.ali.learningHistory = [];
         if (!Array.isArray(this.data.profiles.aboudy.learningHistory)) this.data.profiles.aboudy.learningHistory = [];
+      } else {
+        try {
+          const legacy = JSON.parse(localStorage.getItem('ali_aboudy_scholars_v1') || 'null');
+          if (legacy && legacy.settings) {
+            const migrated = { ...legacy.settings };
+            if (!['en-GB-SoniaNeural','en-GB-RyanNeural'].includes(migrated.onlineVoiceEn)) migrated.onlineVoiceEn = 'en-GB-SoniaNeural';
+            if (!['ar-EG-SalmaNeural','ar-EG-ShakirNeural','ar-SA-ZariyahNeural','ar-SA-HamedNeural'].includes(migrated.onlineVoiceAr)) migrated.onlineVoiceAr = 'ar-EG-SalmaNeural';
+            this.data.settings = { ...this.data.settings, ...migrated };
+          }
+        } catch (migrationError) { console.warn('Parent settings migration skipped.'); }
       }
     } catch (e) {
       console.error('Failed to load storage:', e);
@@ -8452,8 +8517,8 @@ const App = {
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
     document.getElementById('btn-test-local-voice').onclick = () => this.testLocalVoiceDoctor();
 
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-Chirp3-HD-Aoede';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-XA-Chirp3-HD-Aoede';
+    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-SoniaNeural';
+    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-EG-SalmaNeural';
     document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
     document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
     document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
@@ -8564,30 +8629,33 @@ const App = {
       ? '✅ Daily Challenge / تحدي اليوم'
       : '🔥 Daily Challenge / تحدي اليوم';
 
-    // Render Books
+    // One clear entry point per subject; all original books and lessons remain intact.
     const container = document.getElementById('books-container');
+    container.className = 'subject-grid';
     container.innerHTML = '';
-
-    books.forEach(book => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.display = 'flex';
-      card.style.alignItems = 'center';
-      card.style.gap = '15px';
-      card.style.cursor = 'pointer';
-
+    const categories = [
+      { id:'English', title:'English & Phonics', ar:'اللغة الإنجليزية والأصوات', icon:'🔤' },
+      { id:'Maths', title:'Mathematics', ar:'الرياضيات', icon:'🔢' },
+      { id:'Science', title:'Science & Discovery', ar:'العلوم والاستكشاف', icon:'🔬' }
+    ];
+    const child = Store.getChild();
+    categories.forEach(category => {
+      const sourceBooks = books.filter(book => String(book.category || '').toLowerCase() === category.id.toLowerCase());
+      if (!sourceBooks.length) return;
+      const lessons = sourceBooks.reduce((all, book) => all.concat(book.lessons || []), []);
+      const completed = lessons.filter(lesson => child.completedLessons && child.completedLessons[lesson.id] !== undefined).length;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card subject-card';
+      card.setAttribute('aria-label', category.title + '. ' + category.ar + '. ' + lessons.length + ' lessons.');
       card.innerHTML = `
-        <div style="font-size: 3rem;">${book.icon}</div>
-        <div style="flex: 1;">
-          <h3 style="font-size: 1.2rem;">${book.title}</h3>
-          <p style="color: var(--text-light); font-size: 0.9rem;">${book.category} • ${book.lessons.length} Lessons</p>
-        </div>
-        <div style="font-size: 1.5rem;">➔</div>
-      `;
-
+        <span class="subject-icon" aria-hidden="true">${category.icon}</span>
+        <span class="subject-title">${category.title}</span>
+        <span class="subject-ar" dir="rtl">${category.ar}</span>
+        <span class="subject-meta">${lessons.length} lessons • ${completed} completed</span>`;
       card.onclick = () => {
         SoundEffects.click();
-        this.renderMap(book);
+        this.renderMap({ id:'merged_' + category.id.toLowerCase(), title:category.title + ' / ' + category.ar, lessons, sourceBooks });
       };
       container.appendChild(card);
     });
@@ -8946,41 +9014,38 @@ const App = {
     document.getElementById('map-book-title').textContent = book.title;
     const container = document.getElementById('units-map-container');
     container.innerHTML = '';
-
     const child = Store.getChild();
+    const sourceBooks = Array.isArray(book.sourceBooks) && book.sourceBooks.length ? book.sourceBooks : [book];
 
-    book.lessons.forEach((lesson, index) => {
-      const isCompleted = child.completedLessons[lesson.id] !== undefined;
-      const isUnlocked = index === 0 || child.completedLessons[book.lessons[index - 1].id] !== undefined;
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.opacity = isUnlocked ? '1' : '0.6';
-      card.style.borderLeft = isCompleted ? '6px solid var(--success)' : (isUnlocked ? '6px solid var(--accent)' : '6px solid #CBD5E0');
-      card.style.display = 'flex';
-      card.style.alignItems = 'center';
-      card.style.justifySpaceBetween = 'space-between';
-
-      card.innerHTML = `
-        <div style="flex:1;">
-          <h4>Lesson ${index + 1}: ${lesson.title}</h4>
-          <p style="font-size: 0.85rem; color: var(--text-light);">${lesson.questions.length} Questions</p>
-        </div>
-        <div>
-          ${isCompleted ? '⭐ ' + child.completedLessons[lesson.id] + '/3' : (isUnlocked ? '<button class="btn btn-primary">Start</button>' : '🔒 Locked')}
-        </div>
-      `;
-
-      if (isUnlocked) {
-        card.onclick = () => this.startLesson(lesson);
-      }
-
-      container.appendChild(card);
+    sourceBooks.forEach((sourceBook) => {
+      const heading = document.createElement('div');
+      heading.className = 'lesson-group-title';
+      heading.textContent = sourceBook.title;
+      container.appendChild(heading);
+      sourceBook.lessons.forEach((lesson, index) => {
+        const isCompleted = child.completedLessons[lesson.id] !== undefined;
+        const isUnlocked = index === 0 || child.completedLessons[sourceBook.lessons[index - 1].id] !== undefined;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.opacity = isUnlocked ? '1' : '0.58';
+        card.style.borderLeft = isCompleted ? '5px solid #35BFA5' : (isUnlocked ? '5px solid #F3C45F' : '5px solid #CBD5E0');
+        card.style.display = 'flex';
+        card.style.alignItems = 'center';
+        card.style.justifyContent = 'space-between';
+        card.innerHTML = `
+          <div style="flex:1;min-width:0;">
+            <h4>Lesson ${index + 1}: ${lesson.title}</h4>
+            <p style="font-size:.84rem;color:var(--text-light);margin-top:4px;">${lesson.questions.length} questions</p>
+          </div>
+          <div style="margin-left:10px;white-space:nowrap;">
+            ${isCompleted ? '⭐ ' + child.completedLessons[lesson.id] + '/3' : (isUnlocked ? '<span style="font-weight:800;color:#397CC7;">Start →</span>' : '🔒 Locked')}
+          </div>`;
+        if (isUnlocked) card.onclick = () => this.startLesson(lesson);
+        container.appendChild(card);
+      });
     });
-
     this.showScreen('screen-map');
   },
-
   startLesson(lesson, mode = 'lesson') {
     this.currentLesson = lesson;
     this.currentMode = mode;
@@ -9021,26 +9086,13 @@ const App = {
       story.textContent = q.story;
       card.appendChild(story);
     }
-    if (q.hint) {
-      const hint = document.createElement('div');
-      hint.className = 'arabic-hint';
-      hint.textContent = 'Hint: ' + q.hint;
-      card.appendChild(hint);
-    }
-    if (Store.data.settings.arabicSupport !== false) {
-      const arabic = document.createElement('div');
-      arabic.className = 'arabic-explanation';
-      arabic.dir = 'rtl';
-      arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q);
-      card.appendChild(arabic);
-    }
     area.appendChild(card);
 
     if (q.visual) this.renderVisualModel(q.visual, area);
 
     // Speak the English prompt first, then the Arabic helper explanation.
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
-    const helperText = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
+    // Arabic explanation is deliberately deferred until after answer validation.
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
@@ -9073,7 +9125,6 @@ const App = {
       } else {
         await HybridSpeech.speak(titleText);
       }
-      if (helperText) await HybridSpeech.speak(helperText);
     };
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
@@ -9457,9 +9508,14 @@ const App = {
     feedback.className = `feedback-banner ${isCorrect ? 'good' : 'coach'}`;
     feedback.style.display = 'block';
     const arabicExplanation = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
-    feedback.textContent = isCorrect
-      ? `That’s right! ${explanation}${arabicExplanation ? ' / أحسنت! ' + arabicExplanation : ' / أحسنت!'}`
-      : `Good try. ${explanation}${arabicExplanation ? ' / محاولة جميلة. ' + arabicExplanation : ' / محاولة جميلة.'}`;
+    feedback.textContent = isCorrect ? `That’s right! ${explanation}` : `Good try. ${explanation}`;
+    if (arabicExplanation) {
+      const arabicBlock = document.createElement('div');
+      arabicBlock.className = 'arabic-explanation';
+      arabicBlock.dir = 'rtl';
+      arabicBlock.textContent = (isCorrect ? 'أحسنت! ' : 'محاولة جميلة. ') + arabicExplanation;
+      feedback.appendChild(arabicBlock);
+    }
     if (isCorrect && q.type === 'spelling') this.saveVocabularyWord(q.target);
 
     const submitBtn = document.getElementById('btn-submit-answer');
@@ -9722,7 +9778,7 @@ const App = {
 /* Hybrid neural speech: saved clips first, online Chirp 3 HD when missing,
    then Android/browser local TTS as the fallback. */
 const HybridSpeech = (() => {
-  const DB_NAME = 'ali-aboudy-neural-audio-v1', STORE_NAME = 'clips';
+  const DB_NAME = 'ali-aboudy-azure-audio-v2', STORE_NAME = 'clips';
   const MAX_BYTES = 80 * 1024 * 1024;
   let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
   const localSpeak = Speech.speak.bind(Speech);
@@ -9771,7 +9827,7 @@ const HybridSpeech = (() => {
       const response=await fetch(endpoint,{
         method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-XA':'en-GB',phoneme:phoneme||undefined}),
+        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-EG':'en-GB',phoneme:phoneme||undefined}),
         signal:controller?controller.signal:undefined
       });
       if(!response.ok){
@@ -9782,7 +9838,7 @@ const HybridSpeech = (() => {
       const blob=await response.blob();
       if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
       if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-XA':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-XA':'en-GB',voice,text:segment.text,phoneme});
+      await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
       return blob;
     } catch(e) {
       if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);
@@ -9802,8 +9858,8 @@ const HybridSpeech = (() => {
     const settings=Store.data.settings||{},rate=rateFor(opts),results=[];
     for(const segment of segments){
       if(token!==generation)return results;
-      const lang=segment.isArabic?'ar-XA':'en-GB';
-      const voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
+      const lang=segment.isArabic?'ar-EG':'en-GB';
+      const voice=phoneme?'en-GB-SoniaNeural':(segment.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural'));
       const id=idFor(lang,voice,segment.text,rate,phoneme);
       const cached=await getClip(id);
       let blob=null,source='local',onlineAttempt='not-needed',reason='';
@@ -9845,8 +9901,8 @@ const HybridSpeech = (() => {
 })();
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
 Speech.stop=function(){HybridSpeech.stop();};
-if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-Chirp3-HD-Aoede';
-if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-XA-Chirp3-HD-Aoede';
+if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-SoniaNeural';
+if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-EG-SalmaNeural';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
