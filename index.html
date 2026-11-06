@@ -9043,9 +9043,21 @@ const App = {
     const helperText = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
-      const targetLetter = Store.data.activeChild === 'ali' && /^[a-z]$/i.test(String(q.letter || ''))
+      const isAli = Store.data.activeChild === 'ali';
+      const phonemeTokens = isAli ? [...titleText.matchAll(/\\/([a-z]{1,2})\\//gi)] : [];
+      const targetLetter = isAli && /^[a-z]$/i.test(String(q.letter || ''))
         ? String(q.letter).toLowerCase() : '';
-      if (targetLetter) {
+      if (phonemeTokens.length) {
+        let cursor = 0;
+        for (const token of phonemeTokens) {
+          const before = titleText.slice(cursor, token.index).replace(/[–—-]/g, ' ').trim();
+          if (before) await HybridSpeech.speak(before);
+          await this.playAliLetterSound(token[1]);
+          cursor = token.index + token[0].length;
+        }
+        const after = titleText.slice(cursor).replace(/[–—-]/g, ' ').trim();
+        if (after) await HybridSpeech.speak(after);
+      } else if (targetLetter) {
         const marker = new RegExp('(^|[^A-Za-z])' + targetLetter + '(?=$|[^A-Za-z])', 'i');
         const match = marker.exec(titleText);
         if (match) {
