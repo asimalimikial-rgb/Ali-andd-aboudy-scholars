@@ -683,28 +683,36 @@
         <p dir="rtl" style="margin:7px 0;line-height:1.7;">الصوت الشبكي أولاً، مع حفظ المقاطع تلقائياً لإعادة استخدامها دون إنترنت. إذا لم يوجد مقطع محفوظ أو اتصال، يستخدم التطبيق الصوت المحلي.</p>
         <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
         <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="en-GB-Chirp3-HD-Aoede">Aoede — Female, British English (recommended)</option>
-          <option value="en-GB-Chirp3-HD-Achird">Achird — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Kore">Kore — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Charon">Charon — Male, British English</option>
-          <option value="en-GB-Chirp3-HD-Zephyr">Zephyr — Female, British English</option>
-          <option value="en-GB-Chirp3-HD-Fenrir">Fenrir — Male, British English</option>
+          <option value="Puck">Puck — Upbeat (recommended)</option>
+          <option value="Leda">Leda — Youthful</option>
+          <option value="Aoede">Aoede — Breezy</option>
+          <option value="Zephyr">Zephyr — Bright</option>
+          <option value="Achird">Achird — Friendly</option>
+          <option value="Sulafat">Sulafat — Warm</option>
+          <option value="Kore">Kore — Firm</option>
+          <option value="Charon">Charon — Informative</option>
+          <option value="Fenrir">Fenrir — Excitable</option>
+          <option value="Callirrhoe">Callirrhoe — Easy-going</option>
         </select>
         <label for="online-voice-ar" style="display:block;font-weight:bold;margin-top:10px;">Arabic neural voice / الصوت العربي العصبي</label>
         <select id="online-voice-ar" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="ar-XA-Chirp3-HD-Aoede">Aoede — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Achird">Achird — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Kore">Kore — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Charon">Charon — Male, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Zephyr">Zephyr — Female, Arabic</option>
-          <option value="ar-XA-Chirp3-HD-Fenrir">Fenrir — Male, Arabic</option>
+          <option value="Kore">Kore — Firm (recommended)</option>
+          <option value="Puck">Puck — Upbeat</option>
+          <option value="Leda">Leda — Youthful</option>
+          <option value="Aoede">Aoede — Breezy</option>
+          <option value="Zephyr">Zephyr — Bright</option>
+          <option value="Achird">Achird — Friendly</option>
+          <option value="Sulafat">Sulafat — Warm</option>
+          <option value="Charon">Charon — Informative</option>
+          <option value="Fenrir">Fenrir — Excitable</option>
+          <option value="Callirrhoe">Callirrhoe — Easy-going</option>
         </select>
         <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
           <button class="btn btn-accent" id="btn-stop-all-audio" type="button" style="flex:1;">Stop audio / إيقاف الصوت</button>
         </div>
-        <small style="display:block;margin-top:8px;color:var(--text-light);">Saved clips are stored locally (up to approximately 80 MB). Personal names are kept on-device and are not sent to the speech service.</small>
+        <small style="display:block;margin-top:8px;color:var(--text-light);">Saved clips stay on this device (up to approximately 80 MB). As approved by the parent, first names Ali and Aboudy may be included in the spoken text sent to Gemini; learning profiles and progress are never sent.</small>
       </div>
       <div id="samsung-instructions" style="display:none; background: #FFF3CD; padding: 12px; border-radius: var(--radius-sm); margin-top: 12px; font-size: 0.9rem;">
         <strong>Android offline voice setup / إعداد الصوت دون إنترنت:</strong><br>
@@ -719,7 +727,7 @@
 
     <div class="card">
       <h3>Privacy-first learning / تعلّم يحافظ على الخصوصية</h3>
-      <p>Learning, hints and progress run on this device. No Gemini key or cloud hint service is required.</p>
+      <p>Learning, hints and progress stay on this device. Gemini is used only to generate requested speech; first names may be spoken as approved, while profiles and progress remain local. If Gemini is unavailable, the app uses local Android/browser speech.</p>
       <p dir="rtl" style="margin-top:6px;">التعلّم والتلميحات وحفظ التقدم تعمل محلياً على الجهاز، ولا يحتاج التطبيق إلى مفتاح API أو إرسال أسئلة الأطفال إلى خدمة خارجية.</p>
     </div>
     <div class="card">
@@ -8338,8 +8346,8 @@ const App = {
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
 
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-Chirp3-HD-Aoede';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-XA-Chirp3-HD-Aoede';
+    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'Puck';
+    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'Kore';
     document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
     document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
     document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
