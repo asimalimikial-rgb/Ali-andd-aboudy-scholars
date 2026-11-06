@@ -815,8 +815,8 @@ const Store = {
       speechEngine: 'embedded',
       aiVoiceTermsAccepted: false,
       manualVoice: '',
-      manualVoiceEn: '',
-      manualVoiceAr: ''
+      manualVoiceEn: 'F1',
+      manualVoiceAr: 'F1'
     },
     profiles: {
       ali: {
@@ -966,9 +966,13 @@ const Speech = {
     window.__nativeSpeechReady = () => this.loadVoices();
     window.__nativeSpeechStatus = message => {
       const status = document.getElementById("hybrid-voice-status");
-      if (status && message) status.textContent = message;
+      let visibleMessage = message || "";
+      if (!visibleMessage) {
+        try { visibleMessage = JSON.parse(window.NativeSpeech.getStatus() || "{}").message || ""; } catch (e) {}
+      }
+      if (status && visibleMessage) status.textContent = visibleMessage;
       const local = document.getElementById("local-voice-status");
-      if (local && message) local.textContent = message;
+      if (local && visibleMessage) local.textContent = visibleMessage;
       this.loadVoices();
     };
     window.__nativeSpeechEvent = (id, event) => {
@@ -999,7 +1003,7 @@ const Speech = {
     const arSelect = document.getElementById('voice-picker-ar-select');
     const fill = (select, isArabic, savedName) => {
       if (!select) return;
-      const prior = savedName || '';
+      const prior = savedName || 'F1';
       select.innerHTML = '<option value="">Auto (best offline voice)</option>';
       this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && v.localService === true).forEach(v => {
         const opt = document.createElement('option');
@@ -1027,14 +1031,14 @@ const Speech = {
   },
   getBestVoice(isArabic) {
     const settings = Store.data.settings || {};
-    const preferred = isArabic ? (settings.manualVoiceAr || '') : (settings.manualVoiceEn || '');
+    const preferred = isArabic ? (settings.manualVoiceAr || 'F1') : (settings.manualVoiceEn || 'F1');
     if (preferred) {
       const exact = this.voices.find(v => v.name === preferred && (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && (v.localService === true || (v.localService === undefined && !window.NativeSpeech)));
       if (exact) return exact;
     }
     const languageVoices = this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en'));
     const offlineVoices = languageVoices.filter(v => v.localService === true || (v.localService === undefined && !window.NativeSpeech));
-    return offlineVoices[0] || null;
+    return offlineVoices.find(v => v.name === 'F1') || offlineVoices[0] || null;
   },
   normalizeSegment(input, isArabic) {
     let text = String(input == null ? '' : input);
