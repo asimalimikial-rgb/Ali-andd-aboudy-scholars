@@ -5,7 +5,7 @@
 ## محتويات المشروع
 
 - `index.html`: تطبيق الويب الأساسي، مع الدروس والمناهج والصور الأصلية المضمنة.
-- `api/tts.js`: وسيط آمن إلى Microsoft Azure AI Speech Neural TTS.
+- `api/tts.js`: وسيط إلى FreeTTS Neural TTS المجاني.
 - `tts-config.js`: عنوان خدمة الصوت لنسخة الويب.
 - `android/`: غلاف Android WebView مع Android Native Text-to-Speech كحل أخير.
 - `.github/workflows/build-apk.yml`: فحوص JavaScript وبناء APK موقّع ونشر GitHub Release.
