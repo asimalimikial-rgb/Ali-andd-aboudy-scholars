@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const html=fs.readFileSync('index.html','utf8');
 const native=fs.readFileSync('android/app/src/main/java/com/alialiaboudyscholars/app/NativeSpeech.java','utf8');
@@ -41,3 +42,109 @@ assert.equal(html.includes("const spokenFeedback = isCorrect ? 'Great job! أح�
 assert.equal(html.includes("feedback.textContent = isCorrect\n      ? 'That’s right! / أحسنت! إجابة صحيحة!'\n      : 'Good try! / محاولة جميلة!';"),true,'Post-answer text must contain encouragement only');
 assert.equal(html.includes('btn-replay-question')&&html.includes('btn-stop-question'),true,'Lesson screen must provide replay and stop controls before answer submission');
 console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
+
+
+// Runtime regression tests for cancellation, late native callbacks, and JS timeout.
+const speechStart = html.indexOf('// @speech-start');
+const speechEnd = html.indexOf('// @speech-end');
+assert.ok(speechStart >= 0 && speechEnd > speechStart, 'Speech runtime extraction markers must exist');
+const speechSource = html.slice(speechStart + '// @speech-start'.length, speechEnd);
+
+function makeSpeechEnv() {
+  const calls = [];
+  const timers = [];
+  let nextTimer = 1;
+  const env = {
+    console, Promise, Date, Math, JSON, String, Number, RegExp,
+    Store: { data: { activeChild: 'ali', settings: { aiVoiceTermsAccepted: true, speechRate: 0.95 } } },
+    SoundEffects: { init() {} },
+    document: { getElementById: () => null, addEventListener() {} },
+    window: {
+      NativeSpeech: {
+        speak: (id, text, language) => calls.push({ op: 'speak', id, text, language }),
+        cancel: () => calls.push({ op: 'cancel' }),
+        getVoices: () => '[]',
+        getStatus: () => '{}',
+        prewarm: () => calls.push({ op: 'prewarm' })
+      }
+    },
+    setTimeout: (fn, ms) => {
+      const id = nextTimer++;
+      timers.push({ id, fn, ms, cleared: false });
+      return id;
+    },
+    clearTimeout: id => {
+      const timer = timers.find(item => item.id === id);
+      if (timer) timer.cleared = true;
+    }
+  };
+  vm.createContext(env);
+  vm.runInContext(speechSource + '\\nglobalThis.Speech = Speech;', env);
+  env.Speech.getBestVoice = () => null;
+  env.Speech.init();
+  return {
+    env, calls, timers,
+    fire(id) {
+      const timer = timers.find(item => item.id === id && !item.cleared);
+      assert.ok(timer, 'Expected active timer ' + id);
+      timer.cleared = true;
+      timer.fn();
+    }
+  };
+}
+
+{
+  const { env, calls } = makeSpeechEnv();
+  const oldRequest = env.Speech.speak('Old question narration');
+  const oldId = calls.find(item => item.op === 'speak').id;
+  env.Speech.stop();
+  await oldRequest;
+  env.window.__nativeSpeechEvent(oldId, 'end');
+  assert.equal(calls.filter(item => item.op === 'speak').length, 1,
+    'A late native callback must not restart a cancelled narration chain');
+  assert.ok(calls.some(item => item.op === 'cancel'),
+    'Stopping a pending request must cancel the native bridge');
+}
+
+{
+  const { env, calls, timers, fire } = makeSpeechEnv();
+  const timeoutResult = env.Speech.speak('First run model load').then(
+    () => 'resolved',
+    error => error.message
+  );
+  const timeout = timers.find(item => !item.cleared && item.ms >= 30000);
+  assert.ok(timeout, 'A native response timeout must be scheduled');
+  fire(timeout.id);
+  assert.equal(await timeoutResult, 'Embedded voice engine did not respond in time.');
+  assert.ok(calls.some(item => item.op === 'cancel'),
+    'The JavaScript timeout must cancel native generation/playback');
+}
+
+{
+  const { env } = makeSpeechEnv();
+  const guardSource = html.match(/const QuestionNarration = \\{[\\s\\S]*?\\n\\};/);
+  assert.ok(guardSource, 'Question narration token guard must exist');
+  const guardEnv = {};
+  vm.createContext(guardEnv);
+  vm.runInContext(guardSource[0] + '\\nglobalThis.Guard = QuestionNarration;', guardEnv);
+  const token = guardEnv.Guard.begin();
+  assert.equal(guardEnv.Guard.isCurrent(token), true);
+  guardEnv.Guard.invalidate();
+  assert.equal(guardEnv.Guard.isCurrent(token), false,
+    'Submitting an answer or leaving the lesson must invalidate pending helper narration');
+  const answerBlock = html.slice(html.indexOf('  evaluateAnswer(q) {'), html.indexOf('  advanceActivity() {'));
+  assert.ok(answerBlock.indexOf('this.invalidateQuestionNarration();') <
+    answerBlock.indexOf('HybridSpeech.speak(spokenFeedback)'),
+    'Question narration must be invalidated before post-answer encouragement');
+  assert.ok(html.includes("Welcome narration failed:"),
+    'The profile welcome narration must handle rejected promises');
+}
+
+assert.ok(native.includes('if (request != generation.get()) {\\n                    notifyJs(requestId, "end");\\n                    return;\\n                }'),
+  'Stale native requests must not overwrite engine readiness or report current-request errors');
+assert.ok(native.includes('public void prewarm()'),
+  'Native bridge must support background model prewarming');
+assert.ok(native.includes('if (request != generation.get()) {\\n                    notifyJs(id, "end");\\n                    return;\\n                }'),
+  'AudioTrack must not be registered for a stale generation');
+
+console.log('Speech runtime regression checks passed: timeout cancellation, stop, stale callback, narration invalidation, native prewarm, and stale-request handling.');
