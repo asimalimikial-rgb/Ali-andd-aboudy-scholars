@@ -38,7 +38,7 @@ cp -a "$MODEL_DIR/." "$ROOT/android/app/src/main/assets/embedded-tts/supertonic3
 
 curl --fail --location "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/v2.0.1/LICENSE" \
   -o "$ROOT/android/app/src/main/assets/embedded-tts/SHERPA-ONNX-LICENSE.txt"
-curl --fail --location "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5a/LICENSE" \
+curl --fail --location "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/LICENSE" \
   -o "$ROOT/android/app/src/main/assets/embedded-tts/supertonic3/LICENSE"
 
 test -s "$ROOT/android/app/src/main/assets/embedded-tts/SHERPA-ONNX-LICENSE.txt"
