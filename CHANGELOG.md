@@ -1,29 +1,16 @@
-## Unreleased — Local-first speech and pre-answer Arabic guidance
+## Unreleased — Embedded offline TTS and answer-feedback timing
 
-- Restored Android Native TTS as the default speech engine, with separate local English and Arabic voice selectors.
-- Kept Neural TTS as an optional experimental mode; real provider generation and MP3 playback still require live verification.
-- Moved the Arabic helper explanation to the question screen before answer selection; removed Arabic explanation from post-answer feedback and narration.
-- Kept the neural MP3 cache and lesson download tools available only in experimental Neural mode.
+- Replaced the Android System TTS bridge with an app-owned sherpa-onnx 2.0.1 runtime and bundled Supertonic 3 multilingual model.
+- Added pinned, SHA-256-verified build-time downloads for native Android runtime libraries and Arabic/English model assets. No voice model downloads occur on the device.
+- Removed the FreeTTS API proxy, browser SpeechSynthesis path, neural network voice settings, and cached MP3 download workflow.
+- Added separate embedded voice-style selectors for Arabic and English, playback speed, voice test, stop control, and parent acceptance of the model license.
+- Arabic helper explanation is shown and spoken before answer selection only.
+- After submission, correct answers receive brief praise only (e.g. “أحسنت! إجابة صحيحة!”); incorrect answers receive brief encouragement only (e.g. “محاولة جميلة!”). No hint, explanation, or answer-selection instruction is repeated after submission.
+- No silent fallback to Android TTS or online speech is permitted. Runtime/model failures must be visible in the app.
+- Real-device Airplane Mode testing remains a required acceptance gate before merging or publishing a new release.
 
-## Earlier experimental Neural TTS work
+## Earlier v1.3.0 release
 
-- Replaced Azure-dependent network speech with the free FreeTTS Neural TTS API through the existing Vercel proxy.
-- Added FreeTTS MP3 proxy, English and Arabic neural voices, privacy filtering, timeout, and retry-after handling. IPA phonemes remain on the local Android speech path because the free API does not document phoneme SSML.
-- Changed audio reuse to cache-first so repeated prompts do not consume a new provider quota when Neural mode is selected.
 - Grouped existing curriculum books into three clear subject paths without deleting lesson data or lesson IDs.
-- Redesigned the responsive interface while retaining the original embedded child photos.
-- At the time of the v1.3.0 redesign, Arabic explanations were shown after answer validation; the current unreleased change moves them before answer selection.
-- Started a fresh progress namespace and migrated parent preferences only.
-- Bumped Android versionCode to 9 and versionName to 1.3.0.
-
-# Changelog
-
-## v1.3.0 — Learning Environment Redesign (previous release)
-
-- Microsoft Azure AI Speech is now the primary network speech engine.
-- English and Arabic prompts use dedicated neural voices; Ali's phonics prompts use IPA phoneme synthesis.
-- Network TTS remains first choice; cached audio is used when online speech is unavailable, and Android local TTS is the final fallback.
-- Lessons are grouped into English & Phonics, Mathematics, and Science & Discovery.
-- Arabic helper appears before answer selection; post-answer feedback does not repeat it.
-- Modern responsive layout and simplified subject navigation.
+- Redesigned the responsive interface while retaining original embedded child photos.
 - Android versionCode 9; versionName 1.3.0.
