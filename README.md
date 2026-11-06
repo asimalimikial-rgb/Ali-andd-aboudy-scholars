@@ -5,7 +5,7 @@
 ## محتويات المشروع
 
 - `index.html`: تطبيق الويب الأساسي، مع ملفات الطفلين وصورهما الأصلية بناءً على موافقة صاحب المشروع.
-- `api/tts.js`: خادم وسيط آمن للصوت العصبي Google Cloud Text-to-Speech Chirp 3 HD.
+- `api/tts.js`: خادم وسيط آمن لتوليد الصوت عبر Gemini 3.8 Flash-Lite TTS.
 - `tts-config.js`: إعداد مسار خدمة الصوت للويب.
 - `android/`: غلاف Android WebView مع Android Native Text-to-Speech كخيار محلي.
 - `.github/workflows/build-apk.yml`: فحص JavaScript وبناء APK آلياً ونشره كـ GitHub Release.
