@@ -1,42 +1,22 @@
 plugins { id 'com.android.application' }
 
-def releaseStorePath = System.getenv('ANDROID_KEYSTORE_PATH')
-def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
-def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
-def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
-def hasReleaseSigning = releaseStorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
-
 android {
     namespace 'com.alialiaboudyscholars.app'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.alialiaboudyscholars.app'
+        // Separate package keeps the existing installed app and its data untouched.
+        applicationId 'com.alialiaboudyscholars.app.preview'
         minSdk 23
         targetSdk 35
-        versionCode 4
-        versionName '1.2.1'
-    }
-
-    signingConfigs {
-        if (hasReleaseSigning) {
-            release {
-                storeFile file(releaseStorePath)
-                storePassword releaseStorePassword
-                keyAlias releaseKeyAlias
-                keyPassword releaseKeyPassword
-            }
-        }
+        versionCode 5
+        versionName '1.2.2-preview'
     }
 
     buildTypes {
         release {
-            if (hasReleaseSigning) {
-                signingConfig signingConfigs.release
-            } else {
-                // Local builds without signing secrets remain installable for testing.
-                signingConfig signingConfigs.debug
-            }
+            // Device-test build only; intentionally not signed with the production keystore.
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }
