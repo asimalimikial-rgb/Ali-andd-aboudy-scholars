@@ -31,6 +31,7 @@ const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationSta
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
 checks.push(['English question followed by Arabic helper audio',narration.includes('await HybridSpeech.speak(titleText)') && narration.includes('if (helperText) await HybridSpeech.speak(helperText)')]);
 checks.push(['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')]);
+checks.push(['Slash-delimited phonemes are spoken as phonics sounds',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')]);
 checks.push(['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')]);
 const hybridStart=html.indexOf('async function speak(input,opts)');
 const hybridEnd=html.indexOf('async function stats()',hybridStart);
