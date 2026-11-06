@@ -442,7 +442,7 @@
     .avatar-mini::after { content: '⇄'; position: absolute; right: -6px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; background: white; color: var(--primary-aboudy); font-size: 12px; line-height: 18px; box-shadow: var(--shadow-sm); }
     .avatar-mini:focus-visible { outline: 3px solid var(--primary-aboudy); outline-offset: 3px; }
 
-  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}@media(max-width:600px){.jolly-wordstudy-grid{grid-template-columns:minmax(0,1fr)}}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
+  .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
   <script src="tts-config.js"></script>
 </head>
@@ -9687,7 +9687,7 @@ const HybridSpeech = (() => {
     if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
     try {
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate,phoneme:phoneme||undefined}),signal:controller?controller.signal:undefined});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-XA':'en-GB',phoneme:phoneme||undefined}),signal:controller?controller.signal:undefined});
       if(!response.ok)throw new Error('Speech service status '+response.status);
       const blob=await response.blob();if(!blob.size||blob.type&&!blob.type.includes('audio'))throw new Error('Invalid audio response');
       if(token!==generation)return null;
