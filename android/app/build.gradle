@@ -4,7 +4,7 @@ def releaseStorePath = System.getenv('ANDROID_KEYSTORE_PATH')
 def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
-def hasReleaseSigning = releaseStorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+def hasReleaseSigning = releaseStorePath && file(releaseStorePath).isFile() && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
 
 android {
     namespace 'com.alialiaboudyscholars.app'
@@ -14,8 +14,8 @@ android {
         applicationId 'com.alialiaboudyscholars.app'
         minSdk 23
         targetSdk 35
-        versionCode 7
-        versionName '1.2.4'
+        versionCode 8
+        versionName '1.2.5'
     }
 
     signingConfigs {

@@ -8343,6 +8343,25 @@ const App = {
     container.appendChild(box);
   },
 
+  playAliLetterSound(letter) {
+    const key = String(letter || '').trim().toLowerCase();
+    const phonemes = {
+      a:'æ', b:'b', c:'k', d:'d', e:'ɛ', f:'f', g:'ɡ', h:'h', i:'ɪ', j:'dʒ',
+      k:'k', l:'l', m:'m', n:'n', o:'ɒ', p:'p', q:'kw', r:'ɹ', s:'s', t:'t',
+      u:'ʌ', v:'v', w:'w', x:'ks', y:'j', z:'z'
+    };
+    const examples = {
+      a:'short a', b:'b sound', c:'k sound', d:'d sound', e:'short e', f:'f sound',
+      g:'hard g sound', h:'h sound', i:'short i', j:'j sound', k:'k sound',
+      l:'l sound', m:'mmm', n:'nnn', o:'short o', p:'p sound', q:'kw sound',
+      r:'r sound', s:'sss', t:'t sound', u:'short u', v:'v sound', w:'w sound',
+      x:'ks sound', y:'y sound', z:'zzz'
+    };
+    const phoneme = phonemes[key];
+    if (!phoneme) return HybridSpeech.speak(key);
+    return HybridSpeech.speak(key, { phoneme, fallbackText: examples[key], rate: 0.88 });
+  },
+
   playJollyPhoneme(sound, example) {
     const key=String(sound).toLowerCase()+'|'+String(example).toLowerCase();
     const map={
@@ -9019,10 +9038,44 @@ const App = {
 
     if (q.visual) this.renderVisualModel(q.visual, area);
 
-    // Speak question automatically
-    Speech.speak(q.title);
-
-    // Render interactive body based on renderer type
+    // Speak the English prompt first, then the Arabic helper explanation.
+    // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
+    const helperText = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
+    const narrateQuestion = async () => {
+      const titleText = String(q.title || '');
+      const isAli = Store.data.activeChild === 'ali';
+      const phonemeTokens = isAli ? [...titleText.matchAll(/\/([a-z]{1,2})\//gi)] : [];
+      const targetLetter = isAli && /^[a-z]$/i.test(String(q.letter || ''))
+        ? String(q.letter).toLowerCase() : '';
+      if (phonemeTokens.length) {
+        let cursor = 0;
+        for (const token of phonemeTokens) {
+          const before = titleText.slice(cursor, token.index).replace(/[–—-]/g, ' ').trim();
+          if (before) await HybridSpeech.speak(before);
+          await this.playAliLetterSound(token[1]);
+          cursor = token.index + token[0].length;
+        }
+        const after = titleText.slice(cursor).replace(/[–—-]/g, ' ').trim();
+        if (after) await HybridSpeech.speak(after);
+      } else if (targetLetter) {
+        const marker = new RegExp('(^|[^A-Za-z])' + targetLetter + '(?=$|[^A-Za-z])', 'i');
+        const match = marker.exec(titleText);
+        if (match) {
+          const before = titleText.slice(0, match.index + match[1].length).trim();
+          const after = titleText.slice(match.index + match[0].length).trim();
+          if (before) await HybridSpeech.speak(before);
+          await this.playAliLetterSound(targetLetter);
+          if (after) await HybridSpeech.speak(after);
+        } else {
+          await HybridSpeech.speak(titleText);
+          await this.playAliLetterSound(targetLetter);
+        }
+      } else {
+        await HybridSpeech.speak(titleText);
+      }
+      if (helperText) await HybridSpeech.speak(helperText);
+    };
+    narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
 
     const feedback = document.createElement('div');
@@ -9159,7 +9212,13 @@ const App = {
           btn.textContent = opt;
           btn.onclick = () => {
             SoundEffects.click();
-            Speech.speak(opt);
+            const optionText = String(opt).trim();
+            if (Store.data.activeChild === 'ali' && /^[a-z]$/i.test(optionText) &&
+                /\b(?:letter|sound|starts?|begins?|phonics|alphabet)\b/i.test(q.title || '')) {
+              this.playAliLetterSound(optionText);
+            } else {
+              HybridSpeech.speak(opt);
+            }
             container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             this.selectedAnswer = opt;
@@ -9407,14 +9466,16 @@ const App = {
     submitBtn.textContent = 'Continue / متابعة';
     submitBtn.onclick = () => this.advanceActivity();
 
+    const spokenFeedback = isCorrect ? `Great job! ${explanation}` : `Good try. ${explanation}`;
     if (isCorrect) {
       SoundEffects.correct();
       this.lessonScore++;
-      Speech.speak(`Great job! ${explanation}${arabicExplanation ? '. ' + arabicExplanation : ''}`);
     } else {
       SoundEffects.wrong();
-      Speech.speak(`Good try. ${explanation}${arabicExplanation ? '. ' + arabicExplanation : ''}`);
     }
+    HybridSpeech.speak(spokenFeedback)
+      .then(() => arabicExplanation ? HybridSpeech.speak(arabicExplanation) : null)
+      .catch(error => console.warn('Feedback narration failed:', error));
   },
 
   advanceActivity() {
@@ -9745,9 +9806,10 @@ const HybridSpeech = (() => {
       const voice=phoneme?'en-GB-Standard-A':(segment.isArabic?(settings.onlineVoiceAr||'ar-XA-Chirp3-HD-Aoede'):(settings.onlineVoiceEn||'en-GB-Chirp3-HD-Aoede'));
       const id=idFor(lang,voice,segment.text,rate,phoneme);
       const cached=await getClip(id);
-      let blob=cached&&cached.blob&&!opts.forceOnline&&!opts.forceLocal?cached.blob:null;
-      let source=blob?'saved':'local',onlineAttempt='not-needed',reason='';
-      if(!blob&&!opts.forceLocal){
+      let blob=null,source='local',onlineAttempt='not-needed',reason='';
+      // Connected devices always try the neural network first. Saved clips are the
+      // offline/cache fallback; local device TTS is the final fallback only.
+      if(!opts.forceLocal){
         if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
         else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
         else{
@@ -9757,7 +9819,7 @@ const HybridSpeech = (() => {
           else{onlineAttempt='failed';reason=lastFetchError||'network error';}
         }
       }
-      if(!blob&&cached&&cached.blob&&!opts.forceLocal){blob=cached.blob;source='saved';}
+      if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){blob=cached.blob;source='saved';}
       if(token!==generation)return results;
       if(blob){
         try{

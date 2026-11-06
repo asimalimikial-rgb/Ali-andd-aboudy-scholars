@@ -10,6 +10,16 @@
 
 # Changelog
 
+## v1.2.5 — Arabic Helper Narration & Online-First Phonics
+
+- Speak every question in English, then speak the complete Arabic helper explanation exactly as displayed.
+- Keep English question narration and Arabic helper narration as separate sequential speech requests, preserving the correct voice and language for each.
+- For Ali's isolated target letters, speak the phonics sound instead of the letter name; single-letter choices in letter/sound questions use the same phoneme path.
+- Prefer live neural TTS whenever the network is available. Use saved clips when offline or when the network request fails; use Android/browser local TTS only as the final fallback.
+- Make the force-online diagnostic truly bypass cached audio.
+- Bump Android versionCode to 8 and versionName to 1.2.5. Pull Requests build with debug signing; main release builds require and verify the existing protected signing secret.
+
+
 ## v1.2.4 — Restore Online Gemini Voice & Wide Word Study
 
 - Switched the speech endpoint to the configured GEMINI_API_KEY and Gemini 3.8 Flash-Lite TTS model; the previous Google Cloud key name was not configured in production and caused HTTP 503.

@@ -26,4 +26,19 @@ const blending=html.indexOf("else if(skill==='blending')");
 const study=html.indexOf("else if(skill==='wordstudy')");
 const segmenting=html.indexOf("else if(skill==='segmenting')");
 checks.push(['Learning sections remain reachable',blending>=0 && study>blending && segmenting>study]);
+const narrationStart=html.indexOf('const narrateQuestion = async () =>');
+const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
+const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
+checks.push(['English question followed by Arabic helper audio',narration.includes('await HybridSpeech.speak(titleText)') && narration.includes('if (helperText) await HybridSpeech.speak(helperText)')]);
+checks.push(['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')]);
+checks.push(['Slash-delimited phonemes are spoken as phonics sounds',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')]);
+checks.push(['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')]);
+const hybridStart=html.indexOf('async function speak(input,opts)');
+const hybridEnd=html.indexOf('async function stats()',hybridStart);
+const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
+checks.push(['Online neural audio is attempted before cached playback',hybrid.indexOf('blob=await fetchClip(')>=0 && hybrid.indexOf('blob=await fetchClip(')<hybrid.indexOf('if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')]);
+checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
+checks.push(['Local TTS is the final fallback',hybrid.indexOf('await playBlob(blob,rate,token)')>=0 && hybrid.indexOf('await localSpeak(')>hybrid.indexOf('await playBlob(blob,rate,token)')]);
+checks.push(['Feedback speaks English then Arabic separately',html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)')]);
+
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
