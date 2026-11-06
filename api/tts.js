@@ -31,6 +31,8 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid text or voice selection' });
   }
   const languageCode = voice.startsWith('ar-XA-') ? 'ar-XA' : 'en-GB';
+  const rate = Number(body.rate);
+  const speakingRate = Number.isFinite(rate) ? Math.max(0.75, Math.min(1.25, rate)) : 0.95;
   try {
     const upstream = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key=' + encodeURIComponent(apiKey), {
       method: 'POST',
@@ -38,7 +40,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         input: { text },
         voice: { languageCode, name: voice },
-        audioConfig: { audioEncoding: 'MP3' }
+        audioConfig: { audioEncoding: 'MP3', speakingRate }
       })
     });
     if (!upstream.ok) {
