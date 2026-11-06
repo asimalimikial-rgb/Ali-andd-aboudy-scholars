@@ -8205,6 +8205,9 @@ const JOLLY_SOUND_GROUPS = [
   [['qu','queen','make a tiny crown','صوت qu كما في queen'],['ou','out','point outside','صوت ou في out'],['oi','coin','pretend to find a coin','صوت oi'],['ue','blue','point to something blue','صوت ue في blue'],['er','fern','draw a small fern','صوت er'],['ar','farm','pretend to drive a tractor','صوت ar']]
 ];
 const JOLLY_TRICKY = ['I','the','he','she','we','me','be','was','to','do','are','all','you','your','come','some','said','here','there','they','go','no','so','one','by','my','only'];
+const JOLLY_ARABIC_WORDS = {
+  sun:'شمس',ant:'نملة',tap:'نقرة',ink:'حبر',pig:'خنزير',net:'شبكة',cat:'قطة',kite:'طائرة ورقية',egg:'بيضة',hat:'قبعة',red:'أحمر',map:'خريطة',dog:'كلب',goat:'ماعز',octopus:'أخطبوط',up:'أعلى',leg:'ساق',fish:'سمكة',bag:'حقيبة',rain:'مطر',jam:'مربّى',boat:'قارب',tie:'ربطة عنق',feet:'أقدام',fork:'شوكة',zip:'سحّاب',web:'شبكة عنكبوت',ring:'خاتم',van:'سيارة نقل',moon:'قمر',book:'كتاب',yes:'نعم',box:'صندوق',chip:'رقاقة',ship:'سفينة',this:'هذا',thin:'رفيع',queen:'ملكة',out:'خارج',coin:'عملة',blue:'أزرق',fern:'سرخس',farm:'مزرعة'
+};
 
 const App = {
   currentLesson: null,
@@ -8219,7 +8222,7 @@ const App = {
 
   renderJollyPhonics(skill = 'sounds') {
     const skills = [
-      ['sounds','🔊 Letter sounds','أصوات الحروف'],['formation','✍️ Letter formation','كتابة الحروف'],['blending','🧩 Blending','دمج الأصوات'],['segmenting','👂 Segmenting','تقسيم الكلمات'],['tricky','⭐ Tricky words','الكلمات الشائعة']
+      ['sounds','🔊 Letter sounds','أصوات الحروف'],['formation','✍️ Letter formation','كتابة الحروف'],['wordstudy','📚 Word Study','دراسة الكلمات'],['blending','🧩 Blending','دمج الأصوات'],['segmenting','👂 Segmenting','تقسيم الكلمات'],['tricky','⭐ Tricky words','الكلمات الشائعة']
     ];
     const bar = document.getElementById('jolly-skills'); bar.innerHTML = '';
     skills.forEach(([id,en,ar]) => { const b=document.createElement('button'); b.className='btn '+(id===skill?'btn-primary':'btn-secondary'); b.textContent=en+' / '+ar; b.onclick=()=>this.renderJollyPhonics(id); bar.appendChild(b); });
@@ -8805,8 +8808,9 @@ const App = {
       const row = document.createElement('div'); row.className = 'card vocabulary-row';
       const meta = document.createElement('div'); meta.className = 'word-meta';
       const word = document.createElement('strong'); word.textContent = entry.word;
+      const meaning = document.createElement('small'); meaning.dir='rtl'; meaning.textContent = JOLLY_ARABIC_WORDS[String(entry.word||'').toLowerCase()] || 'كلمة جديدة';
       const date = document.createElement('small'); date.textContent = entry.date || '';
-      meta.append(word, document.createElement('br'), date);
+      meta.append(word, document.createElement('br'), meaning, document.createElement('br'), date);
       const speak = document.createElement('button'); speak.className = 'btn btn-accent'; speak.type = 'button'; speak.textContent = '🔊';
       speak.setAttribute('aria-label', `Speak ${entry.word}`); speak.onclick = () => Speech.speak(entry.word);
       row.append(meta, speak); list.appendChild(row);
