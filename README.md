@@ -32,11 +32,13 @@
 
 ### تفعيل Google Cloud TTS
 
+تتطلب Google تفعيل Billing وربط حساب فوترة حتى عند استخدام الحصة المجانية. الحصة المجانية المعلنة لـ Chirp 3 HD هي حتى مليون حرف شهرياً؛ لا يُفترض أن الخدمة بلا شروط فوترة. راقب الاستهلاك وحدود المشروع في Google Cloud Console.\n
+
 أنشئ Google Cloud API key مقيّداً بخدمة Cloud Text-to-Speech، وفعّل Cloud Text-to-Speech في المشروع. ثم أضف المتغير التالي في Vercel Project Settings → Environment Variables:
 
 `GOOGLE_TTS_API_KEY` (Sensitive)
 
-لا تضع المفتاح في HTML أو GitHub أو APK. Chirp 3 HD لا يدعم SSML أو معامل سرعة النطق من جهة Google؛ سرعة التشغيل تضبط محلياً عبر مشغل الصوت.
+لا تضع المفتاح في HTML أو GitHub أو APK. يدعم Chirp 3 HD التحكم في وتيرة النطق (Pace) عبر speakingRate؛ يحفظ التطبيق كل سرعة كمقطع منفصل حتى لا يُعاد استخدام ملف صوت بسرعة مختلفة. واجهة التحكم هنا محدودة بين 0.75 و1.25 لتناسب الأطفال.
 
 الأصوات الافتراضية:
 - English: `en-GB-Chirp3-HD-Aoede`
