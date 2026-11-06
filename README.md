@@ -10,7 +10,7 @@
 - `android/app/src/main/java/com/alialiaboudyscholars/app/EmbeddedTtsEngine.java`: إعداد محرك Supertonic 3 وتوليد الكلام.
 - `scripts/prepare-embedded-tts.sh`: تنزيل runtime والنموذج أثناء بناء APK فقط، مع التحقق من SHA-256.
 - `.github/workflows/build-apk.yml`: فحوص JavaScript وبناء APK ونشر الإصدارات وفق إعدادات التوقيع الحالية.
-- `MODEL-LICENSES.md`: تراخيص المحرك والنموذج وشروط إعادة التوزيع.
+- `MODEL-LICENSES.md`: تراخيص sherpa-onnx وONNX Runtime وLLVM والنموذج وشروط إعادة التوزيع.
 
 ## بيئة التعلّم
 
@@ -25,7 +25,7 @@
 ## سياسة الصوت — محرك مستقل مضمّن
 
 1. يستخدم تطبيق Android محرك sherpa-onnx 2.0.1 مع نموذج Supertonic 3 متعدد اللغات لتوليد العربية والإنجليزية داخل التطبيق.
-2. runtime والنموذج وملفات التشغيل مضمّنة في APK؛ لا توجد تنزيلات صوتية عند أول تشغيل أو أثناء استخدام الطفل.
+2. runtime والنموذج وملفات التشغيل مضمّنة في APK؛ لا توجد تنزيلات صوتية عند أول تشغيل أو أثناء استخدام الطفل. كما تُضمّن إشعارات تراخيص sherpa-onnx وONNX Runtime وLLVM والنموذج.
 3. لا يستخدم التطبيق `android.speech.tts.TextToSpeech`، ولا Web Speech API، ولا تطبيق TTS منفصل، ولا أي Network TTS API. عند تعطل المحرك يظهر خطأ واضح ولا يحدث fallback إلى محرك الهاتف أو الإنترنت.
 4. يستخدم Android AudioTrack لتشغيل PCM الذي ولّده المحرك المضمّن فقط.
 5. يستطيع ولي الأمر اختيار نمط صوت مستقل للإنجليزية والعربية، وضبط السرعة، واختبار الصوت وإيقافه.
