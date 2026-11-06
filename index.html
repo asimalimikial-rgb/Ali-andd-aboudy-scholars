@@ -8237,7 +8237,7 @@ const App = {
           const grapheme=document.createElement('div');grapheme.className='jolly-grapheme';grapheme.textContent=sound;card.appendChild(grapheme);
           const w=document.createElement('div');w.className='jolly-word';w.textContent=word;card.appendChild(w);
           const a=document.createElement('div');a.className='jolly-ar';a.dir='rtl';a.textContent=ar+' • '+(JOLLY_ARABIC_WORDS[word.toLowerCase()]||'');card.appendChild(a);
-          const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound);card.appendChild(name);
+          const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound.toLowerCase().replace(/[^a-z]/g,' ').trim().split(/\\s+/).join(' '));card.appendChild(name);
           const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
           const say=document.createElement('button');say.className='btn btn-secondary';say.textContent='Example word / كلمة المثال';say.onclick=()=>Speech.speak(word);card.appendChild(say);
           if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-accent';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,sound);card.appendChild(trace);}
@@ -8337,7 +8337,7 @@ const App = {
       'y|yes':['j','yuh'],'x|box':['ks','ks'],'ch|chip':['tʃ','ch'],'sh|ship':['ʃ','shhh'],'th|this':['ð','voiced th'],'th|thin':['θ','soft th'],
       'qu|queen':['kw','kw'],'ou|out':['aʊ','ow'],'oi|coin':['ɔɪ','oy'],'ue|blue':['uː','blue'],'er|fern':['ɜː','er'],'ar|farm':['ɑː','ar']
     };
-    const item=map[key];
+    const simpleKeys={s:'s|sun',a:'a|ant',t:'t|tap',i:'i|ink',p:'p|pig',n:'n|net',m:'m|map'};\n    const item=map[key]||map[simpleKeys[String(sound).toLowerCase()]||''];
     if(!item){Speech.speak(example);return;}
     const spoken=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();
     Speech.speak(spoken,{phoneme:item[0],fallbackText:item[1],rate:0.88});
