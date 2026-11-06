@@ -9143,6 +9143,18 @@ const App = {
       }
       if (arabicHelper) await HybridSpeech.speak(arabicHelper, { language: 'ar' });
     };
+    const audioControls = document.createElement('div');
+    audioControls.id = 'question-audio-controls';
+    audioControls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;';
+    audioControls.innerHTML = `
+      <button type="button" class="btn btn-secondary" id="btn-replay-question" style="flex:1;">↻ Repeat question / إعادة السؤال</button>
+      <button type="button" class="btn btn-secondary" id="btn-stop-question" style="flex:1;">■ Stop voice / إيقاف الصوت</button>
+    `;
+    card.appendChild(audioControls);
+    document.getElementById('btn-replay-question').onclick = () => {
+      narrateQuestion().catch(error => console.warn('Question replay failed:', error));
+    };
+    document.getElementById('btn-stop-question').onclick = () => HybridSpeech.stop();
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
 
@@ -9520,6 +9532,8 @@ const App = {
     }
 
     this.answerLocked = true;
+    const audioControls = document.getElementById('question-audio-controls');
+    if (audioControls) audioControls.style.display = 'none';
     const feedback = document.getElementById('answer-feedback');
     feedback.className = `feedback-banner ${isCorrect ? 'good' : 'coach'}`;
     feedback.style.display = 'block';
