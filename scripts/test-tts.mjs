@@ -24,6 +24,10 @@ assert.equal(sherpa.includes('System.loadLibrary("sherpa-onnx-jni")'),true,'Bund
 assert.equal(prep.includes('SHERPA_SHA256=')&&prep.includes('MODEL_SHA256='),true,'Runtime/model versions must be pinned');
 assert.equal(prep.includes('sha256sum --check'),true,'Runtime/model downloads must be hash-verified');
 assert.equal(prep.includes('supertonic3/LICENSE'),true,'Model license must be bundled');
+assert.equal(prep.includes('ONNXRUNTIME-LICENSE.txt')&&prep.includes('LLVM-LICENSE.txt'),true,'Native dependency licenses must be bundled');
+assert.equal(html.includes('chk-ai-voice-terms'),true,'Parent must accept the model license before speech is enabled');
+assert.equal(html.includes('aiVoiceTermsAccepted'),true,'Parent model-license acceptance must gate speech');
+assert.equal(html.includes('Speech.stop=function(){HybridSpeech.stop();}'),false,'Speech stop must not recurse through the facade');
 assert.equal(html.includes('أحسنت! إجابة صحيحة!'),true,'Correct answer must receive short praise');
 assert.equal(html.includes('محاولة جميلة!'),true,'Incorrect answer must receive supportive feedback');
 console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
