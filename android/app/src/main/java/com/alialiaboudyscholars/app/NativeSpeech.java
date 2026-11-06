@@ -60,6 +60,23 @@ public final class NativeSpeech {
         } catch (Exception ignored) { return "{\"ready\":false}"; }
     }
 
+    @JavascriptInterface public void prewarm() {
+        worker.execute(() -> {
+            if (engine != null) return;
+            try {
+                notifyStatus("Loading the embedded offline voice… / جارٍ تحميل محرك الصوت المضمّن…");
+                engine = new EmbeddedTtsEngine(context);
+                ready = true;
+                lastError = "";
+                notifyStatus("");
+            } catch (Throwable error) {
+                ready = false;
+                lastError = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+                notifyStatus("Embedded offline voice initialization failed / تعذّر تهيئة محرك الصوت المضمّن: " + lastError);
+            }
+        });
+    }
+
     @JavascriptInterface public void speak(String id, String text, String language,
                                            String voiceName, float rate, float pitch) {
         final long request = generation.incrementAndGet();
@@ -86,6 +103,10 @@ public final class NativeSpeech {
                 if (request != generation.get()) { notifyJs(requestId, "end"); return; }
                 playAudio(requestId, audio, request);
             } catch (Throwable error) {
+                if (request != generation.get()) {
+                    notifyJs(requestId, "end");
+                    return;
+                }
                 ready = false;
                 lastError = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
                 notifyStatus("Embedded offline speech failed / تعذّر تشغيل محرك الصوت المضمّن: " + lastError);
@@ -126,8 +147,14 @@ public final class NativeSpeech {
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build();
 
-        synchronized (audioLock) { activeTrack = track; }
         try {
+            synchronized (audioLock) {
+                if (request != generation.get()) {
+                    notifyJs(id, "end");
+                    return;
+                }
+                activeTrack = track;
+            }
             if (track.getState() != AudioTrack.STATE_INITIALIZED) {
                 throw new IllegalStateException("AudioTrack failed to initialize for " + sampleRate + " Hz PCM.");
             }
