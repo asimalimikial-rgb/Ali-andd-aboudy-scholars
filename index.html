@@ -9038,19 +9038,16 @@ const App = {
 
     if (q.visual) this.renderVisualModel(q.visual, area);
 
-    // Narrate the exact English prompt first, then its Arabic helper explanation.
-    // For Ali's isolated target letter, replace the spoken letter name with its phonics sound.
+    // Speak the English prompt first, then the Arabic helper explanation.
+    // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
     const helperText = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
       const targetLetter = Store.data.activeChild === 'ali' && /^[a-z]$/i.test(String(q.letter || ''))
         ? String(q.letter).toLowerCase() : '';
       if (targetLetter) {
-        const escaped = targetLetter.replace(/[.*+?^${}()|[\]\\]/g, '\\    // Speak question automatically
-    Speech.speak(q.title);
-
-    // Render interactive body based on renderer type');
-        const marker = new RegExp('\\\\b' + escaped + '\\\\b', 'i');
+        const escaped = targetLetter.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+        const marker = new RegExp('\\b' + escaped + '\\b', 'i');
         const match = marker.exec(titleText);
         if (match) {
           const before = titleText.slice(0, match.index).trim();
@@ -9068,8 +9065,6 @@ const App = {
       if (helperText) await HybridSpeech.speak(helperText);
     };
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
-
-    // Render interactive body based on renderer type
     this.renderQuestionType(q, area);
 
     const feedback = document.createElement('div');
@@ -9208,7 +9203,7 @@ const App = {
             SoundEffects.click();
             const optionText = String(opt).trim();
             if (Store.data.activeChild === 'ali' && /^[a-z]$/i.test(optionText) &&
-                /\\b(?:letter|sound|starts?|begins?|phonics|alphabet)\\b/i.test(q.title || '')) {
+                /\b(?:letter|sound|starts?|begins?|phonics|alphabet)\b/i.test(q.title || '')) {
               this.playAliLetterSound(optionText);
             } else {
               HybridSpeech.speak(opt);
