@@ -26,7 +26,7 @@ final class EmbeddedTtsEngine {
 
         OfflineTtsModelConfig model = new OfflineTtsModelConfig();
         model.setSupertonic(supertonic);
-        model.setNumThreads(Math.max(1, Math.min(3, Runtime.getRuntime().availableProcessors() - 1)));
+        model.setNumThreads(2);
         model.setDebug(false);
         model.setProvider("cpu");
 
@@ -40,6 +40,7 @@ final class EmbeddedTtsEngine {
     GeneratedAudio synthesize(String text, String language, int voiceId, float speed) {
         GenerationConfig generation = new GenerationConfig();
         generation.setSid(Math.max(0, Math.min(9, voiceId)));
+        generation.setNumSteps(8);
         generation.setSpeed(Math.max(0.70f, Math.min(1.20f, speed)));
         generation.setSilenceScale(0.2f);
         generation.setExtra(Collections.singletonMap("lang", language));
