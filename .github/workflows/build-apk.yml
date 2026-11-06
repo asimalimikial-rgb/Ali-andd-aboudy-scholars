@@ -58,8 +58,8 @@ jobs:
       - name: Name APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.2.0.apk
-          sha256sum dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.2.1.apk
+          sha256sum dist/Ali-Aboudy-Scholars-v1.2.1.apk
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -70,12 +70,12 @@ jobs:
           retention-days: 30
 
       - name: Publish GitHub Release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
+          tag_name: v1.2.1
           target_commitish: ${{ github.sha }}
-          name: Ali & Aboudy Scholars v1.2.0
+          name: Ali & Aboudy Scholars v1.2.1
           body_path: CHANGELOG.md
           files: dist/Ali-Aboudy-Scholars-v1.2.0.apk
           overwrite_files: true
