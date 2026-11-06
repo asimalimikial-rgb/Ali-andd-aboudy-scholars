@@ -1,0 +1,1 @@
+Android device-test build: SDK license acceptance is handled by setup-android; platform and build-tools packages are installed separately via sdkmanager.
