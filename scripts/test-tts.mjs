@@ -31,4 +31,5 @@ assert.equal(html.includes('aiVoiceTermsAccepted'),true,'Parent model-license ac
 assert.equal(html.includes('Speech.stop=function(){HybridSpeech.stop();}'),false,'Speech stop must not recurse through the facade');
 assert.equal(html.includes('أحسنت! إجابة صحيحة!'),true,'Correct answer must receive short praise');
 assert.equal(html.includes('محاولة جميلة!'),true,'Incorrect answer must receive supportive feedback');
+assert.equal(html.includes('btn-replay-question')&&html.includes('btn-stop-question'),true,'Lesson screen must provide replay and stop controls before answer submission');
 console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
