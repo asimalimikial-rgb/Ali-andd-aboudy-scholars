@@ -8247,7 +8247,44 @@ const App = {
     } else if(skill==='blending') {
       const examples=[['s','a','t','sat'],['p','i','n','pin'],['t','a','p','tap'],['n','a','p','nap'],['m','a','p','map'],['s','i','t','sit']];
       examples.forEach(parts=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<h3 style="text-align:center">${parts.slice(0,3).join('  +  ')}</h3><p style="text-align:center;font-size:1.8rem;margin:8px">→ ${parts[3]}</p><p dir="rtl" style="text-align:center">اسمع كل صوت منفصلاً، ثم قرّب الأصوات من بعضها حتى تسمع الكلمة.</p>`;const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Listen and blend';b.onclick=()=>{parts.slice(0,3).forEach((x,i)=>setTimeout(()=>this.playJollyPhoneme(x,parts[3]),i*650));setTimeout(()=>Speech.speak(parts[3]),2200);};box.appendChild(b);root.appendChild(box);});
-    } else if(skill==='segmenting') {
+    } else if(skill==='wordstudy') {
+      const ali=Store.data.activeChild==='ali';
+      const words=ali?[
+        ['sun','شمس','s · u · n','ثلاثة أصوات قصيرة تكوّن كلمة sun.'],
+        ['cat','قطة','c · a · t','ابدأ بصوت c ثم a ثم t.'],
+        ['map','خريطة','m · a · p','ادمج الأصوات بهدوء لتقرأ map.'],
+        ['dog','كلب','d · o · g','استمع إلى الصوت الأول ثم أكمل.'],
+        ['pen','قلم','p · e · n','لاحظ صوت e القصير في وسط الكلمة.'],
+        ['fish','سمكة','f · i · sh','الحرفان sh يعملان معاً كصوت واحد.'],
+        ['hat','قبعة','h · a · t','ثلاثة أصوات؛ اقرأها من اليسار إلى اليمين.'],
+        ['bag','حقيبة','b · a · g','استمع إلى b في بداية الكلمة.']
+      ]:[
+        ['garden','حديقة','gar · den','اقرأ الكلمة في مقطعين: gar ثم den.'],
+        ['bright','مشرق / لامع','br · igh · t','مجموعة igh تمثل صوتاً طويلاً واحداً.'],
+        ['because','لأن','be · cause','اقرأ الكلمة على جزأين، ثم اربطها بالمعنى.'],
+        ['friend','صديق','fr · ie · nd','انتبه إلى نمط ie في هذه الكلمة.'],
+        ['train','قطار','tr · ai · n','الحرفان ai يمثلان صوت المد في train.'],
+        ['careful','حذر','care · ful','لاحظ نهاية ful في الكلمة.'],
+        ['window','نافذة','win · dow','اقرأ المقطعين ثم قل المعنى بالعربية.'],
+        ['enough','كافٍ','e · nough','هذه كلمة شائعة؛ تدرب على شكلها ونطقها.']
+      ];
+      const intro=document.createElement('div');intro.className='jolly-practice';
+      const introTitle=document.createElement('h3');introTitle.textContent='Word Study / دراسة الكلمات';intro.appendChild(introTitle);
+      const introText=document.createElement('p');introText.dir='rtl';introText.textContent='اختر كلمة، اسمع نطقها، اقرأ معناها بالعربية، ثم تتبّعها بإصبعك. الكلمات مناسبة لمستوى الطفل المختار.';intro.appendChild(introText);root.appendChild(intro);
+      const grid=document.createElement('div');grid.className='jolly-sounds';
+      words.forEach(item=>{
+        const card=document.createElement('article');card.className='jolly-sound';
+        const word=document.createElement('div');word.className='jolly-grapheme';word.textContent=item[0];card.appendChild(word);
+        const meaning=document.createElement('div');meaning.className='jolly-ar';meaning.dir='rtl';meaning.textContent='المعنى: '+item[1];card.appendChild(meaning);
+        const parts=document.createElement('p');parts.style.textAlign='center';parts.style.fontWeight='700';parts.textContent=item[2];card.appendChild(parts);
+        const help=document.createElement('p');help.dir='rtl';help.className='jolly-ar';help.textContent=item[3];card.appendChild(help);
+        const listen=document.createElement('button');listen.className='btn btn-primary';listen.textContent='Listen / اسمع';listen.onclick=()=>Speech.speak(item[0]);card.appendChild(listen);
+        const trace=document.createElement('button');trace.className='btn btn-secondary';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,item[0]);card.appendChild(trace);
+        const save=document.createElement('button');save.className='btn btn-accent';save.textContent='Save word / احفظ الكلمة';save.onclick=()=>{this.saveVocabularyWord(item[0]);save.textContent='Saved / تم الحفظ';};card.appendChild(save);
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
+
       [['sun',['s','u','n']],['map',['m','a','p']],['fish',['f','i','sh']],['ship',['sh','i','p']],['chat',['ch','a','t']]].forEach(([word,parts])=>{const box=document.createElement('div');box.className='jolly-practice';const h=document.createElement('h3');h.textContent=word;box.appendChild(h);const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Reveal sounds';b.onclick=()=>{let line=box.querySelector('.segments');if(!line){line=document.createElement('p');line.className='segments';line.style.fontSize='1.5rem';line.style.textAlign='center';box.appendChild(line);}line.textContent=parts.join('  •  ');};box.appendChild(b);root.appendChild(box);});
     } else {
       const box=document.createElement('div');box.className='jolly-group';box.innerHTML='<h3>Common tricky words</h3><p dir="rtl">هذه كلمات شائعة نتعلم التعرف عليها وقراءتها، لأن بعض أجزائها لا تتبع أنماط الأصوات التي تعلمناها بعد.</p>';
