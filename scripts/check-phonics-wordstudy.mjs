@@ -19,7 +19,7 @@ const checks=[
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));
 const soundEntries=[...soundBlock.matchAll(/\['([^']+)','([^']+)'/g)].map(m=>m[1].toLowerCase()+'|'+m[2].toLowerCase());
-const phonemeBlock=html.slice(html.indexOf('playJollyPhoneme(sound, example)'),html.indexOf('  init() {',html.indexOf('playJollyPhoneme(sound, example)')));
+const phonemeBlock=html.slice(html.indexOf('getJollyPhonemeData(sound, example)'),html.indexOf('  init() {',html.indexOf('getJollyPhonemeData(sound, example)')));
 const phonemeKeys=new Set([...phonemeBlock.matchAll(/'([^']+\|[^']+)':\['/g)].map(m=>m[1]));
 checks[checks.length-1][1]=soundEntries.length===42 && soundEntries.every(k=>phonemeKeys.has(k));
 const blending=html.indexOf("else if(skill==='blending')");
