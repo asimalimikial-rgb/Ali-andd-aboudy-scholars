@@ -1,0 +1,1 @@
+Android CI installs platform-tools through setup-android and installs Android 35 platform/build-tools with sdkmanager in a separate step.
