@@ -885,7 +885,12 @@ const Store = {
       } else {
         try {
           const legacy = JSON.parse(localStorage.getItem('ali_aboudy_scholars_v1') || 'null');
-          if (legacy && legacy.settings) this.data.settings = { ...this.data.settings, ...legacy.settings };
+          if (legacy && legacy.settings) {
+            const migrated = { ...legacy.settings };
+            if (!['en-GB-SoniaNeural','en-GB-RyanNeural'].includes(migrated.onlineVoiceEn)) migrated.onlineVoiceEn = 'en-GB-SoniaNeural';
+            if (!['ar-EG-SalmaNeural','ar-EG-ShakirNeural','ar-SA-ZariyahNeural','ar-SA-HamedNeural'].includes(migrated.onlineVoiceAr)) migrated.onlineVoiceAr = 'ar-EG-SalmaNeural';
+            this.data.settings = { ...this.data.settings, ...migrated };
+          }
         } catch (migrationError) { console.warn('Parent settings migration skipped.'); }
       }
     } catch (e) {
