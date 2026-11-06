@@ -952,48 +952,41 @@ const SoundEffects = {
 const Speech = {
   voices: [], unlocked: false, _utt: null, keepAliveTimer: null,
   init() {
-    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
-    if (window.NativeSpeech) {
-      window.__nativeSpeechReady = () => this.loadVoices();
-      window.__nativeSpeechEvent = (id, event) => {
-        const pending = this._nativePending;
-        if (pending && pending.id === id && (event === 'end' || event === 'error')) {
-          this._nativePending = null;
-          pending.finish();
-        }
-      };
+    if (!window.NativeSpeech) {
+      const message = "Embedded offline voice bridge unavailable / جسر محرك الصوت المضمّن غير متاح";
+      const status = document.getElementById("hybrid-voice-status");
+      if (status) status.textContent = message;
+      return;
     }
-    this.loadVoices();
-    if (!('speechSynthesis' in window)) return;
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
-    }
-    [500, 1600, 3500].forEach(delay => setTimeout(() => this.loadVoices(), delay));
-    const unlock = () => {
-      if (this.unlocked) return;
-      SoundEffects.init();
-      try {
-        const u = new SpeechSynthesisUtterance(' ');
-        u.volume = 0;
-        window.speechSynthesis.speak(u);
-      } catch (e) {}
-      this.unlocked = true;
-      ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.removeEventListener(evt, unlock));
+    window.__nativeSpeechReady = () => this.loadVoices();
+    window.__nativeSpeechStatus = message => {
+      const status = document.getElementById("hybrid-voice-status");
+      if (status && message) status.textContent = message;
+      const local = document.getElementById("local-voice-status");
+      if (local && message) local.textContent = message;
+      this.loadVoices();
     };
-    ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, unlock, { once: true }));
+    window.__nativeSpeechEvent = (id, event) => {
+      const pending = this._nativePending;
+      if (!pending || pending.id !== id || event === "start") return;
+      this._nativePending = null;
+      clearTimeout(pending.timeout);
+      if (event === "end") pending.finish();
+      else pending.fail(new Error("Embedded offline speech generation or playback failed."));
+    };
+    this.loadVoices();
+    document.addEventListener("pointerdown", () => {
+      try { SoundEffects.init(); } catch (e) {}
+    }, { once: true });
   },
   loadVoices() {
-    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
-    let browserVoices = [];
     let nativeVoices = [];
-    try { if (window.speechSynthesis) browserVoices = window.speechSynthesis.getVoices() || []; } catch (e) {}
     try {
-      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === 'function') {
-        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || '[]');
+      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === "function") {
+        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || "[]");
       }
     } catch (e) { nativeVoices = []; }
-    const known = new Set(browserVoices.map(v => v.name));
-    this.voices = browserVoices.concat(nativeVoices.filter(v => v && v.name && !known.has(v.name)));
+    this.voices = nativeVoices.filter(v => v && v.name && v.localService === true);
     this.updateVoicePicker();
   },
   updateVoicePicker() {
@@ -1003,7 +996,7 @@ const Speech = {
       if (!select) return;
       const prior = savedName || '';
       select.innerHTML = '<option value="">Auto (best offline voice)</option>';
-      this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && (v.localService === true || (v.localService === undefined && !window.NativeSpeech))).forEach(v => {
+      this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && v.localService === true).forEach(v => {
         const opt = document.createElement('option');
         opt.value = v.name;
         opt.textContent = `${v.name} (${v.lang || 'unknown'})${v.localService === true ? ' • Offline' : ''}`;
@@ -1098,69 +1091,70 @@ const Speech = {
   speak(input, opts = {}) {
     const generation = (this._speechGeneration || 0) + 1;
     this._speechGeneration = generation;
-    return new Promise(resolve => {
-      const segments = this.prepareSegments(input, opts);
-      if (!segments.length || (!('speechSynthesis' in window) && !window.NativeSpeech)) {
-        if (input) this.showCaptionBubble(input);
-        resolve(); return;
-      }
-      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-      if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
+    const spokenText = opts.phoneme ? (opts.fallbackText || input) : input;
+    const segments = this.prepareSegments(spokenText, opts);
+    if (!segments.length) return Promise.resolve([]);
+    if (!window.NativeSpeech || typeof window.NativeSpeech.speak !== "function") {
+      const error = new Error("The embedded offline voice engine is unavailable. No system or online fallback is permitted.");
+      this.showCaptionBubble("Embedded voice unavailable / الصوت المضمّن غير متاح");
+      return Promise.reject(error);
+    }
+    const settings = Store.data.settings || {};
+    const baseRate = Number(settings.speechRate) || (Store.data.activeChild === "ali" ? 0.88 : 0.96);
+    const rate = Math.max(0.70, Math.min(1.20, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
+    return new Promise((resolve, reject) => {
       let index = 0;
-      const playNext = () => {
-        if (generation !== this._speechGeneration) { resolve(); return; }
-        if (index >= segments.length) { resolve(); return; }
-        const segment = segments[index++];
-        const utterance = typeof SpeechSynthesisUtterance === 'function' ? new SpeechSynthesisUtterance(segment.text) : { text: segment.text };
-        this._utt = utterance;
-        const voice = this.getBestVoice(segment.isArabic);
-        if (voice && !window.NativeSpeech) utterance.voice = voice;
-        utterance.lang = voice && voice.lang ? voice.lang : (segment.isArabic ? 'ar' : 'en-GB');
-        const settings = Store.data.settings || {};
-        const baseRate = Number(settings.speechRate) || (Store.data.activeChild === 'ali' ? 0.88 : 0.96);
-        utterance.rate = Math.max(0.65, Math.min(1.2, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
-        utterance.pitch = opts.pitch || 1.0;
-        let finished = false;
-        let nativeId = null;
-        let nativeWatchdog = null;
-        const startWatchdog = setTimeout(() => { if (!finished) finish(); }, 4200);
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(startWatchdog);
-          if (nativeWatchdog) clearTimeout(nativeWatchdog);
-          if (this._nativePending && this._nativePending.id === nativeId) this._nativePending = null;
-          if (generation !== this._speechGeneration) { resolve(); return; }
-          setTimeout(playNext, 100);
-        };
-        if (window.NativeSpeech) {
-          clearTimeout(startWatchdog);
-          nativeId = 'native-' + generation + '-' + index + '-' + Date.now();
-          nativeWatchdog = setTimeout(finish, Math.max(12000, segment.text.length * 350));
-          this._nativePending = { id: nativeId, finish };
-          try {
-            window.NativeSpeech.speak(nativeId, segment.text, utterance.lang, voice ? voice.name : '', utterance.rate, utterance.pitch);
-          } catch (e) { finish(); }
-          return;
-        }
-        utterance.onstart = () => {
-          if (generation !== this._speechGeneration) return;
-          if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
-          this.keepAliveTimer = setInterval(() => {
-            try { if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); } else clearInterval(this.keepAliveTimer); } catch (e) {}
-          }, 12000);
-        };
-        utterance.onend = finish;
-        utterance.onerror = finish;
-        try { window.speechSynthesis.speak(utterance); }
-        catch (e) { finish(); }
+      let settled = false;
+      const fail = error => {
+        if (settled) return;
+        settled = true;
+        this._nativePending = null;
+        reject(error instanceof Error ? error : new Error(String(error || "Embedded speech failed")));
       };
-      setTimeout(playNext, 80);
+      const playNext = () => {
+        if (settled) return;
+        if (generation !== this._speechGeneration) { settled = true; resolve(); return; }
+        if (index >= segments.length) { settled = true; resolve(); return; }
+        const segment = segments[index++];
+        const voice = this.getBestVoice(segment.isArabic);
+        const language = segment.isArabic ? "ar" : "en";
+        const id = "embedded-" + generation + "-" + index + "-" + Date.now();
+        const pending = {
+          id,
+          finish: () => { if (!settled && generation === this._speechGeneration) setTimeout(playNext, 80); },
+          fail
+        };
+        pending.timeout = setTimeout(() => {
+          if (this._nativePending && this._nativePending.id === id) {
+            this._nativePending = null;
+            fail(new Error("Embedded voice engine did not respond in time."));
+          }
+        }, Math.max(30000, segment.text.length * 700));
+        this._nativePending = pending;
+        try {
+          window.NativeSpeech.speak(id, segment.text, language, voice ? voice.name : "", rate, opts.pitch || 1.0);
+        } catch (error) {
+          clearTimeout(pending.timeout);
+          fail(error);
+        }
+      };
+      playNext();
     });
+  },
+  stop() {
+    this._speechGeneration = (this._speechGeneration || 0) + 1;
+    const pending = this._nativePending;
+    this._nativePending = null;
+    if (pending) {
+      clearTimeout(pending.timeout);
+      try { pending.finish(); } catch (e) {}
+    }
+    try { if (window.NativeSpeech) window.NativeSpeech.cancel(); } catch (e) {}
   }
+
 };
-// Local Android/browser speech initialization is intentionally disabled; HybridSpeech is the sole TTS path.
-document.addEventListener('pointerdown',()=>{try{SoundEffects.init();}catch(e){}},{once:true});
+// The only speech path is the embedded sherpa-onnx runtime exposed by NativeSpeech.
+
 
 // Complete Curriculum Data Definitions
 const Curriculum = {
