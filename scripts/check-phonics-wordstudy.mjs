@@ -31,7 +31,7 @@ const checks=[
   ['Runtime loads the sherpa JNI library',sherpa.includes('System.loadLibrary("sherpa-onnx-jni")') && sherpa.includes('OfflineTtsSupertonicModelConfig')],
   ['Arabic and English are passed as local model languages',engine.includes('Collections.singletonMap("lang", language)')],
   ['Runtime and model downloads are pinned and verified',prep.includes('SHERPA_SHA256=') && prep.includes('MODEL_SHA256=') && prep.includes('sha256sum --check')],
-  ['Model and runtime licenses are bundled',prep.includes('SHERPA-ONNX-LICENSE.txt') && prep.includes('supertonic3/LICENSE')],
+  ['Model and runtime licenses are bundled',prep.includes('SHERPA-ONNX-LICENSE.txt') && prep.includes('ONNXRUNTIME-LICENSE.txt') && prep.includes('LLVM-LICENSE.txt') && prep.includes('supertonic3/LICENSE')],
   ['Android build includes Kotlin and uncompressed ONNX assets',gradle.includes("org.jetbrains.kotlin.android") && gradle.includes("noCompress += ['onnx', 'bin']")],
   ['APK workflow prepares embedded runtime before build',workflow.includes('bash scripts/prepare-embedded-tts.sh')],
   ['Parent voice controls retain Arabic, English, speed, test and stop',html.includes('voice-picker-select') && html.includes('voice-picker-ar-select') && html.includes('speech-rate-control') && html.includes('btn-test-voice') && html.includes('btn-stop-all-audio')]
