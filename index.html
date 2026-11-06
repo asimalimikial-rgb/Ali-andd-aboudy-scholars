@@ -9622,7 +9622,7 @@ const HybridSpeech = (() => {
     controller=typeof AbortController!=='undefined'?new AbortController():null;
     try{
       const response=await fetch(window.ALI_TTS_API_BASE||'/api/tts',{
-        method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
+        method:'POST',mode:'cors',credentials:'same-origin',cache:'no-store',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({text:segment.text,voice,language:segment.isArabic?'ar-XA':'en-GB',rate}),
         signal:controller?controller.signal:undefined
