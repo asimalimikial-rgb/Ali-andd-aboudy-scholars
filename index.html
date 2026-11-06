@@ -1162,6 +1162,7 @@ const Speech = {
   }
 };
 // Local Android/browser speech initialization is intentionally disabled; HybridSpeech is the sole TTS path.
+document.addEventListener('pointerdown',()=>{try{SoundEffects.init();}catch(e){}},{once:true});
 
 // Complete Curriculum Data Definitions
 const Curriculum = {
