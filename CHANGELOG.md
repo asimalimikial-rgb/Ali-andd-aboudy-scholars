@@ -1,3 +1,13 @@
+## Unreleased — Bilingual TTS reliability
+
+- Added server-side privacy enforcement so child names cannot be sent to the online speech provider.
+- Added request validation, bounded provider timeout, clearer upstream error codes, retry-after handling, and support for WAV/PCM audio responses.
+- Added independent online English/Arabic tests that bypass saved clips, report Online/Cache/Local outcomes, and use generic test phrases without child names.
+- Added a separate local/offline English and Arabic voice test.
+- Improved Android locale fallback when an Arabic TTS locale is missing.
+- Aligned web and Android API configuration with the Vercel project used for Production.
+- Added automated API tests to the CI validation workflow.
+
 # Changelog
 
 ## v1.2.4 — Restore Online Gemini Voice & Wide Word Study
