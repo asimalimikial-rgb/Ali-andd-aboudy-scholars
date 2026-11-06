@@ -9913,6 +9913,12 @@ const HybridSpeech = (() => {
     if(Store.data.activeChild==='ali'){
       const alphabet={a:'æ',b:'b',c:'k',d:'d',e:'ɛ',f:'f',g:'ɡ',h:'h',i:'ɪ',j:'dʒ',k:'k',l:'l',m:'m',n:'n',o:'ɒ',p:'p',q:'kw',r:'ɹ',s:'s',t:'t',u:'ʌ',v:'v',w:'w',x:'ks',y:'j',z:'z'};
       for(const node of lesson.querySelectorAll('.option-btn')){const letter=(node.innerText||node.textContent||'').trim().toLowerCase();if(alphabet[letter])segments.push({text:letter,isArabic:false,phoneme:alphabet[letter]});}
+      if(typeof App!=='undefined'&&App.currentLesson&&Array.isArray(App.currentLesson.questions)){
+        for(const q of App.currentLesson.questions){
+          const choices=[...(Array.isArray(q.options)?q.options:[]),...(Array.isArray(q.letters)?q.letters:[]),q.target];
+          for(const choice of choices){const letter=String(choice==null?'':choice).trim().toLowerCase();if(alphabet[letter])segments.push({text:letter,isArabic:false,phoneme:alphabet[letter]});}
+        }
+      }
     }
     const unique=[...new Map(segments.map(seg=>[(seg.isArabic?'ar|':'en|')+seg.text+'|'+(seg.phoneme||''),seg])).values()];
     if(!unique.length)return{message:'Open a lesson first, then download its audio / افتح درساً أولاً ثم نزّل صوته'};
