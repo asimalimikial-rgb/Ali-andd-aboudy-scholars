@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * JavaScript bridge for the bundled sherpa-onnx/Supertonic runtime.
- * Deliberately contains no Android TextToSpeech or network speech fallback.
+ * Deliberately contains no platform speech engine or network speech fallback.
  */
 public final class NativeSpeech {
     private final Context context;
@@ -36,9 +36,9 @@ public final class NativeSpeech {
     @JavascriptInterface public String getVoices() {
         JSONArray voices = new JSONArray();
         try {
+            String[] styles = new String[]{"M1", "M2", "M3", "M4", "M5", "F1", "F2", "F3", "F4", "F5"};
             for (String language : new String[]{"en", "ar"}) {
-                String[] styles = new String[]{"M1", "M2", "M3", "M4", "M5", "F1", "F2", "F3", "F4", "F5"};
-            for (String style : styles) {
+                for (String style : styles) {
                     JSONObject voice = new JSONObject();
                     voice.put("name", style);
                     voice.put("lang", language.equals("ar") ? "ar" : "en");
@@ -81,6 +81,7 @@ public final class NativeSpeech {
                     lastError = "";
                     notifyStatus("");
                 }
+                if (request != generation.get()) { notifyJs(requestId, "end"); return; }
                 GeneratedAudio audio = active.synthesize(content, lang, voiceId, rate);
                 if (request != generation.get()) { notifyJs(requestId, "end"); return; }
                 playAudio(requestId, audio, request);
@@ -124,8 +125,14 @@ public final class NativeSpeech {
             final int chunk = 4096;
             for (int offset = 0; offset < samples.length && request == generation.get(); offset += chunk) {
                 int count = Math.min(chunk, samples.length - offset);
-                int written = track.write(samples, offset, count, AudioTrack.WRITE_BLOCKING);
-                if (written < 0) throw new IllegalStateException("AudioTrack write failed: " + written);
+                int writtenTotal = 0;
+                while (writtenTotal < count && request == generation.get()) {
+                    int written = track.write(samples, offset + writtenTotal,
+                        count - writtenTotal, AudioTrack.WRITE_BLOCKING);
+                    if (written < 0) throw new IllegalStateException("AudioTrack write failed: " + written);
+                    if (written == 0) continue;
+                    writtenTotal += written;
+                }
             }
             if (request == generation.get()) {
                 track.stop();
