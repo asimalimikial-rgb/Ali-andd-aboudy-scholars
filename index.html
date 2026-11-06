@@ -903,8 +903,19 @@ const SoundEffects = {
 const Speech = {
   voices: [], unlocked: false, _utt: null, keepAliveTimer: null,
   init() {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
+    if (window.NativeSpeech) {
+      window.__nativeSpeechReady = () => this.loadVoices();
+      window.__nativeSpeechEvent = (id, event) => {
+        const pending = this._nativePending;
+        if (pending && pending.id === id && (event === 'end' || event === 'error')) {
+          this._nativePending = null;
+          pending.finish();
+        }
+      };
+    }
     this.loadVoices();
+    if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
     }
@@ -923,8 +934,17 @@ const Speech = {
     ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, unlock, { once: true }));
   },
   loadVoices() {
-    if (!('speechSynthesis' in window)) return;
-    try { this.voices = window.speechSynthesis.getVoices() || []; } catch (e) { this.voices = []; }
+    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
+    let browserVoices = [];
+    let nativeVoices = [];
+    try { if (window.speechSynthesis) browserVoices = window.speechSynthesis.getVoices() || []; } catch (e) {}
+    try {
+      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === 'function') {
+        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || '[]');
+      }
+    } catch (e) { nativeVoices = []; }
+    const known = new Set(browserVoices.map(v => v.name));
+    this.voices = browserVoices.concat(nativeVoices.filter(v => v && v.name && !known.has(v.name)));
     this.updateVoicePicker();
   },
   updateVoicePicker() {
