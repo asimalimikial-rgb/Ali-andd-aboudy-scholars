@@ -60,6 +60,11 @@ try {
   assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
   assert.equal(calls.length, beforePrivate);
 
+  res = await call('POST', { text: 'Ali is learning today', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-private-en');
+  assert.equal(res.code, 400);
+  assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
+  assert.equal(calls.length, beforePrivate);
+
   res = await call('POST', { text: 'Locale mismatch', voice: 'ar-EG-SalmaNeural', language: 'en-GB' }, 'test-mismatch');
   assert.equal(res.code, 400);
   res = await call('POST', { text: 'Unknown voice', voice: 'not-a-voice', language: 'en-GB' }, 'test-voice');
