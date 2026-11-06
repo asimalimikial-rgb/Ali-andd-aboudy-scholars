@@ -1,59 +1,65 @@
-# Ali & Aboudy Scholars — v1.2.5
+# Ali & Aboudy Scholars — v1.3.0
 
-تطبيق تعليمي متكامل لعلي (KG2) وعبودي (Grade 2)، بملفي تعلم منفصلين ومحتوى تفاعلي متعدد المستويات.
+تطبيق تعليمي شخصي لعلي (KG2) وعبودي (Grade 2)، بملفي تعلم منفصلين، مناهج متكاملة، ألعاب قصيرة، ومساعد صوتي ثنائي اللغة.
 
 ## محتويات المشروع
 
-- `index.html`: تطبيق الويب الأساسي، مع ملفات الطفلين وصورهما الأصلية بناءً على موافقة صاحب المشروع.
-- `api/tts.js`: خادم وسيط آمن للصوت العصبي Google Cloud Text-to-Speech Chirp 3 HD.
-- `tts-config.js`: إعداد مسار خدمة الصوت للويب.
-- `android/`: غلاف Android WebView مع Android Native Text-to-Speech كخيار محلي.
-- `.github/workflows/build-apk.yml`: فحص JavaScript وبناء APK آلياً ونشره كـ GitHub Release.
-- `tts-config.android.js`: عنوان API الذي يحقن في نسخة Android.
+- `index.html`: تطبيق الويب الأساسي، مع الدروس والمناهج والصور الأصلية المضمنة.
+- `api/tts.js`: وسيط آمن إلى Microsoft Azure AI Speech Neural TTS.
+- `tts-config.js`: عنوان خدمة الصوت لنسخة الويب.
+- `android/`: غلاف Android WebView مع Android Native Text-to-Speech كحل أخير.
+- `.github/workflows/build-apk.yml`: فحوص JavaScript وبناء APK موقّع ونشر GitHub Release.
+- `tts-config.android.js`: عنوان خدمة الصوت الذي يُضمّن في APK.
 
-## الميزات التعليمية
+## بيئة التعلّم
 
-- ملفات منفصلة لعلي KG2 وعبودي Grade 2.
-- الكتب والمناهج والدروس وPlay & Learn وDaily Challenge والمكافآت.
-- My Learning World وSmart Learning Coach.
-- Phonics Studio وJolly Phonics pathway وReading Adventure.
-- Math Playground وLittle Science Lab وMy Word Collector.
-- Adventure Arcade وSibling Team Quest وVirtual Pet وMystery Box وAchievement Vault.
-- Parent Learning Report، النسخ الاحتياطي والاستعادة، وحفظ التقدم محلياً.
-- واجهة مناسبة للهاتف والأجهزة اللوحية والكمبيوتر.
+- ثلاثة مداخل واضحة تجمع الدروس: English & Phonics، Mathematics، Science & Discovery.
+- الحفاظ على كتب المنهج الأصلية والدروس ومعرّفاتها وتسلسل فتح الدروس.
+- ملفات مستقلة لعلي KG2 وعبودي Grade 2.
+- Jolly Phonics، Phonics Studio، Reading Adventure، Math Playground، Little Science Lab.
+- Play & Learn، Daily Challenge، Smart Learning Coach، My Word Collector، الألعاب والإنجازات.
+- Parent Dashboard، إعدادات الصوت، النسخ الاحتياطي والاستعادة.
+- واجهة متجاوبة للهاتف واللوحي والكمبيوتر.
 
-## نظام الصوت الهجين — أولوية الشبكة
+## سياسة الصوت
 
-1. عند توفر الإنترنت، يطلب التطبيق الصوت العصبي الشبكي أولاً لكل مقطع إنجليزي أو عربي؛ ولا يفضّل الكاش على الاتصال الشبكي.
-2. تُحفظ المقاطع الناجحة في IndexedDB لإعادة استخدامها عند انقطاع الإنترنت.
-3. عند تعذر الاتصال الشبكي، يستخدم التطبيق المقطع المحفوظ إن وُجد.
-4. لا يُستخدم Android Native TextToSpeech أو Web Speech المحلي إلا إذا تعذر الصوت الشبكي ولم يوجد مقطع محفوظ، أو عند تفعيل اختبار الصوت المحلي يدوياً.
-5. في شاشة السؤال، يُنطق نص السؤال الإنجليزي أولاً، ثم الشرح المساعد العربي كاملاً كما يظهر للطفل. وعند عرض حرف مستهدف منفرد لعلي، يُستبدل اسم الحرف بصوته التعليمي (Phonics).
-6. اختبار الصوت الشبكي يرسل عينتين عامتين مستقلتين للإنجليزية والعربية ويتجاوز الكاش فعلياً. ويوجد اختبار منفصل للأصوات المحلية.
-7. تُمنع أسماء الطفلين من الإرسال إلى الخدمة على مستوى التطبيق والخادم؛ النصوص الشخصية تبقى على الجهاز.
+1. عند توفر الإنترنت، يطلب التطبيق Microsoft Azure AI Speech أولاً.
+2. تُحفظ المقاطع الناجحة محلياً في IndexedDB لإعادة تشغيلها عند انقطاع الشبكة.
+3. إذا فشل الطلب الشبكي، يُستخدم المقطع المحفوظ إن وُجد.
+4. إذا لم يوجد اتصال أو مقطع محفوظ، يستخدم التطبيق Android Native TTS كخيار أخير.
+5. السؤال يُنطق بالإنجليزية فقط قبل الإجابة. لا يظهر ولا يُنطق الشرح العربي قبل أن يختار الطفل إجابته ويتحقق منها.
+6. بعد التحقق، تظهر تغذية راجعة وشرح عربي واحد، ويُقرأ الشرح بعد التغذية الراجعة.
+7. حروف Phonics المنفردة لعلي تستخدم IPA phoneme synthesis بدلاً من اسم الحرف.
+8. تُمنع أسماء الطفلين من الإرسال إلى مزوّد الصوت؛ النصوص الشخصية تبقى على الجهاز.
 
-### إعداد Gemini TTS على Vercel
+## إعداد Microsoft Azure AI Speech على Vercel
 
-أضف المتغير السري `GEMINI_API_KEY` إلى مشروع Vercel في بيئتي Preview وProduction. لا تضع المفتاح في HTML أو GitHub أو APK. لا تستخدم `GOOGLE_TTS_API_KEY` لهذا المسار؛ فهو خاص بتكامل Google Cloud TTS القديم.
+أنشئ مورداً من نوع **Speech** في Azure، ثم أضف متغيرين سريين إلى مشروع Vercel في بيئتي **Preview** و**Production**:
 
-يستخدم endpoint موديل `gemini-3.8-flash-lite-tts` عبر Gemini Generate Content API، ويحوّل الصوت الناتج إلى WAV قبل إرساله للتطبيق. يجب أن يكون endpoint متاحاً من تطبيق الويب وAndroid؛ إذا كانت Vercel Deployment Protection/SSO تمنع الطلبات العامة، فلن يستطيع الهاتف الوصول إليه حتى لو كان المفتاح مضبوطاً.
+- `AZURE_SPEECH_KEY`: مفتاح مورد Speech.
+- `AZURE_SPEECH_REGION`: معرّف المنطقة كما يظهر في Azure، مثل `uaenorth`.
+
+لا تضع المفتاح في HTML أو GitHub أو APK، ولا ترسله في المحادثة. يجب أن يطابق الـregion المفتاح الخاص بالمورد؛ مفاتيح Azure Speech مرتبطة بالمنطقة.
 
 الأصوات الافتراضية:
-- English: `en-GB-Chirp3-HD-Aoede`
-- Arabic: `ar-XA-Chirp3-HD-Aoede`
+- English: `en-GB-SoniaNeural`.
+- Arabic: `ar-EG-SalmaNeural`.
+- خيارات إضافية متاحة في إعدادات الوالد.
 
-### تشخيص الصوت
+الـendpoint يعيد MP3، ويدعم SSML وIPA، ويتعامل مع timeout و429 وRetry-After. يوجد حد وقائي محلي قدره 18 طلباً لكل عنوان IP خلال 60 ثانية لتقليل احتمال تجاوز حد Azure F0 البالغ 20 معاملة لكل 60 ثانية. هذا الحد الوقائي لا يحل محل حدود Azure الفعلية، ولا يضمن عدم وجود throttling على مستوى المورد.
 
-- زر **Test English + Arabic** يجرب الشبكة مباشرة ويعرض هل نجح الاتصال أو رجع إلى الكاش/الصوت المحلي، مع رمز الخطأ عند الفشل.
-- زر **Test local/offline voices** يتجاوز الشبكة والكاش ويختبر محرك Android/Web المحلي.
-- لا يُعد وجود صوت عربي في القائمة دليلاً على تثبيت بياناته أو نجاح تشغيله؛ يجب تثبيت بيانات اللغة العربية من إعدادات Android وتجربة الزر المحلي على الهاتف.
+بعد إضافة المتغيرات، أعد نشر Vercel Production. لا يُعد الصوت الشبكي جاهزاً حتى ينجح اختبار حقيقي للإنجليزية والعربية ويعيد HTTP 200 مع ملف صوتي غير فارغ.
 
 ## بناء APK
 
-يُبنى APK من مجلد `android/` عبر GitHub Actions. الإصدار الحالي v1.2.5 يستخدم `versionCode 8`. في Pull Requests يُبنى APK تجريبي بتوقيع Debug للتحقق، أما الإصدار المنشور على `main` فيُوقّع بمفتاح Release المحفوظ في GitHub Secrets، وتتحقق workflow من بصمة شهادة التوقيع قبل النشر. لا ترفع ملف JKS أو كلمة مروره إلى المستودع.
+يُبنى APK من مجلد `android/` عبر GitHub Actions. الإصدار v1.3.0 يستخدم `versionCode 9` و`versionName 1.3.0`. في Pull Requests يُبنى APK تجريبي بتوقيع Debug، أما إصدار `main` فيُوقّع بمفتاح Release المحفوظ في GitHub Secrets، وتتحقق workflow من بصمة شهادة التوقيع قبل النشر.
 
-## ملاحظات تشغيل
+لا ترفع ملف JKS أو كلمة مروره إلى المستودع.
 
-- GitHub Pages يستضيف واجهة الويب فقط؛ endpoint الصوت يحتاج نشر Vercel.
-- إذا لم يتم إعداد `GEMINI_API_KEY` في Vercel، يستجيب endpoint برمز `TTS_NOT_CONFIGURED`، ويستخدم التطبيق المقطع المحفوظ إن وجد ثم الصوت المحلي كخيار أخير.
-- لا تُعد جودة Android TTS أو العمل دون إنترنت مختبراً على جهاز فعلي إلا بعد إجراء الاختبار.
+## الخصوصية والاختبار
+
+- لا توجد إعلانات أو أدوات تتبع أو إرسال لبيانات تقدم الطفل.
+- مفاتيح Azure تبقى على الخادم في Vercel.
+- اختبارات CI تحاكي مزوّد الصوت؛ لا تثبت وحدها نجاح الاتصال الحقيقي أو جودة النطق.
+- لا يُدّعى اختبار جهاز Android فعلي إلا بعد تجربته على الجهاز.
+- GitHub Pages يستضيف واجهة الويب فقط؛ خدمة TTS تعمل من Vercel.
