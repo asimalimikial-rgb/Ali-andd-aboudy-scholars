@@ -9782,16 +9782,22 @@ const HybridSpeech = (() => {
     });
   }
   let lastFetchError = '';
+  function escapeXml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
   async function fetchClip(segment,voice,rate,token,phoneme){
     const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
     if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
+    const safePhoneme=String(phoneme||'').trim();
+    if(safePhoneme && !/^[^"<>]{1,32}$/u.test(safePhoneme))return null;
+    const synthesisText=safePhoneme
+      ? '<speak><phoneme alphabet="ipa" ph="'+escapeXml(safePhoneme)+'">'+escapeXml(segment.text)+'</phoneme></speak>'
+      : segment.text;
     controller=typeof AbortController!=='undefined'?new AbortController():null;
     lastFetchError='';
     try {
       const response=await fetch(endpoint,{
         method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-EG':'en-GB',phoneme:phoneme||undefined}),
+        body:JSON.stringify({text:synthesisText,voice,rate,language:segment.isArabic?'ar-EG':'en-GB'}),
         signal:controller?controller.signal:undefined
       });
       if(!response.ok){
@@ -9837,10 +9843,9 @@ const HybridSpeech = (() => {
       if(!blob&&!opts.forceLocal){
         if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
         else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
-        else if(phoneme){onlineAttempt='skipped';reason='neural-provider-does-not-support-the-required-IPA-phoneme-mode';}
         else{
           onlineAttempt='attempted';
-          blob=await fetchClip(segment,voice,rate,token,'');
+          blob=await fetchClip(segment,voice,rate,token,phoneme);
           if(blob){source='online';onlineAttempt='success';}
           else{onlineAttempt='failed';reason=lastFetchError||'network error';}
         }
