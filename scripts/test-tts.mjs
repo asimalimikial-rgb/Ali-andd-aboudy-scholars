@@ -73,10 +73,17 @@ try {
   assert.equal(res.code, 400);
 
   const beforePhoneme = calls.length;
-  res = await call('POST', { text: 'a', voice: 'en-GB-SoniaNeural', language: 'en-GB', phoneme: 'æ' }, 'test-phoneme');
-  assert.equal(res.code, 422);
-  assert.equal(res.body.code, 'PHONEME_UNSUPPORTED');
-  assert.equal(calls.length, beforePhoneme);
+  const phonemeSsml = '<speak><phoneme alphabet="ipa" ph="æ">a</phoneme></speak>';
+  res = await call('POST', { text: phonemeSsml, voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-phoneme');
+  assert.equal(res.code, 200);
+  assert.equal(calls.length, beforePhoneme + 2);
+  assert.equal(JSON.parse(calls[beforePhoneme].options.body).text, phonemeSsml);
+
+  const beforeUnsafeSsml = calls.length;
+  res = await call('POST', { text: '<speak><audio src="https://example.com/x.mp3"/></speak>', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-unsafe-ssml');
+  assert.equal(res.code, 400);
+  assert.equal(res.body.code, 'INVALID_TTS_REQUEST');
+  assert.equal(calls.length, beforeUnsafeSsml);
 
   globalThis.fetch = async () => ({ ok: false, status: 429, headers: { get(name) { return name === 'retry-after' ? '20' : null; } } });
   res = await call('POST', { text: 'Provider limit test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-provider-limit');
@@ -90,7 +97,7 @@ try {
   assert.equal(res.code, 502);
   assert.equal(res.body.code, 'INVALID_AUDIO_REFERENCE');
 
-  console.log('FreeTTS API tests passed: method handling, English, Arabic, MP3 proxy, rate conversion, privacy guard, validation, IPA fallback handling, provider 429, and invalid audio reference.');
+  console.log('FreeTTS API tests passed: method handling, English, Arabic, MP3 proxy, rate conversion, privacy guard, validation, IPA SSML handling, provider 429, and invalid audio reference.');
 } finally {
   globalThis.fetch = oldFetch;
 }
