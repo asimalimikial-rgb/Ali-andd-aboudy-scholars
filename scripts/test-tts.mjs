@@ -1,93 +1,48 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const handler = require('../api/tts.js');
+import fs from 'node:fs';
 
-function makeResponse() {
-  return {
-    code: 200, headers: {}, body: null,
-    setHeader(k,v) { this.headers[k.toLowerCase()] = v; },
-    status(code) { this.code = code; return this; },
-    json(body) { this.body = body; return this; },
-    send(body) { this.body = body; return this; },
-    end() { return this; }
-  };
-}
-async function call(method, body, ip) {
-  const res = makeResponse();
-  await handler({ method, body, headers: { 'x-forwarded-for': ip }, socket: {} }, res);
-  return res;
-}
-const oldKey = process.env.AZURE_SPEECH_KEY;
-const oldRegion = process.env.AZURE_SPEECH_REGION;
-const oldFetch = globalThis.fetch;
-try {
-  process.env.AZURE_SPEECH_KEY = 'test-azure-key';
-  process.env.AZURE_SPEECH_REGION = 'uaenorth';
-  let res = await call('OPTIONS', {}, 'test-options');
-  assert.equal(res.code, 204);
-  res = await call('GET', {}, 'test-get');
-  assert.equal(res.code, 405);
+const html=fs.readFileSync('index.html','utf8');
+const native=fs.readFileSync('android/app/src/main/java/com/alialiaboudyscholars/app/NativeSpeech.java','utf8');
+const engine=fs.readFileSync('android/app/src/main/java/com/alialiaboudyscholars/app/EmbeddedTtsEngine.java','utf8');
+const sherpa=fs.readFileSync('android/app/src/main/java/com/k2fsa/sherpa/onnx/Tts.kt','utf8');
+const prep=fs.readFileSync('scripts/prepare-embedded-tts.sh','utf8');
 
-  let sent = null;
-  globalThis.fetch = async (url, options) => {
-    sent = { url: String(url), options };
-    return {
-      ok: true, status: 200, headers: { get() { return null; } },
-      async arrayBuffer() { return Uint8Array.from([73,68,51,4,5,6,7,8]).buffer; }
-    };
-  };
-
-  res = await call('POST', { text: 'English test', voice: 'en-GB-SoniaNeural', language: 'en-GB', rate: 0.95 }, 'test-en');
-  assert.equal(res.code, 200);
-  assert.equal(res.headers['content-type'], 'audio/mpeg');
-  assert.equal(res.body.length, 8);
-  assert.equal(sent.url, 'https://uaenorth.tts.speech.microsoft.com/cognitiveservices/v1');
-  assert.equal(sent.options.headers['Ocp-Apim-Subscription-Key'], 'test-azure-key');
-  assert.equal(sent.options.headers['Content-Type'], 'application/ssml+xml');
-  assert.match(sent.options.body, /en-GB-SoniaNeural/);
-  assert.match(sent.options.body, /English test/);
-
-  res = await call('POST', { text: 'اختبار اللغة العربية', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-ar');
-  assert.equal(res.code, 200);
-  assert.match(sent.options.body, /xml:lang="ar-EG"/);
-  assert.match(sent.options.body, /ar-EG-SalmaNeural/);
-
-  res = await call('POST', { text: 'a', voice: 'en-GB-SoniaNeural', language: 'en-GB', phoneme: 'æ' }, 'test-phoneme');
-  assert.equal(res.code, 200);
-  assert.match(sent.options.body, /<phoneme alphabet="ipa" ph="æ">a<\/phoneme>/);
-
-  const before = sent.url;
-  res = await call('POST', { text: 'أهلاً عبودي', voice: 'ar-EG-SalmaNeural', language: 'ar-EG' }, 'test-private');
-  assert.equal(res.code, 400);
-  assert.equal(res.body.code, 'PERSONAL_TEXT_BLOCKED');
-  assert.equal(sent.url, before);
-
-  res = await call('POST', { text: 'Locale mismatch', voice: 'ar-EG-SalmaNeural', language: 'en-GB' }, 'test-mismatch');
-  assert.equal(res.code, 400);
-  res = await call('POST', { text: 'Unknown voice', voice: 'not-a-voice', language: 'en-GB' }, 'test-voice');
-  assert.equal(res.code, 400);
-
-  delete process.env.AZURE_SPEECH_KEY;
-  res = await call('POST', { text: 'No key', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-no-key');
-  assert.equal(res.code, 503);
-  process.env.AZURE_SPEECH_KEY = 'test-azure-key';
-
-  globalThis.fetch = async () => ({ ok: false, status: 429, headers: { get(name) { return name === 'retry-after' ? '20' : null; } } });
-  res = await call('POST', { text: 'Provider limit test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-provider-limit');
-  assert.equal(res.code, 429);
-  assert.equal(res.headers['retry-after'], '20');
-
-  globalThis.fetch = async () => ({ ok: false, status: 401, headers: { get() { return null; } } });
-  res = await call('POST', { text: 'Authentication test', voice: 'en-GB-SoniaNeural', language: 'en-GB' }, 'test-auth');
-  assert.equal(res.code, 502);
-  assert.equal(res.body.code, 'PROVIDER_AUTH_FAILED');
-
-  console.log('Azure TTS API tests passed: method handling, English, Arabic, IPA phonemes, MP3 response, privacy guard, validation, missing credentials, 429 retry-after, and authentication errors.');
-} finally {
-  globalThis.fetch = oldFetch;
-  if (oldKey === undefined) delete process.env.AZURE_SPEECH_KEY;
-  else process.env.AZURE_SPEECH_KEY = oldKey;
-  if (oldRegion === undefined) delete process.env.AZURE_SPEECH_REGION;
-  else process.env.AZURE_SPEECH_REGION = oldRegion;
-}
+assert.equal(html.includes('speechSynthesis'),false,'Web Speech API must never be used');
+assert.equal(html.includes('<script src="tts-config.js"></script>'),false,'Deleted legacy remote TTS config must not be referenced');
+assert.equal(html.includes('SpeechSynthesisUtterance'),false,'Browser speech utterances must never be used');
+assert.equal(html.includes('/api/tts'),false,'No remote TTS endpoint may remain');
+assert.equal(html.includes('freetts.org'),false,'No online speech provider may remain');
+assert.equal(html.includes('fetchClip('),false,'No remote speech clip fetcher may remain');
+assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must use the app-owned native bridge');
+assert.equal(html.includes('const queued = (this._speechQueue || Promise.resolve())'),true,'Speech requests must be serialized instead of canceling each other');
+assert.equal(html.includes('this._speechQueue = Promise.resolve();'),true,'Explicit stop must invalidate queued speech');
+assert.equal(html.includes('const activeScreen = document.querySelector(\'.screen.active\');'),true,'Leaving a screen must stop its narration');
+assert.equal(html.includes('HybridSpeech.stop();\\n    const q = this.currentLesson.questions[this.currentQuestionIndex];'),true,'Changing questions must stop stale narration');
+assert.equal(html.includes('HybridSpeech.stop();\\n    try {\\n      await HybridSpeech.speak(\'Hello! This is the embedded English voice test.\');'),true,'Voice test must start by clearing previous narration');
+assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
+assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
+assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
+assert.equal(native.includes('if (style.startsWith(\"M\")) index += 5;'),true,'Supertonic SID order must map F1-F5 to 0-4 and M1-M5 to 5-9');
+assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');
+assert.equal(native.includes('peak < 0.00001f'),true,'Silent generated PCM must be rejected instead of reported as success');
+assert.equal(native.includes('getPlaybackHeadPosition()'),true,'Speech completion must wait for PCM frames to reach the playback head');
+assert.equal(native.includes('track.setVolume(1.0f)'),true,'PCM playback must use full AudioTrack volume');
+assert.equal(native.includes('track.getState() != AudioTrack.STATE_INITIALIZED'),true,'Uninitialized AudioTrack must fail visibly');
+assert.equal(native.includes('PCM playback timed out'),true,'Playback timeout must be reported instead of false success');
+assert.equal(native.includes('HttpURLConnection'),false,'Native TTS must not make HTTP calls');
+assert.equal(engine.includes('OfflineTtsSupertonicModelConfig'),true,'Embedded engine must load Supertonic model');
+assert.equal(engine.includes('Collections.singletonMap("lang", language)'),true,'Arabic/English language code must be passed to model');
+assert.equal(sherpa.includes('System.loadLibrary("sherpa-onnx-jni")'),true,'Bundled sherpa JNI runtime must load');
+assert.equal(prep.includes('SHERPA_SHA256=')&&prep.includes('MODEL_SHA256='),true,'Runtime/model versions must be pinned');
+assert.equal(prep.includes('sha256sum --check'),true,'Runtime/model downloads must be hash-verified');
+assert.equal(prep.includes('supertonic3/LICENSE'),true,'Model license must be bundled');
+assert.equal(prep.includes('ONNXRUNTIME-LICENSE.txt')&&prep.includes('LLVM-LICENSE.txt'),true,'Native dependency licenses must be bundled');
+assert.equal(html.includes('chk-ai-voice-terms'),true,'Parent must accept the model license before speech is enabled');
+assert.equal(html.includes('aiVoiceTermsAccepted'),true,'Parent model-license acceptance must gate speech');
+assert.equal(html.includes('Speech.stop=function(){HybridSpeech.stop();}'),false,'Speech stop must not recurse through the facade');
+assert.equal(html.includes('أحسنت! إجابة صحيحة!'),true,'Correct answer must receive short praise');
+assert.equal(html.includes('محاولة جميلة!'),true,'Incorrect answer must receive supportive feedback');
+assert.equal(html.includes("const spokenFeedback = isCorrect ? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';"),true,'Post-answer speech must contain encouragement only');
+assert.equal(html.includes("feedback.textContent = isCorrect\n      ? 'That’s right! / أحسنت! إجابة صحيحة!'\n      : 'Good try! / محاولة جميلة!';"),true,'Post-answer text must contain encouragement only');
+assert.equal(html.includes('btn-replay-question')&&html.includes('btn-stop-question'),true,'Lesson screen must provide replay and stop controls before answer submission');
+console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');

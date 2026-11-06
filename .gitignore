@@ -1,0 +1,5 @@
+# Generated offline TTS binaries and model weights (downloaded and hash-verified during Android build)
+android/app/src/main/jniLibs/
+android/app/src/main/assets/embedded-tts/
+android/app/build/
+android/.gradle/

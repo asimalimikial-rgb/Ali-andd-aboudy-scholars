@@ -444,7 +444,7 @@
 
   .jolly-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.jolly-group{background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:14px;padding:12px;margin:12px 0}.jolly-sounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.jolly-wordstudy-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.jolly-wordstudy-grid .jolly-sound{min-width:0}.jolly-sound{border:1px solid var(--border-color,#ddd);border-radius:12px;padding:12px;text-align:center;background:var(--card-bg,#fff);min-width:0}.jolly-grapheme{font-size:2rem;font-weight:800;line-height:1.2}.jolly-word{font-weight:700;margin:5px 0}.jolly-ar{font-size:.85rem;color:var(--text-light);direction:rtl}.jolly-sound button{margin-top:6px;width:100%}.jolly-practice{padding:14px;border-radius:14px;background:var(--surface,#f4f7fb);margin-top:12px}
   </style>
-  <script src="tts-config.js"></script>
+  
 
   <style id="scholars-v130-design">
     :root{--primary-ali:#F06B67;--secondary-ali:#35B9AE;--primary-aboudy:#397CC7;--bg-ali:#FFF8F3;--bg-aboudy:#F3F7FC;--accent:#F7C95B;--text-dark:#203047;--text-light:#718096;--card-bg:#fff;--radius-lg:24px;--radius-md:18px;--shadow-sm:0 8px 24px rgba(32,48,71,.07);--shadow-md:0 14px 34px rgba(32,48,71,.12)}
@@ -727,45 +727,33 @@
     </div>
 
     <div class="card">
-      <h3>Microsoft Azure AI Speech / صوت مايكروسوفت العصبي</h3>
-      <div id="voice-doctor-info" style="font-size: 0.95rem; line-height: 1.7; margin: 10px 0;">Loading speech diagnosis...</div>
-      <label for="voice-picker-select" style="display:block; font-weight: bold; margin-top: 10px;">English voice / الصوت الإنجليزي:</label>
-      <select id="voice-picker-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
-      <label for="voice-picker-ar-select" style="display:block; font-weight: bold; margin-top: 10px;">Arabic voice / الصوت العربي:</label>
-      <select id="voice-picker-ar-select" style="width: 100%; min-height: 44px; margin-top: 4px; border-radius: var(--radius-sm); border: 1px solid #CCC;"></select>
+      <h3>Speech engine / محرك الصوت</h3>
+      <div id="voice-doctor-info" style="font-size:0.95rem;line-height:1.7;margin:10px 0;">Local Android speech is selected by default. Neural speech is experimental until real audio playback is verified.</div>
+      <div id="local-voice-settings" style="margin-top:12px;padding:12px;border:1px solid #DDE8F2;border-radius:12px;">
+        <strong>Local voice selection / اختيار الصوت المحلي</strong>
+        <label for="voice-picker-select" style="display:block;margin-top:10px;">English voice / الصوت الإنجليزي</label>
+        <select id="voice-picker-select" style="width:100%;min-height:44px;margin-top:4px;"><option value="">Auto (best offline voice)</option></select>
+        <label for="voice-picker-ar-select" style="display:block;margin-top:10px;">Arabic voice / الصوت العربي</label>
+        <select id="voice-picker-ar-select" style="width:100%;min-height:44px;margin-top:4px;"><option value="">Auto (best offline voice)</option></select>
+        <div id="local-voice-status" role="status" aria-live="polite" style="margin-top:8px;line-height:1.6;">Detecting available device voices…</div>
+      </div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:12px;"><input type="checkbox" id="chk-arabic-support" checked> Arabic learning explanations / إظهار الشرح العربي المساعد</label>
       <label for="speech-rate-control" style="display:block; font-weight:bold; margin-top:12px;">Speech speed / سرعة النطق</label>
       <input id="speech-rate-control" type="range" min="0.70" max="1.15" step="0.05" value="0.95" style="width:100%; min-height:32px;">
-      <button class="btn btn-accent" id="btn-test-voice" style="margin-top: 12px; width: 100%;">🔊 Test English + Arabic / اختبار الصوتين</button>
-      <button class="btn btn-secondary" id="btn-test-local-voice" type="button" style="margin-top:8px;width:100%;">📱 Test local/offline voices / اختبار الصوت المحلي دون إنترنت</button>
-
-      <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
-        <h3>Microsoft Azure AI Speech / الصوت الشبكي</h3>
-        <p style="margin:7px 0;line-height:1.6;">Azure neural voice first. Successful clips are saved on this device for offline replay. If the network and saved clip are unavailable, the app uses the local Android voice.</p>
-        <p dir="rtl" style="margin:7px 0;line-height:1.7;">صوت Microsoft Azure الشبكي أولاً، مع حفظ المقاطع الناجحة لإعادة استخدامها دون إنترنت. إذا تعذّر الاتصال ولم يوجد مقطع محفوظ، ينتقل التطبيق إلى صوت Android المحلي.</p>
-        <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
-        <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="en-GB-SoniaNeural">Sonia — British English (recommended)</option>
-          <option value="en-GB-RyanNeural">Ryan — British English</option>
-        </select></select>
-        <label for="online-voice-ar" style="display:block;font-weight:bold;margin-top:10px;">Arabic neural voice / الصوت العربي العصبي</label>
-        <select id="online-voice-ar" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="ar-EG-SalmaNeural">Salma — Arabic (Egypt)</option>
-          <option value="ar-EG-ShakirNeural">Shakir — Arabic (Egypt)</option>
-          <option value="ar-SA-ZariyahNeural">Zariyah — Arabic (Saudi Arabia)</option>
-          <option value="ar-SA-HamedNeural">Hamed — Arabic (Saudi Arabia)</option>
-        </select></select>
-        <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
-          <button class="btn btn-accent" id="btn-stop-all-audio" type="button" style="flex:1;">Stop audio / إيقاف الصوت</button>
-        </div>
-        <small style="display:block;margin-top:8px;color:var(--text-light);">Saved clips are stored locally (up to approximately 80 MB). Personal names are kept on-device and are not sent to the speech service.</small>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-accent" id="btn-test-voice" style="flex:1;">🔊 Test both voices / اختبار الصوتين</button>
+        <button class="btn btn-secondary" id="btn-stop-all-audio" style="flex:1;">Stop audio / إيقاف الصوت</button>
       </div>
-      <div id="samsung-instructions" style="display:none; background: #FFF3CD; padding: 12px; border-radius: var(--radius-sm); margin-top: 12px; font-size: 0.9rem;">
-        <strong>Android offline voice setup / إعداد الصوت دون إنترنت:</strong><br>
-        Settings → General management → Text-to-speech → Preferred engine → Install voice data. Install English and Arabic voice data, then use the Play test.
-        <p dir="rtl" style="margin-top:8px;">من إعدادات الهاتف افتح الإدارة العامة ثم تحويل النص إلى كلام، واختر محرك Google أو Samsung وثبّت بيانات الصوت للإنجليزية والعربية.</p>
+      <div class="card" id="embedded-voice-info" style="margin-top:14px;border:2px solid #B8D8F5;">
+        <h3>Embedded Offline Voice / الصوت المضمّن دون إنترنت</h3>
+        <p style="margin:7px 0;line-height:1.6;">Arabic and English speech are generated entirely inside this app. The model is bundled in the APK; no voice downloads, online TTS, or Android system speech engine are used.</p>
+        <p dir="rtl" style="margin:7px 0;line-height:1.7;">يُولَّد الصوت العربي والإنجليزي داخل التطبيق نفسه. المحرك والنموذج مضمّنان في ملف APK؛ لا توجد تنزيلات صوتية أو خدمة TTS شبكية أو اعتماد على محرك النطق في نظام أندرويد.</p>
+        <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Embedded model initializes locally on first use / يُحمّل المحرك محلياً عند أول استخدام.</div>
+        <small style="display:block;margin-top:8px;color:var(--text-light);">Synthetic AI voice, processed on this device. Use only lawfully; do not use it to harm or exploit minors, impersonate anyone without consent, or harass others. / صوت اصطناعي يُعالج على الجهاز؛ يُستخدم بصورة قانونية ومسؤولة، ولا يجوز استخدامه للإضرار بالأطفال أو انتحال شخصية أي شخص دون موافقته أو مضايقة الآخرين.</small>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;line-height:1.6;">
+          <input type="checkbox" id="chk-ai-voice-terms" style="margin-top:5px;">
+          <span>Parent agreement: I accept the included Supertonic 3 model license and its usage restrictions. <a href="embedded-tts/supertonic3/LICENSE">Read the full model license</a>. / إقرار ولي الأمر: أوافق على ترخيص نموذج Supertonic 3 المضمّن وشروط استخدامه. <a href="embedded-tts/supertonic3/LICENSE">قراءة الترخيص الكامل</a>.</span>
+        </label>
       </div>
     </div>
     <div class="card" id="parent-insights-card">
@@ -809,7 +797,7 @@
 <script>
 /**
  * Ali and Aboudy Scholars - Complete Engine Logic
- * Single File Implementation with robust offline Speech Synthesis
+ * Single File Implementation with embedded offline sherpa-onnx speech
  */
 
 // Global State / Store
@@ -824,9 +812,11 @@ const Store = {
       largeText: false,
       arabicSupport: true,
       speechRate: 0.95,
+      speechEngine: 'embedded',
+      aiVoiceTermsAccepted: false,
       manualVoice: '',
-      manualVoiceEn: '',
-      manualVoiceAr: ''
+      manualVoiceEn: 'F1',
+      manualVoiceAr: 'F1'
     },
     profiles: {
       ali: {
@@ -887,8 +877,6 @@ const Store = {
           const legacy = JSON.parse(localStorage.getItem('ali_aboudy_scholars_v1') || 'null');
           if (legacy && legacy.settings) {
             const migrated = { ...legacy.settings };
-            if (!['en-GB-SoniaNeural','en-GB-RyanNeural'].includes(migrated.onlineVoiceEn)) migrated.onlineVoiceEn = 'en-GB-SoniaNeural';
-            if (!['ar-EG-SalmaNeural','ar-EG-ShakirNeural','ar-SA-ZariyahNeural','ar-SA-HamedNeural'].includes(migrated.onlineVoiceAr)) migrated.onlineVoiceAr = 'ar-EG-SalmaNeural';
             this.data.settings = { ...this.data.settings, ...migrated };
           }
         } catch (migrationError) { console.warn('Parent settings migration skipped.'); }
@@ -969,48 +957,45 @@ const SoundEffects = {
 const Speech = {
   voices: [], unlocked: false, _utt: null, keepAliveTimer: null,
   init() {
-    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
-    if (window.NativeSpeech) {
-      window.__nativeSpeechReady = () => this.loadVoices();
-      window.__nativeSpeechEvent = (id, event) => {
-        const pending = this._nativePending;
-        if (pending && pending.id === id && (event === 'end' || event === 'error')) {
-          this._nativePending = null;
-          pending.finish();
-        }
-      };
+    if (!window.NativeSpeech) {
+      const message = "Embedded offline voice bridge unavailable / جسر محرك الصوت المضمّن غير متاح";
+      const status = document.getElementById("hybrid-voice-status");
+      if (status) status.textContent = message;
+      return;
     }
-    this.loadVoices();
-    if (!('speechSynthesis' in window)) return;
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
-    }
-    [500, 1600, 3500].forEach(delay => setTimeout(() => this.loadVoices(), delay));
-    const unlock = () => {
-      if (this.unlocked) return;
-      SoundEffects.init();
-      try {
-        const u = new SpeechSynthesisUtterance(' ');
-        u.volume = 0;
-        window.speechSynthesis.speak(u);
-      } catch (e) {}
-      this.unlocked = true;
-      ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.removeEventListener(evt, unlock));
+    window.__nativeSpeechReady = () => this.loadVoices();
+    window.__nativeSpeechStatus = message => {
+      const status = document.getElementById("hybrid-voice-status");
+      let visibleMessage = message || "";
+      if (!visibleMessage) {
+        try { visibleMessage = JSON.parse(window.NativeSpeech.getStatus() || "{}").message || ""; } catch (e) {}
+      }
+      if (status && visibleMessage) status.textContent = visibleMessage;
+      const local = document.getElementById("local-voice-status");
+      if (local && visibleMessage) local.textContent = visibleMessage;
+      this.loadVoices();
     };
-    ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, unlock, { once: true }));
+    window.__nativeSpeechEvent = (id, event) => {
+      const pending = this._nativePending;
+      if (!pending || pending.id !== id || event === "start") return;
+      this._nativePending = null;
+      clearTimeout(pending.timeout);
+      if (event === "end") pending.finish();
+      else pending.fail(new Error("Embedded offline speech generation or playback failed."));
+    };
+    this.loadVoices();
+    document.addEventListener("pointerdown", () => {
+      try { SoundEffects.init(); } catch (e) {}
+    }, { once: true });
   },
   loadVoices() {
-    if (!('speechSynthesis' in window) && !window.NativeSpeech) return;
-    let browserVoices = [];
     let nativeVoices = [];
-    try { if (window.speechSynthesis) browserVoices = window.speechSynthesis.getVoices() || []; } catch (e) {}
     try {
-      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === 'function') {
-        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || '[]');
+      if (window.NativeSpeech && typeof window.NativeSpeech.getVoices === "function") {
+        nativeVoices = JSON.parse(window.NativeSpeech.getVoices() || "[]");
       }
     } catch (e) { nativeVoices = []; }
-    const known = new Set(browserVoices.map(v => v.name));
-    this.voices = browserVoices.concat(nativeVoices.filter(v => v && v.name && !known.has(v.name)));
+    this.voices = nativeVoices.filter(v => v && v.name && v.localService === true);
     this.updateVoicePicker();
   },
   updateVoicePicker() {
@@ -1018,9 +1003,9 @@ const Speech = {
     const arSelect = document.getElementById('voice-picker-ar-select');
     const fill = (select, isArabic, savedName) => {
       if (!select) return;
-      const prior = savedName || '';
+      const prior = savedName || 'F1';
       select.innerHTML = '<option value="">Auto (best offline voice)</option>';
-      this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && (v.localService === true || (v.localService === undefined && !window.NativeSpeech))).forEach(v => {
+      this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && v.localService === true).forEach(v => {
         const opt = document.createElement('option');
         opt.value = v.name;
         opt.textContent = `${v.name} (${v.lang || 'unknown'})${v.localService === true ? ' • Offline' : ''}`;
@@ -1037,17 +1022,23 @@ const Speech = {
     }
     fill(enSelect, false, settings.manualVoiceEn || '');
     fill(arSelect, true, settings.manualVoiceAr || '');
+    const localStatus = document.getElementById('local-voice-status');
+    if (localStatus) {
+      const en = this.voices.filter(v => (v.lang || '').toLowerCase().startsWith('en') && v.localService === true).length;
+      const ar = this.voices.filter(v => (v.lang || '').toLowerCase().startsWith('ar') && v.localService === true).length;
+      localStatus.textContent = `Available offline voices: English ${en}, Arabic ${ar}. / الأصوات المحلية المتاحة: الإنجليزية ${en}، العربية ${ar}.`;
+    }
   },
   getBestVoice(isArabic) {
     const settings = Store.data.settings || {};
-    const preferred = isArabic ? (settings.manualVoiceAr || '') : (settings.manualVoiceEn || '');
+    const preferred = isArabic ? (settings.manualVoiceAr || 'F1') : (settings.manualVoiceEn || 'F1');
     if (preferred) {
       const exact = this.voices.find(v => v.name === preferred && (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en') && (v.localService === true || (v.localService === undefined && !window.NativeSpeech)));
       if (exact) return exact;
     }
     const languageVoices = this.voices.filter(v => (v.lang || '').toLowerCase().startsWith(isArabic ? 'ar' : 'en'));
     const offlineVoices = languageVoices.filter(v => v.localService === true || (v.localService === undefined && !window.NativeSpeech));
-    return offlineVoices[0] || null;
+    return offlineVoices.find(v => v.name === 'F1') || offlineVoices[0] || null;
   },
   normalizeSegment(input, isArabic) {
     let text = String(input == null ? '' : input);
@@ -1107,70 +1098,88 @@ const Speech = {
     setTimeout(() => { bubble.style.display = 'none'; }, 4500);
   },
   speak(input, opts = {}) {
-    const generation = (this._speechGeneration || 0) + 1;
-    this._speechGeneration = generation;
-    return new Promise(resolve => {
-      const segments = this.prepareSegments(input, opts);
-      if (!segments.length || (!('speechSynthesis' in window) && !window.NativeSpeech)) {
-        if (input) this.showCaptionBubble(input);
-        resolve(); return;
-      }
-      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-      if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
-      let index = 0;
-      const playNext = () => {
-        if (generation !== this._speechGeneration) { resolve(); return; }
-        if (index >= segments.length) { resolve(); return; }
-        const segment = segments[index++];
-        const utterance = typeof SpeechSynthesisUtterance === 'function' ? new SpeechSynthesisUtterance(segment.text) : { text: segment.text };
-        this._utt = utterance;
-        const voice = this.getBestVoice(segment.isArabic);
-        if (voice && !window.NativeSpeech) utterance.voice = voice;
-        utterance.lang = voice && voice.lang ? voice.lang : (segment.isArabic ? 'ar' : 'en-GB');
-        const settings = Store.data.settings || {};
-        const baseRate = Number(settings.speechRate) || (Store.data.activeChild === 'ali' ? 0.88 : 0.96);
-        utterance.rate = Math.max(0.65, Math.min(1.2, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
-        utterance.pitch = opts.pitch || 1.0;
-        let finished = false;
-        let nativeId = null;
-        let nativeWatchdog = null;
-        const startWatchdog = setTimeout(() => { if (!finished) finish(); }, 4200);
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(startWatchdog);
-          if (nativeWatchdog) clearTimeout(nativeWatchdog);
-          if (this._nativePending && this._nativePending.id === nativeId) this._nativePending = null;
-          if (generation !== this._speechGeneration) { resolve(); return; }
-          setTimeout(playNext, 100);
-        };
-        if (window.NativeSpeech) {
-          clearTimeout(startWatchdog);
-          nativeId = 'native-' + generation + '-' + index + '-' + Date.now();
-          nativeWatchdog = setTimeout(finish, Math.max(12000, segment.text.length * 350));
-          this._nativePending = { id: nativeId, finish };
-          try {
-            window.NativeSpeech.speak(nativeId, segment.text, utterance.lang, voice ? voice.name : '', utterance.rate, utterance.pitch);
-          } catch (e) { finish(); }
-          return;
-        }
-        utterance.onstart = () => {
-          if (generation !== this._speechGeneration) return;
-          if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
-          this.keepAliveTimer = setInterval(() => {
-            try { if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); } else clearInterval(this.keepAliveTimer); } catch (e) {}
-          }, 12000);
-        };
-        utterance.onend = finish;
-        utterance.onerror = finish;
-        try { window.speechSynthesis.speak(utterance); }
-        catch (e) { finish(); }
-      };
-      setTimeout(playNext, 80);
+    // Serialize utterances. A new phrase must not cancel a phrase already in progress.
+    const generation = this._speechGeneration || 0;
+    const queued = (this._speechQueue || Promise.resolve()).catch(() => {}).then(() => {
+      if (generation !== (this._speechGeneration || 0)) return [];
+      return this._speakNow(input, opts, generation);
     });
+    this._speechQueue = queued.catch(() => {});
+    return queued;
+  },
+  _speakNow(input, opts = {}, generation) {
+    if (!Store.data.settings.aiVoiceTermsAccepted) {
+      const message = 'A parent must accept the embedded voice model license in Parent Settings first. / يجب أن يوافق ولي الأمر على ترخيص نموذج الصوت من إعدادات الوالدين أولاً.';
+      if (typeof HybridSpeech !== 'undefined') HybridSpeech.updateStatus(message);
+      return Promise.reject(new Error(message));
+    }
+    const spokenText = opts.phoneme ? (opts.fallbackText || input) : input;
+    const segments = this.prepareSegments(spokenText, opts);
+    if (!segments.length) return Promise.resolve([]);
+    if (!window.NativeSpeech || typeof window.NativeSpeech.speak !== "function") {
+      const error = new Error("The embedded offline voice engine is unavailable. No system or online fallback is permitted.");
+      this.showCaptionBubble("Embedded voice unavailable / الصوت المضمّن غير متاح");
+      return Promise.reject(error);
+    }
+    const settings = Store.data.settings || {};
+    const baseRate = Number(settings.speechRate) || (Store.data.activeChild === "ali" ? 0.88 : 0.96);
+    const rate = Math.max(0.70, Math.min(1.20, opts.rate || (settings.slowSpeech ? baseRate * 0.88 : baseRate)));
+    return new Promise((resolve, reject) => {
+      let index = 0;
+      let settled = false;
+      const fail = error => {
+        if (settled) return;
+        settled = true;
+        this._nativePending = null;
+        reject(error instanceof Error ? error : new Error(String(error || "Embedded speech failed")));
+      };
+      const playNext = () => {
+        if (settled) return;
+        if (generation !== this._speechGeneration) { settled = true; resolve(); return; }
+        if (index >= segments.length) { settled = true; resolve(); return; }
+        const segment = segments[index++];
+        const voice = this.getBestVoice(segment.isArabic);
+        const language = segment.isArabic ? "ar" : "en";
+        const id = "embedded-" + generation + "-" + index + "-" + Date.now();
+        const pending = {
+          id,
+          finish: () => { if (!settled && generation === this._speechGeneration) setTimeout(playNext, 80); },
+          cancel: () => { if (!settled) { settled = true; resolve(); } },
+          fail
+        };
+        pending.timeout = setTimeout(() => {
+          if (this._nativePending && this._nativePending.id === id) {
+            this._nativePending = null;
+            fail(new Error("Embedded voice engine did not respond in time."));
+          }
+        }, Math.max(30000, segment.text.length * 700));
+        this._nativePending = pending;
+        try {
+          window.NativeSpeech.speak(id, segment.text, language, voice ? voice.name : "", rate, opts.pitch || 1.0);
+        } catch (error) {
+          clearTimeout(pending.timeout);
+          fail(error);
+        }
+      };
+      playNext();
+    });
+  },
+  stop() {
+    // Explicit stop/navigation invalidates the active utterance and all queued utterances.
+    this._speechGeneration = (this._speechGeneration || 0) + 1;
+    this._speechQueue = Promise.resolve();
+    const pending = this._nativePending;
+    this._nativePending = null;
+    if (pending) {
+      clearTimeout(pending.timeout);
+      try { pending.cancel(); } catch (e) {}
+    }
+    try { if (window.NativeSpeech) window.NativeSpeech.cancel(); } catch (e) {}
   }
+
 };
-Speech.init();
+// The only speech path is the embedded sherpa-onnx runtime exposed by NativeSpeech.
+
 
 // Complete Curriculum Data Definitions
 const Curriculum = {
@@ -8331,7 +8340,7 @@ const App = {
           const w=document.createElement('div');w.className='jolly-word';w.textContent=word;card.appendChild(w);
           const a=document.createElement('div');a.className='jolly-ar';a.dir='rtl';a.textContent=ar+' • '+(JOLLY_ARABIC_WORDS[word.toLowerCase()]||'');card.appendChild(a);
           const name=document.createElement('button');name.className='btn btn-secondary';name.textContent='Letter name / اسم الحرف';name.onclick=()=>Speech.speak(sound.toLowerCase().replace(/[^a-z]/g,' ').trim().split(/\s+/).join(' '));card.appendChild(name);
-          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
+          const hear=document.createElement('button');hear.className='btn btn-primary';hear.textContent='Phonics sound / صوت الحرف';const neuralPhoneme=this.getJollyPhonemeData(sound,word);if(neuralPhoneme){hear.dataset.neuralPhoneme=neuralPhoneme[0];hear.dataset.neuralText=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();}hear.onclick=()=>this.playJollyPhoneme(sound,word);card.appendChild(hear);
           const say=document.createElement('button');say.className='btn btn-secondary';say.textContent='Example word / كلمة المثال';say.onclick=()=>Speech.speak(word);card.appendChild(say);
           if(skill==='formation'){const trace=document.createElement('button');trace.className='btn btn-accent';trace.textContent='Trace / تتبّع';trace.onclick=()=>this.openTracePad(card,sound);card.appendChild(trace);}
           grid.appendChild(card);
@@ -8427,7 +8436,7 @@ const App = {
     return HybridSpeech.speak(key, { phoneme, fallbackText: examples[key], rate: 0.88 });
   },
 
-  playJollyPhoneme(sound, example) {
+  getJollyPhonemeData(sound, example) {
     const key=String(sound).toLowerCase()+'|'+String(example).toLowerCase();
     const map={
       's|sun':['s','ssss'],'a|ant':['æ','short a'],'t|tap':['t','tuh'],'i|ink':['ɪ','short i'],'p|pig':['p','puh'],'n|net':['n','nnn'],
@@ -8439,7 +8448,11 @@ const App = {
       'qu|queen':['kw','kw'],'ou|out':['aʊ','ow'],'oi|coin':['ɔɪ','oy'],'ue|blue':['uː','blue'],'er|fern':['ɜː','er'],'ar|farm':['ɑː','ar']
     };
     const simpleKeys={s:'s|sun',a:'a|ant',t:'t|tap',i:'i|ink',p:'p|pig',n:'n|net',m:'m|map'};
-    const item=map[key]||map[simpleKeys[String(sound).toLowerCase()]||''];
+    return map[key]||map[simpleKeys[String(sound).toLowerCase()]||'']||null;
+  },
+
+  playJollyPhoneme(sound, example) {
+    const item=this.getJollyPhonemeData(sound,example);
     if(!item){Speech.speak(example);return;}
     const spoken=String(sound).toLowerCase()==='c / k'?'k':String(sound).toLowerCase();
     Speech.speak(spoken,{phoneme:item[0],fallbackText:item[1],rate:0.88});
@@ -8449,6 +8462,7 @@ const App = {
     document.querySelectorAll('[data-profile-photo]').forEach(img => {
       img.src = ProfilePhotos[img.dataset.profilePhoto] || '';
     });
+    Speech.init();
     this.bindEvents();
     this.renderHeader();
     this.showScreen('screen-profiles');
@@ -8466,7 +8480,17 @@ const App = {
     if (arabicToggle) arabicToggle.checked = s.arabicSupport !== false;
     const rateControl = document.getElementById('speech-rate-control');
     if (rateControl) rateControl.value = String(s.speechRate || 0.95);
+    const localPanel = document.getElementById('local-voice-settings');
+    if (localPanel) localPanel.style.display = 'block';
+    const aiTerms = document.getElementById('chk-ai-voice-terms');
+    if (aiTerms) aiTerms.checked = !!s.aiVoiceTermsAccepted;
     Speech.updateVoicePicker();
+    const localStatus = document.getElementById('local-voice-status');
+    if (localStatus) {
+      const en = Speech.voices.filter(v => (v.lang || '').toLowerCase().startsWith('en') && v.localService === true).length;
+      const ar = Speech.voices.filter(v => (v.lang || '').toLowerCase().startsWith('ar') && v.localService === true).length;
+      localStatus.textContent = `Available offline voices: English ${en}, Arabic ${ar}. / الأصوات المحلية المتاحة: الإنجليزية ${en}، العربية ${ar}.`;
+    }
   },
 
   bindEvents() {
@@ -8475,10 +8499,9 @@ const App = {
     document.getElementById('card-aboudy').onclick = () => this.selectProfile('aboudy');
 
     // Header Actions
-    document.getElementById('btn-back-home').onclick = () => { SoundEffects.click(); this.showScreen('screen-home'); };
+    document.getElementById('btn-back-home').onclick = () => { HybridSpeech.stop(); SoundEffects.click(); this.showScreen('screen-home'); };
     document.getElementById('hdr-avatar').onclick = () => {
-      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
-      SoundEffects.click(); this.showScreen('screen-profiles');
+      HybridSpeech.stop(); SoundEffects.click(); this.showScreen('screen-profiles');
     };
     document.getElementById('btn-open-parent').onclick = () => this.openParentGate();
     document.getElementById('btn-play-games').onclick = () => this.renderGames();
@@ -8515,22 +8538,16 @@ const App = {
 
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
-    document.getElementById('btn-test-local-voice').onclick = () => this.testLocalVoiceDoctor();
-
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-SoniaNeural';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-EG-SalmaNeural';
-    document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
-    document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
-    document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
     document.getElementById('btn-stop-all-audio').onclick = () => HybridSpeech.stop();
-    document.getElementById('voice-picker-select').onchange = (e) => {
-      Store.data.settings.manualVoiceEn = e.target.value;
-      Store.data.settings.manualVoice = e.target.value;
+    document.getElementById('voice-picker-select').onchange = e => { Store.data.settings.manualVoiceEn = e.target.value; Store.save(); };
+    document.getElementById('voice-picker-ar-select').onchange = e => { Store.data.settings.manualVoiceAr = e.target.value; Store.save(); };
+    document.getElementById('chk-ai-voice-terms').onchange = e => {
+      Store.data.settings.aiVoiceTermsAccepted = e.target.checked;
       Store.save();
-    };
-    document.getElementById('voice-picker-ar-select').onchange = (e) => {
-      Store.data.settings.manualVoiceAr = e.target.value;
-      Store.save();
+      if (!e.target.checked) HybridSpeech.stop();
+      HybridSpeech.updateStatus(e.target.checked
+        ? 'Parent agreement saved. Embedded voice is ready for first use. / تم حفظ موافقة ولي الأمر.'
+        : 'Voice paused until a parent accepts the model license. / تم إيقاف الصوت حتى موافقة ولي الأمر.');
     };
     document.getElementById('chk-arabic-support').onchange = (e) => {
       Store.data.settings.arabicSupport = e.target.checked;
@@ -8573,6 +8590,10 @@ const App = {
   },
 
   showScreen(screenId) {
+    const activeScreen = document.querySelector('.screen.active');
+    if (activeScreen && activeScreen.id !== screenId && typeof HybridSpeech !== 'undefined') {
+      HybridSpeech.stop();
+    }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(screenId);
     if (target) target.classList.add('active');
@@ -9060,6 +9081,8 @@ const App = {
   },
 
   renderCurrentQuestion() {
+    // A new question owns the narration channel; do not let the previous question continue.
+    HybridSpeech.stop();
     const q = this.currentLesson.questions[this.currentQuestionIndex];
     const total = this.currentLesson.questions.length;
     this.answerLocked = false;
@@ -9090,9 +9113,17 @@ const App = {
 
     if (q.visual) this.renderVisualModel(q.visual, area);
 
-    // Speak the English prompt first, then the Arabic helper explanation.
+    // Show the Arabic helper before the child answers; never repeat it in post-answer feedback.
+    const arabicHelper = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
+    if (arabicHelper) {
+      const helper = document.createElement('div');
+      helper.className = 'arabic-explanation';
+      helper.dir = 'rtl';
+      helper.textContent = 'مساعدة قبل الإجابة: ' + arabicHelper;
+      card.appendChild(helper);
+    }
+    // Speak the English prompt first, then the Arabic helper, before answer selection.
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
-    // Arabic explanation is deliberately deferred until after answer validation.
     const narrateQuestion = async () => {
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
@@ -9125,7 +9156,20 @@ const App = {
       } else {
         await HybridSpeech.speak(titleText);
       }
+      if (arabicHelper) await HybridSpeech.speak(arabicHelper, { language: 'ar' });
     };
+    const audioControls = document.createElement('div');
+    audioControls.id = 'question-audio-controls';
+    audioControls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;';
+    audioControls.innerHTML = `
+      <button type="button" class="btn btn-secondary" id="btn-replay-question" style="flex:1;">↻ Repeat question / إعادة السؤال</button>
+      <button type="button" class="btn btn-secondary" id="btn-stop-question" style="flex:1;">■ Stop voice / إيقاف الصوت</button>
+    `;
+    card.appendChild(audioControls);
+    document.getElementById('btn-replay-question').onclick = () => {
+      narrateQuestion().catch(error => console.warn('Question replay failed:', error));
+    };
+    document.getElementById('btn-stop-question').onclick = () => HybridSpeech.stop();
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
 
@@ -9503,26 +9547,23 @@ const App = {
     }
 
     this.answerLocked = true;
+    const audioControls = document.getElementById('question-audio-controls');
+    if (audioControls) audioControls.style.display = 'none';
     const feedback = document.getElementById('answer-feedback');
-    const explanation = q.explanation || q.hint || 'Keep looking for clues and try the next one.';
     feedback.className = `feedback-banner ${isCorrect ? 'good' : 'coach'}`;
     feedback.style.display = 'block';
-    const arabicExplanation = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) : '';
-    feedback.textContent = isCorrect ? `That’s right! ${explanation}` : `Good try. ${explanation}`;
-    if (arabicExplanation) {
-      const arabicBlock = document.createElement('div');
-      arabicBlock.className = 'arabic-explanation';
-      arabicBlock.dir = 'rtl';
-      arabicBlock.textContent = (isCorrect ? 'أحسنت! ' : 'محاولة جميلة. ') + arabicExplanation;
-      feedback.appendChild(arabicBlock);
-    }
+    // Post-answer feedback is encouragement only. Never repeat hints, explanations,
+    // or instructions after the child has submitted an answer.
+    feedback.textContent = isCorrect
+      ? 'That’s right! / أحسنت! إجابة صحيحة!'
+      : 'Good try! / محاولة جميلة!';
     if (isCorrect && q.type === 'spelling') this.saveVocabularyWord(q.target);
 
     const submitBtn = document.getElementById('btn-submit-answer');
     submitBtn.textContent = 'Continue / متابعة';
     submitBtn.onclick = () => this.advanceActivity();
 
-    const spokenFeedback = isCorrect ? `Great job! ${explanation}` : `Good try. ${explanation}`;
+    const spokenFeedback = isCorrect ? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';
     if (isCorrect) {
       SoundEffects.correct();
       this.lessonScore++;
@@ -9530,7 +9571,6 @@ const App = {
       SoundEffects.wrong();
     }
     HybridSpeech.speak(spokenFeedback)
-      .then(() => arabicExplanation ? HybridSpeech.speak(arabicExplanation) : null)
       .catch(error => console.warn('Feedback narration failed:', error));
   },
 
@@ -9714,48 +9754,20 @@ const App = {
   },
 
   renderVoiceDoctor() {
-    const total = Speech.voices.length;
-    const localVoices = Speech.voices.filter(v => v.localService).length;
-    const enVoice = Speech.getBestVoice(false);
-    const arVoice = Speech.getBestVoice(true);
-
     const info = document.getElementById('voice-doctor-info');
-    info.innerHTML = `
-      • Voices detected: <strong>${total}</strong><br>
-      • Voices marked local: <strong>${localVoices}</strong><br>
-      • English voice: <strong>${enVoice ? enVoice.name + ' (' + enVoice.lang + ')' : 'No offline English voice detected'}</strong><br>
-      • Arabic voice: <strong>${arVoice ? arVoice.name + ' (' + arVoice.lang + ')' : 'No offline Arabic voice detected'}</strong><br>
-      • Engine: <strong>${Speech.unlocked ? 'Ready after user gesture' : 'Tap a button to unlock'}</strong><br>
-      <span dir="rtl">يجب اختبار الصوتين عملياً؛ وجود اسم الصوت في القائمة لا يضمن جودة النطق أو عمله دون إنترنت.</span>
-    `;
-
-    if (total === 0 || !localVoices) {
-      document.getElementById('samsung-instructions').style.display = 'block';
-    } else {
-      document.getElementById('samsung-instructions').style.display = 'none';
-    }
+    if (info) info.textContent = 'Embedded sherpa-onnx voice / محرك sherpa-onnx مستقل ومضمّن داخل التطبيق ويعمل دون إنترنت.';
+    HybridSpeech.updateStatus();
   },
 
   async testVoiceDoctor() {
-    const english = await HybridSpeech.speak('English online voice test. Four plus three equals seven.', { forceOnline: true });
-    const arabic = await HybridSpeech.speak('اختبار اللغة العربية. أربعة زائد ثلاثة يساوي سبعة.', { forceOnline: true });
-    const summarize = (label, results) => {
-      const online = results.filter(item => item.onlineAttempt === 'success').length;
-      const saved = results.filter(item => item.source === 'saved').length;
-      const local = results.filter(item => item.source === 'local').length;
-      const failed = results.find(item => item.onlineAttempt === 'failed');
-      const blocked = results.some(item => item.onlineAttempt === 'blocked');
-      return label + ': ' + (online ? 'Online ' + online : saved ? 'Saved ' + saved : 'Local ' + local) +
-        (failed ? ' — API ' + failed.reason : '') + (blocked ? ' — privacy guard' : '');
-    };
-    HybridSpeech.updateStatus('اختبار الشبكة — ' + summarize('English', english) + ' | ' + summarize('العربية', arabic));
-  },
-
-  async testLocalVoiceDoctor() {
-    const english = await HybridSpeech.speak('Local English voice test. Four plus three equals seven.', { forceLocal: true });
-    const arabic = await HybridSpeech.speak('اختبار الصوت العربي المحلي. أربعة زائد ثلاثة يساوي سبعة.', { forceLocal: true });
-    const describe = (label, results) => label + ': ' + (results.length ? 'تم تشغيل ' + results.length + ' مقطع' : 'لا توجد مقاطع قابلة للنطق');
-    HybridSpeech.updateStatus('اختبار الصوت المحلي — ' + describe('English', english) + ' | ' + describe('العربية', arabic));
+    HybridSpeech.stop();
+    try {
+      await HybridSpeech.speak('Hello! This is the embedded English voice test.');
+      await HybridSpeech.speak('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' });
+      HybridSpeech.updateStatus('Both embedded voices completed the test / اكتمل اختبار الصوتين المضمّنين');
+    } catch (error) {
+      HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
+    }
   },
 
   exportData() {
@@ -9775,134 +9787,31 @@ const App = {
 };
 
 
-/* Hybrid neural speech: saved clips first, online Chirp 3 HD when missing,
-   then Android/browser local TTS as the fallback. */
-const HybridSpeech = (() => {
-  const DB_NAME = 'ali-aboudy-azure-audio-v2', STORE_NAME = 'clips';
-  const MAX_BYTES = 80 * 1024 * 1024;
-  let dbPromise = null, generation = 0, currentAudio = null, currentUrl = null, controller = null;
-  const localSpeak = Speech.speak.bind(Speech);
-  const personalNamePattern = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
-  function openDB() {
-    if (!('indexedDB' in window)) return Promise.resolve(null);
-    if (dbPromise) return dbPromise;
-    dbPromise = new Promise(resolve => {
-      try {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME, { keyPath: 'id' }); };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = req.onblocked = () => resolve(null);
-      } catch (e) { resolve(null); }
-    });
-    return dbPromise;
-  }
-  const reqP = req => new Promise((resolve,reject) => { req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
-  async function getClip(id) {
-    const db=await openDB(); if(!db)return null;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), item=await reqP(store.get(id)); if(item){item.accessedAt=Date.now();store.put(item);} return item||null; } catch(e){return null;}
-  }
-  async function saveClip(id,blob,meta) {
-    const db=await openDB(); if(!db||!blob||!blob.size||blob.size>2*1024*1024)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'); tx.objectStore(STORE_NAME).put({id,blob,bytes:blob.size,createdAt:Date.now(),accessedAt:Date.now(),language:meta.language,voice:meta.voice,text:meta.text}); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);tx.onabort=()=>j(tx.error)}); await evict(); } catch(e){console.warn('Audio cache save failed',e);}
-  }
-  async function evict() {
-    const db=await openDB(); if(!db)return;
-    try { const tx=db.transaction(STORE_NAME,'readwrite'), store=tx.objectStore(STORE_NAME), items=await reqP(store.getAll()); let total=items.reduce((n,x)=>n+(x.bytes||0),0); if(total>MAX_BYTES){items.sort((a,b)=>(a.accessedAt||a.createdAt)-(b.accessedAt||b.createdAt));for(const x of items){if(total<=MAX_BYTES*.85)break;store.delete(x.id);total-=x.bytes||0;}} } catch(e){}
-  }
-  const idFor=(lang,voice,text,rate,phoneme)=>lang+'::'+voice+'::'+Number(rate).toFixed(2)+'::'+(phoneme?'ipa:'+phoneme+'::':'')+text;
-  function rateFor(opts){const s=Store.data.settings||{},base=Number(opts&&opts.rate)||Number(s.speechRate)||.95;return Math.max(.75,Math.min(1.25,s.slowSpeech?base*.88:base));}
-  function playBlob(blob,rate,token){
-    return new Promise((resolve,reject)=>{
-      if(token!==generation)return resolve();
-      try { if(currentAudio)currentAudio.pause(); if(currentUrl)URL.revokeObjectURL(currentUrl); currentUrl=URL.createObjectURL(blob); const audio=new Audio(currentUrl); currentAudio=audio; audio.preload='auto';audio.playbackRate=rate;let done=false;const finish=e=>{if(done)return;done=true;audio.onended=audio.onerror=null;if(currentAudio===audio)currentAudio=null;e?reject(e):resolve();};audio.onended=()=>finish();audio.onerror=()=>finish(new Error('Audio playback failed'));Promise.resolve(audio.play()).catch(finish); } catch(e){reject(e);}
-    });
-  }
-  let lastFetchError = '';
-  async function fetchClip(segment,voice,rate,token,phoneme){
-    const endpoint=window.ALI_TTS_API_BASE||'/api/tts';
-    if(!navigator.onLine||personalNamePattern.test(segment.text))return null;
-    controller=typeof AbortController!=='undefined'?new AbortController():null;
-    lastFetchError='';
+/* Embedded-only speech facade. No network requests, cache downloads, or system TTS. */
+const HybridSpeech = {
+  speak(input, opts = {}) {
+    const text = opts.phoneme ? (opts.fallbackText || input) : input;
+    return Speech.localSpeak(text, Object.assign({}, opts, { phoneme: undefined }));
+  },
+  stop() {
+    Speech.stop();
+    this.updateStatus("Audio stopped / تم إيقاف الصوت");
+  },
+  updateStatus(message) {
+    const status = document.getElementById("hybrid-voice-status");
+    if (!status) return;
+    let engineStatus = "";
     try {
-      const response=await fetch(endpoint,{
-        method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:segment.text,voice,rate,language:segment.isArabic?'ar-EG':'en-GB',phoneme:phoneme||undefined}),
-        signal:controller?controller.signal:undefined
-      });
-      if(!response.ok){
-        let details={};
-        try{details=await response.json();}catch(e){}
-        throw new Error('HTTP '+response.status+(details.code?' '+details.code:''));
-      }
-      const blob=await response.blob();
-      if(!blob.size||(blob.type&&!blob.type.includes('audio')))throw new Error('Invalid audio response');
-      if(token!==generation)return null;
-      await saveClip(idFor(segment.isArabic?'ar-EG':'en-GB',voice,segment.text,rate,phoneme),blob,{language:segment.isArabic?'ar-EG':'en-GB',voice,text:segment.text,phoneme});
-      return blob;
-    } catch(e) {
-      if(e&&e.name!=='AbortError')console.warn('Online neural voice unavailable; local fallback used.',e);
-      lastFetchError=e&&e.message?e.message:(e&&e.name==='AbortError'?'request cancelled':'network error');
-      return null;
-    } finally {controller=null;}
+      const state = JSON.parse(window.NativeSpeech.getStatus() || "{}");
+      engineStatus = state.message || "";
+    } catch (e) {}
+    status.textContent = message || engineStatus ||
+      "Embedded offline voice initializes locally on first use / يُحمّل محرك الصوت محلياً عند أول استخدام";
   }
-  async function speak(input,opts){
-    opts=opts||{};
-    const phoneme=typeof opts.phoneme==='string'?opts.phoneme:'';
-    const token=++generation;
-    lastFetchError='';
-    try{if(currentAudio)currentAudio.pause();if(currentUrl)URL.revokeObjectURL(currentUrl);if(controller)controller.abort();if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
-    currentAudio=null;currentUrl=null;
-    const segments=Speech.prepareSegments(input,opts);
-    if(!segments.length)return [];
-    const settings=Store.data.settings||{},rate=rateFor(opts),results=[];
-    for(const segment of segments){
-      if(token!==generation)return results;
-      const lang=segment.isArabic?'ar-EG':'en-GB';
-      const voice=phoneme?'en-GB-SoniaNeural':(segment.isArabic?(settings.onlineVoiceAr||'ar-EG-SalmaNeural'):(settings.onlineVoiceEn||'en-GB-SoniaNeural'));
-      const id=idFor(lang,voice,segment.text,rate,phoneme);
-      const cached=await getClip(id);
-      let blob=null,source='local',onlineAttempt='not-needed',reason='';
-      // Connected devices always try the neural network first. Saved clips are the
-      // offline/cache fallback; local device TTS is the final fallback only.
-      if(!opts.forceLocal){
-        if(!navigator.onLine){onlineAttempt='skipped';reason='offline';}
-        else if(personalNamePattern.test(segment.text)){onlineAttempt='blocked';reason='privacy';}
-        else{
-          onlineAttempt='attempted';
-          blob=await fetchClip(segment,voice,rate,token,phoneme);
-          if(blob){source='online';onlineAttempt='success';}
-          else{onlineAttempt='failed';reason=lastFetchError||'network error';}
-        }
-      }
-      if(!blob&&cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline){blob=cached.blob;source='saved';}
-      if(token!==generation)return results;
-      if(blob){
-        try{
-          await playBlob(blob,rate,token);
-          updateStatus(source==='saved'?'Playing saved offline audio / تشغيل صوت محفوظ دون إنترنت':'Playing neural audio; saved for offline replay / تشغيل الصوت الشبكي وحفظه');
-          results.push({language:lang,source,onlineAttempt,reason});
-          continue;
-        }catch(e){console.warn('Audio playback failed; local fallback used.',e);reason='audio playback failed';}
-      }
-      source='local';
-      updateStatus(reason==='privacy'?'Personal text kept on device / النص الشخصي لا يغادر الجهاز':(navigator.onLine?'Local voice fallback / استخدام الصوت المحلي':'Offline: no saved clip, using local voice / دون إنترنت: الصوت المحلي'));
-      await localSpeak(phoneme?(opts.fallbackText||segment.text):segment.text,Object.assign({},opts,{language:segment.isArabic?'ar':'en-GB'}));
-      results.push({language:lang,source,onlineAttempt,reason:reason||'no cached or online audio'});
-    }
-    return results;
-  }
-  async function stats(){const db=await openDB();if(!db)return{count:0,bytes:0};try{const tx=db.transaction(STORE_NAME,'readonly'),items=await reqP(tx.objectStore(STORE_NAME).getAll());return{count:items.length,bytes:items.reduce((n,x)=>n+(x.bytes||0),0)};}catch(e){return{count:0,bytes:0};}}
-  async function clearCache(){const db=await openDB();if(!db)return;try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error);});}catch(e){}}
-  function updateStatus(message){const el=document.getElementById('hybrid-voice-status');if(!el)return;stats().then(s=>{el.textContent=(message||(navigator.onLine?'Online-first neural voice ready / الصوت الشبكي جاهز':'Offline local fallback ready / الصوت المحلي جاهز دون إنترنت'))+' • '+s.count+' saved clips • '+(s.bytes/1048576).toFixed(1)+' MB / '+(navigator.onLine?'متصل':'غير متصل');});}
-  function stop(){generation++;Speech._speechGeneration=(Speech._speechGeneration||0)+1;try{if(controller)controller.abort();if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}if(currentUrl)URL.revokeObjectURL(currentUrl);if(window.speechSynthesis)window.speechSynthesis.cancel();if(window.NativeSpeech)window.NativeSpeech.cancel();}catch(e){}if(Speech._nativePending){const pending=Speech._nativePending;Speech._nativePending=null;try{pending.finish();}catch(e){}}controller=null;currentAudio=null;currentUrl=null;if(Speech.keepAliveTimer){clearInterval(Speech.keepAliveTimer);Speech.keepAliveTimer=null;}updateStatus('Audio stopped / تم إيقاف الصوت');}
-  window.addEventListener('online',()=>updateStatus());window.addEventListener('offline',()=>updateStatus());
-  return{speak,stop,clearCache,updateStatus,stats};
-})();
+};
+Speech.localSpeak = Speech.speak.bind(Speech);
 Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);};
-Speech.stop=function(){HybridSpeech.stop();};
-if(!Store.data.settings.onlineVoiceEn)Store.data.settings.onlineVoiceEn='en-GB-SoniaNeural';
-if(!Store.data.settings.onlineVoiceAr)Store.data.settings.onlineVoiceAr='ar-EG-SalmaNeural';
+Store.data.settings.speechEngine='embedded';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
@@ -9911,6 +9820,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<script>try { Speech.loadVoices(); window.__refreshAppSpeechVoices = () => Speech.loadVoices(); } catch (e) {}</script>
+
 </body>
 </html>
