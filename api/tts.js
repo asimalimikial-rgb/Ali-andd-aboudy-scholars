@@ -6,7 +6,7 @@ const VOICES = new Map([
   ['ar-SA-ZariyahNeural', 'ar-SA'],
   ['ar-SA-HamedNeural', 'ar-SA']
 ]);
-const PERSONAL_TEXT = /\\b(?:ali|aboudy|aboudi)\\b|علي|عبودي|عبودى/i;
+const PERSONAL_TEXT = /\b(?:ali|aboudy|aboudi)\b|علي|عبودي|عبودى/i;
 const RATE_BUCKETS = new Map();
 let providerWindow = { start: 0, count: 0 };
 
