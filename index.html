@@ -729,11 +729,6 @@
     <div class="card">
       <h3>Speech engine / محرك الصوت</h3>
       <div id="voice-doctor-info" style="font-size:0.95rem;line-height:1.7;margin:10px 0;">Local Android speech is selected by default. Neural speech is experimental until real audio playback is verified.</div>
-      <label for="speech-engine-mode" style="display:block;font-weight:bold;margin-top:12px;">Choose speech engine / اختر محرك الصوت</label>
-      <select id="speech-engine-mode" style="width:100%;min-height:48px;margin-top:6px;border:1px solid #CCC;border-radius:10px;padding:8px;">
-        <option value="local">Local device voice — works offline / الصوت المحلي — يعمل دون إنترنت</option>
-        <option value="neural">Experimental Neural voice — requires internet / الصوت العصبي التجريبي — يحتاج إنترنت</option>
-      </select>
       <div id="local-voice-settings" style="margin-top:12px;padding:12px;border:1px solid #DDE8F2;border-radius:12px;">
         <strong>Local voice selection / اختيار الصوت المحلي</strong>
         <label for="voice-picker-select" style="display:block;margin-top:10px;">English voice / الصوت الإنجليزي</label>
@@ -745,31 +740,16 @@
       <label style="display:flex; align-items:center; gap:8px; margin-top:12px;"><input type="checkbox" id="chk-arabic-support" checked> Arabic learning explanations / إظهار الشرح العربي المساعد</label>
       <label for="speech-rate-control" style="display:block; font-weight:bold; margin-top:12px;">Speech speed / سرعة النطق</label>
       <input id="speech-rate-control" type="range" min="0.70" max="1.15" step="0.05" value="0.95" style="width:100%; min-height:32px;">
-      <button class="btn btn-accent" id="btn-test-voice" style="margin-top: 12px; width: 100%;">🔊 Test English + Arabic / اختبار الصوتين</button>
-      <div class="card" id="online-voice-card" style="margin-top:14px;border:2px solid #B8D8F5;">
-        <h3>Free Neural Speech / الصوت الشبكي المجاني</h3>
-        <p style="margin:7px 0;line-height:1.6;">Neural MP3 clips are downloaded and stored on this device. Once a lesson is downloaded, its saved clips play offline without any local TTS engine.</p>
-        <p dir="rtl" style="margin:7px 0;line-height:1.7;">يتم تنزيل المقاطع العصبية بصيغة MP3 وحفظها في الجهاز. بعد تنزيل صوت الدرس، تعمل المقاطع المحفوظة دون إنترنت ومن غير استخدام محرك الصوت المحلي.</p>
-        <label for="online-voice-en" style="display:block;font-weight:bold;margin-top:10px;">English neural voice</label>
-        <select id="online-voice-en" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="en-GB-SoniaNeural">Sonia — British English (recommended)</option>
-          <option value="en-GB-RyanNeural">Ryan — British English</option>
-        </select></select>
-        <label for="online-voice-ar" style="display:block;font-weight:bold;margin-top:10px;">Arabic neural voice / الصوت العربي العصبي</label>
-        <select id="online-voice-ar" style="width:100%;min-height:44px;margin-top:4px;border-radius:8px;border:1px solid #CCC;">
-          <option value="ar-EG-SalmaNeural">Salma — Arabic (Egypt)</option>
-          <option value="ar-EG-ShakirNeural">Shakir — Arabic (Egypt)</option>
-          <option value="ar-SA-ZariyahNeural">Zariyah — Arabic (Saudi Arabia)</option>
-          <option value="ar-SA-HamedNeural">Hamed — Arabic (Saudi Arabia)</option>
-        </select></select>
-        <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Checking voice storage…</div>
-        <button class="btn btn-primary" id="btn-download-lesson-audio" type="button" style="width:100%;margin-top:12px;">⬇️ Download this lesson's neural audio for offline / تنزيل صوت هذا الدرس للاستخدام دون إنترنت</button>
-        <div id="lesson-audio-download-status" role="status" aria-live="polite" style="margin-top:8px;line-height:1.6;"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button class="btn btn-secondary" id="btn-clear-voice-cache" type="button" style="flex:1;">Clear saved audio / مسح الصوت المحفوظ</button>
-          <button class="btn btn-accent" id="btn-stop-all-audio" type="button" style="flex:1;">Stop audio / إيقاف الصوت</button>
-        </div>
-        <small style="display:block;margin-top:8px;color:var(--text-light);">Free tier: up to 2,000 characters/day and 20 requests/minute. Saved MP3 clips stay on this device. Personal names are blocked from online synthesis. Download each lesson before going offline.</small>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-accent" id="btn-test-voice" style="flex:1;">🔊 Test both voices / اختبار الصوتين</button>
+        <button class="btn btn-secondary" id="btn-stop-all-audio" style="flex:1;">Stop audio / إيقاف الصوت</button>
+      </div>
+      <div class="card" id="embedded-voice-info" style="margin-top:14px;border:2px solid #B8D8F5;">
+        <h3>Embedded Offline Voice / الصوت المضمّن دون إنترنت</h3>
+        <p style="margin:7px 0;line-height:1.6;">Arabic and English speech are generated entirely inside this app. The model is bundled in the APK; no voice downloads, online TTS, or Android system speech engine are used.</p>
+        <p dir="rtl" style="margin:7px 0;line-height:1.7;">يُولَّد الصوت العربي والإنجليزي داخل التطبيق نفسه. المحرك والنموذج مضمّنان في ملف APK؛ لا توجد تنزيلات صوتية أو خدمة TTS شبكية أو اعتماد على محرك النطق في نظام أندرويد.</p>
+        <div id="hybrid-voice-status" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border-radius:9px;background:#F1F8FF;line-height:1.5;">Embedded model initializes locally on first use / يُحمّل المحرك محلياً عند أول استخدام.</div>
+        <small style="display:block;margin-top:8px;color:var(--text-light);">Synthetic AI voice, processed on this device. Use only lawfully; do not use it to harm or exploit minors, impersonate anyone without consent, or harass others. / صوت اصطناعي يُعالج على الجهاز؛ يُستخدم بصورة قانونية ومسؤولة، ولا يجوز استخدامه للإضرار بالأطفال أو انتحال شخصية أي شخص دون موافقته أو مضايقة الآخرين.</small>
       </div>
     </div>
     <div class="card" id="parent-insights-card">
@@ -828,7 +808,7 @@ const Store = {
       largeText: false,
       arabicSupport: true,
       speechRate: 0.95,
-      speechEngine: 'local',
+      speechEngine: 'embedded',
       manualVoice: '',
       manualVoiceEn: '',
       manualVoiceAr: ''
@@ -892,8 +872,6 @@ const Store = {
           const legacy = JSON.parse(localStorage.getItem('ali_aboudy_scholars_v1') || 'null');
           if (legacy && legacy.settings) {
             const migrated = { ...legacy.settings };
-            if (!['en-GB-SoniaNeural','en-GB-RyanNeural'].includes(migrated.onlineVoiceEn)) migrated.onlineVoiceEn = 'en-GB-SoniaNeural';
-            if (!['ar-EG-SalmaNeural','ar-EG-ShakirNeural','ar-SA-ZariyahNeural','ar-SA-HamedNeural'].includes(migrated.onlineVoiceAr)) migrated.onlineVoiceAr = 'ar-EG-SalmaNeural';
             this.data.settings = { ...this.data.settings, ...migrated };
           }
         } catch (migrationError) { console.warn('Parent settings migration skipped.'); }
@@ -8483,12 +8461,8 @@ const App = {
     if (arabicToggle) arabicToggle.checked = s.arabicSupport !== false;
     const rateControl = document.getElementById('speech-rate-control');
     if (rateControl) rateControl.value = String(s.speechRate || 0.95);
-    const engine = document.getElementById('speech-engine-mode');
-    if (engine) engine.value = ['local','neural'].includes(s.speechEngine) ? s.speechEngine : 'local';
-    const onlineCard = document.getElementById('online-voice-card');
-    if (onlineCard) onlineCard.style.display = s.speechEngine === 'neural' ? 'block' : 'none';
     const localPanel = document.getElementById('local-voice-settings');
-    if (localPanel) localPanel.style.display = s.speechEngine === 'neural' ? 'none' : 'block';
+    if (localPanel) localPanel.style.display = 'block';
     Speech.updateVoicePicker();
     const localStatus = document.getElementById('local-voice-status');
     if (localStatus) {
@@ -8506,7 +8480,6 @@ const App = {
     // Header Actions
     document.getElementById('btn-back-home').onclick = () => { SoundEffects.click(); this.showScreen('screen-home'); };
     document.getElementById('hdr-avatar').onclick = () => {
-      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
       SoundEffects.click(); this.showScreen('screen-profiles');
     };
     document.getElementById('btn-open-parent').onclick = () => this.openParentGate();
@@ -8544,25 +8517,9 @@ const App = {
 
     // Voice Doctor & Parent Controls
     document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();
-    document.getElementById('btn-download-lesson-audio').onclick = () => this.downloadCurrentLessonAudio();
-    const engineSelect = document.getElementById('speech-engine-mode');
-    engineSelect.value = Store.data.settings.speechEngine || 'local';
-    engineSelect.onchange = () => {
-      Store.data.settings.speechEngine = engineSelect.value === 'neural' ? 'neural' : 'local';
-      Store.save();
-      this.applySettings();
-      HybridSpeech.stop();
-      HybridSpeech.updateStatus(Store.data.settings.speechEngine === 'local' ? 'Local Android voice selected / تم اختيار الصوت المحلي' : 'Experimental neural mode selected / تم اختيار الصوت العصبي التجريبي');
-    };
+    document.getElementById('btn-stop-all-audio').onclick = () => HybridSpeech.stop();
     document.getElementById('voice-picker-select').onchange = e => { Store.data.settings.manualVoiceEn = e.target.value; Store.save(); };
     document.getElementById('voice-picker-ar-select').onchange = e => { Store.data.settings.manualVoiceAr = e.target.value; Store.save(); };
-
-    document.getElementById('online-voice-en').value = Store.data.settings.onlineVoiceEn || 'en-GB-SoniaNeural';
-    document.getElementById('online-voice-ar').value = Store.data.settings.onlineVoiceAr || 'ar-EG-SalmaNeural';
-    document.getElementById('online-voice-en').onchange = (e) => { Store.data.settings.onlineVoiceEn = e.target.value; Store.save(); };
-    document.getElementById('online-voice-ar').onchange = (e) => { Store.data.settings.onlineVoiceAr = e.target.value; Store.save(); };
-    document.getElementById('btn-clear-voice-cache').onclick = async () => { await HybridSpeech.clearCache(); HybridSpeech.updateStatus('Saved voice clips cleared / تم مسح المقاطع المحفوظة'); };
-    document.getElementById('btn-stop-all-audio').onclick = () => HybridSpeech.stop();
     document.getElementById('chk-arabic-support').onchange = (e) => {
       Store.data.settings.arabicSupport = e.target.checked;
       Store.save();
@@ -9754,25 +9711,13 @@ const App = {
   },
 
   async testVoiceDoctor() {
-    const english = await HybridSpeech.speak('English online voice test. Four plus three equals seven.', { forceOnline: true });
-    const arabic = await HybridSpeech.speak('اختبار اللغة العربية. أربعة زائد ثلاثة يساوي سبعة.', { forceOnline: true });
-    const summarize = (label, results) => {
-      const online = results.filter(item => item.onlineAttempt === 'success').length;
-      const saved = results.filter(item => item.source === 'saved').length;
-      const local = results.filter(item => item.source === 'local').length;
-      const failed = results.find(item => item.onlineAttempt === 'failed');
-      const blocked = results.some(item => item.onlineAttempt === 'blocked');
-      return label + ': ' + (online ? 'Online ' + online : saved ? 'Saved ' + saved : 'Local ' + local) +
-        (failed ? ' — API ' + failed.reason : '') + (blocked ? ' — privacy guard' : '');
-    };
-    HybridSpeech.updateStatus('اختبار الشبكة — ' + summarize('English', english) + ' | ' + summarize('العربية', arabic));
-  },
-
-  async downloadCurrentLessonAudio() {
-    const status = document.getElementById('lesson-audio-download-status');
-    if (status) status.textContent = 'Preparing neural audio pack… / جارٍ تجهيز الحزمة الصوتية العصبية…';
-    const result = await HybridSpeech.prefetchLesson();
-    if (status) status.textContent = result.message;
+    try {
+      await HybridSpeech.speak('Hello! This is the embedded English voice test.');
+      await HybridSpeech.speak('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' });
+      HybridSpeech.updateStatus('Both embedded voices completed the test / اكتمل اختبار الصوتين المضمّنين');
+    } catch (error) {
+      HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
+    }
   },
 
   exportData() {
