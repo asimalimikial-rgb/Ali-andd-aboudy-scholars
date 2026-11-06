@@ -64,8 +64,8 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ali-Aboudy-Scholars-v1.2.0
-          path: dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          name: Ali-Aboudy-Scholars-v1.2.1
+          path: dist/Ali-Aboudy-Scholars-v1.2.1.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -77,6 +77,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Ali & Aboudy Scholars v1.2.1
           body_path: CHANGELOG.md
-          files: dist/Ali-Aboudy-Scholars-v1.2.0.apk
+          files: dist/Ali-Aboudy-Scholars-v1.2.1.apk
           overwrite_files: true
           make_latest: true
