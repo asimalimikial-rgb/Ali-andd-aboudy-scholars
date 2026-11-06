@@ -9046,11 +9046,10 @@ const App = {
       const targetLetter = Store.data.activeChild === 'ali' && /^[a-z]$/i.test(String(q.letter || ''))
         ? String(q.letter).toLowerCase() : '';
       if (targetLetter) {
-        const escaped = targetLetter.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
-        const marker = new RegExp('\\b' + escaped + '\\b', 'i');
+        const marker = new RegExp('(^|[^A-Za-z])' + targetLetter + '(?=$|[^A-Za-z])', 'i');
         const match = marker.exec(titleText);
         if (match) {
-          const before = titleText.slice(0, match.index).trim();
+          const before = titleText.slice(0, match.index + match[1].length).trim();
           const after = titleText.slice(match.index + match[0].length).trim();
           if (before) await HybridSpeech.speak(before);
           await this.playAliLetterSound(targetLetter);
