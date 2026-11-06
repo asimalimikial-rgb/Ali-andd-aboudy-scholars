@@ -8,13 +8,13 @@ const checks=[
   ['Letter-name control',html.includes('Letter name / اسم الحرف')],
   ['Phonics-sound control',html.includes('Phonics sound / صوت الحرف')],
   ['Example-word control',html.includes('Example word / كلمة المثال')],
-  ['IPA request',html.includes('phoneme:phoneme||undefined') && html.includes('en-GB-SoniaNeural')],
-  ['FreeTTS API configuration',api.includes('https://freetts.org/api/tts') && api.includes('https://freetts.org/api/audio/') && api.includes('audio/mpeg') && api.includes('PHONEME_UNSUPPORTED')],
+  ['IPA request',html.includes('phoneme:item[0]') && html.includes('synthesisText') && html.includes('<phoneme alphabet="ipa" ph="')],
+  ['FreeTTS API configuration',api.includes('https://freetts.org/api/tts') && api.includes('https://freetts.org/api/audio/') && api.includes('audio/mpeg') && api.includes('safePhonemeSsml')],
   ['Offline IPA cache key',html.includes('ipa:'+String.fromCharCode(39)+'+phoneme') && html.includes('rate,phoneme),blob')],
   ['Mobile trace canvas size',html.includes('height:210px')],
   ['Wide single-column Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('grid-template-columns:minmax(0,1fr)')],
   ['FreeTTS language routing',html.includes("language:segment.isArabic?'ar-EG':'en-GB'")],
-  ['Android offline TTS bridge',html.includes('window.NativeSpeech.speak(nativeId') && html.includes('window.__nativeSpeechReady') && !html.includes('tts-bridge.js')],
+  ['Neural-only speech initialization',html.includes('Speech.speak=function(input,opts){return HybridSpeech.speak(input,opts);}') && !html.includes('Speech.init();') && !html.includes('const localSpeak')],
   ['All 42 sound entries mapped',true]
 ];
 const soundBlock=html.slice(html.indexOf('const JOLLY_SOUND_GROUPS'),html.indexOf('const JOLLY_TRICKY'));
@@ -38,7 +38,7 @@ const hybridEnd=html.indexOf('async function stats()',hybridStart);
 const hybrid=hybridStart>=0?html.slice(hybridStart,hybridEnd):'';
 checks.push(['Cached audio is reused before new network generation',hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')>=0 && hybrid.indexOf('if(cached&&cached.blob&&!opts.forceLocal&&!opts.forceOnline)')<hybrid.indexOf('blob=await fetchClip(')]);
 checks.push(['Force-online diagnostics bypass cache',hybrid.includes('!opts.forceOnline') && hybrid.includes('!opts.forceLocal&&!opts.forceOnline')]);
-checks.push(['Local TTS is the final fallback',hybrid.indexOf('await playBlob(blob,rate,token)')>=0 && hybrid.indexOf('await localSpeak(')>hybrid.indexOf('await playBlob(blob,rate,token)')]);
+checks.push(['No local TTS fallback',hybrid.includes("source='unavailable'") && !hybrid.includes('localSpeak(') && !hybrid.includes('speechSynthesis.speak')]);
 checks.push(['One Arabic explanation appears after answer only',html.includes("arabicBlock.className = 'arabic-explanation'") && html.includes('HybridSpeech.speak(spokenFeedback)') && html.includes('arabicExplanation ? HybridSpeech.speak(arabicExplanation)') && !html.includes("arabic.textContent = 'شرح مساعد: ' + this.getArabicHelper(q)")]);
 
 for(const [name,ok] of checks){if(!ok)throw new Error('Failed: '+name);console.log('PASS '+name);}
