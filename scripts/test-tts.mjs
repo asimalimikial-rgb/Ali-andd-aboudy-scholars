@@ -228,6 +228,11 @@ function makeSpeechEnv() {
   const currentQuestion = html.slice(html.indexOf('  renderCurrentQuestion() {'), html.indexOf('  renderQuestionType(q, container) {'));
   assert.ok(currentQuestion.includes('this.invalidateQuestionNarration();'),
     'Changing the question must invalidate speech from the previous question');
+  assert.ok(currentQuestion.includes('this.answerLocked = false;') &&
+    currentQuestion.indexOf('this.answerLocked = false;') < currentQuestion.indexOf('this.renderQuestionType(q, area);'),
+    'Answer controls must be available while narration is playing');
+  assert.equal(render.includes('btn.disabled = true'), false,
+    'Question options must not be locked while speech is playing');
   assert.ok(html.includes("document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();") &&
     (html.match(/this\.testVoiceDoctor\(\)/g) || []).length === 1,
     'Voice test must only be started by an explicit button press');
