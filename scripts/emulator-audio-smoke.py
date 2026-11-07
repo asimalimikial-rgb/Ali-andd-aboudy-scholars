@@ -1,152 +1,113 @@
 #!/usr/bin/env python3
-"""Drive the Android app's parent voice test on a real ARM64 emulator via adb.
+"""Run deterministic Android emulator smoke/audio-gate checks through a debug-only WebView hook.
 
-The test never accepts the model licence on the user's behalf. If the app has no
-stored parent consent, it reports that explicit-consent blocker and stops.
+This test never accepts the Supertonic 3 model licence on the user's behalf.
 """
 import json
 import os
-import re
 import subprocess
 import sys
 import time
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 OUT = Path("emulator-audio-report.json")
+LOG = Path("emulator-logcat.txt")
+SCREEN = Path("emulator-screen.png")
 ADB = os.environ.get("ADB", "adb")
 
-def adb(*args, check=True, timeout=30):
+def adb(*args, check=True, timeout=60):
     return subprocess.run([ADB, *args], check=check, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           timeout=timeout).stdout
 
-def dump_ui():
-    adb("shell", "uiautomator", "dump", "/sdcard/window.xml", check=False, timeout=30)
-    raw = adb("exec-out", "cat", "/sdcard/window.xml", check=False, timeout=15)
-    try:
-        return ET.fromstring(raw)
-    except ET.ParseError:
-        return ET.Element("hierarchy")
-
-def bounds_center(node):
-    m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
-    if not m:
-        return None
-    x1,y1,x2,y2 = map(int,m.groups())
-    return ((x1+x2)//2,(y1+y2)//2)
-
-def find_node(predicate, timeout=20):
-    end = time.time() + timeout
-    while time.time() < end:
-        root = dump_ui()
-        for node in root.iter("node"):
-            if predicate(node):
-                point = bounds_center(node)
-                if point:
-                    return node, point
-        time.sleep(1)
-    raise RuntimeError("Timed out waiting for an expected Android UI element.")
-
-def tap_point(point):
-    adb("shell", "input", "tap", str(point[0]), str(point[1]))
-
-def tap_text(text, timeout=20, exact=False):
-    node, point = find_node(
-        lambda n: (n.attrib.get("text", "") == text if exact else text in n.attrib.get("text", ""))
-                  or (n.attrib.get("content-desc", "") == text if exact else text in n.attrib.get("content-desc", "")),
-        timeout)
-    tap_point(point)
-    time.sleep(1.5)
-    return node
-
 def report(status, **extra):
-    data = {"status": status, "device": adb("shell","getprop","ro.product.cpu.abi").strip(),
-            "sdk": adb("shell","getprop","ro.build.version.sdk").strip(), **extra}
+    data = {
+        "status": status,
+        "device_abi": adb("shell", "getprop", "ro.product.cpu.abi").strip(),
+        "android_api": adb("shell", "getprop", "ro.build.version.sdk").strip(),
+        "airplane_mode": adb("shell", "cmd", "connectivity", "airplane-mode").strip(),
+        **extra,
+    }
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(data, ensure_ascii=False, indent=2))
 
 def main():
-    adb("wait-for-device")
-    end = time.time() + 180
-    while time.time() < end:
-        if adb("shell","getprop","sys.boot_completed").strip() == "1":
+    adb("wait-for-device", timeout=120)
+    deadline = time.time() + 180
+    while time.time() < deadline:
+        if adb("shell", "getprop", "sys.boot_completed").strip() == "1":
             break
         time.sleep(2)
     else:
         raise RuntimeError("Android emulator did not finish booting.")
 
+    airplane = adb("shell", "cmd", "connectivity", "airplane-mode").strip().lower()
+    if "enabled" not in airplane:
+        raise RuntimeError("Emulator is not offline; airplane-mode status was: " + airplane)
+
     package = "com.alialiaboudyscholars.app"
-    adb("shell","am","force-stop",package,check=False)
-    adb("shell","am","start","-n",package+"/.MainActivity")
-    time.sleep(12)
-
-    # Select Ali's profile, then enter protected Parent Settings.
-    tap_text("Ali (علي)", timeout=35)
-    tap_text("Parent settings", timeout=25)
-    question_node, _ = find_node(lambda n: "Adult Verification: Solve" in n.attrib.get("text",""), timeout=15)
-    question = question_node.attrib.get("text","")
-    numbers = re.search(r"(\d+)\s*\+\s*(\d+)", question)
-    if not numbers:
-        raise RuntimeError("Could not parse the parent verification arithmetic.")
-    answer = str(int(numbers.group(1)) + int(numbers.group(2)))
-    _, input_point = find_node(lambda n: n.attrib.get("class","").endswith("EditText"), timeout=10)
-    tap_point(input_point)
-    adb("shell","input","text",answer)
-    tap_text("Enter", timeout=10, exact=True)
-    time.sleep(3)
-
-    # Never tick this checkbox automatically: it is the parent's explicit
-    # acceptance of the bundled Supertonic 3 model licence.
-    consent_node, _ = find_node(
-        lambda n: "Parent agreement:" in n.attrib.get("text",""), timeout=20)
-    consent_checked = consent_node.attrib.get("checked","false").lower() == "true"
-    if not consent_checked:
-        report("blocked_explicit_parent_model_license_consent",
-               details="App installed and Parent Settings opened. Voice generation was not started because the app's explicit parent licence checkbox is unchecked. The test automation will not accept legal terms on the user's behalf.",
-               parent_gate_question=question,
-               consent_checkbox=consent_node.attrib)
-        return 0
-
-    # Device is offline before this workflow starts; the app must synthesize
-    # both languages using only the bundled runtime and models.
-    tap_text("Test both voices", timeout=15)
-    deadline = time.time() + 180
-    diagnostics = ""
-    while time.time() < deadline:
-        root = dump_ui()
-        for n in root.iter("node"):
-            if n.attrib.get("class","").endswith("EditText") and ("test-call" in n.attrib.get("text","") or "native-" in n.attrib.get("text","")):
-                diagnostics = n.attrib.get("text","")
-                break
-        if diagnostics.count("native-end") >= 2 or "native-error" in diagnostics:
-            break
-        time.sleep(3)
-
-    tap_text("Show speech diagnostics", timeout=10)
+    apk = "dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk"
+    adb("logcat", "-c", check=False)
+    adb("install", "-r", apk, timeout=180)
+    adb("shell", "am", "start", "-n", package + "/.MainActivity",
+        "--ez", "ci_audio_test", "true")
     time.sleep(2)
-    root = dump_ui()
-    for n in root.iter("node"):
-        if n.attrib.get("class","").endswith("EditText"):
-            candidate = n.attrib.get("text","")
-            if "test-call" in candidate or "native-" in candidate:
-                diagnostics = candidate
-                break
 
-    result = {
-        "diagnostics": diagnostics,
-        "native_start_count": diagnostics.count("native-start"),
-        "native_end_count": diagnostics.count("native-end"),
-        "native_error_count": diagnostics.count("native-error"),
-        "offline": True
-    }
-    passed = result["native_start_count"] >= 2 and result["native_end_count"] >= 2 and result["native_error_count"] == 0
-    report("passed" if passed else "failed", **result)
-    return 0 if passed else 2
+    marker = ""
+    deadline = time.time() + 45
+    while time.time() < deadline:
+        log = adb("logcat", "-d", "-s", "CI_AUDIO_TEST:I", check=False)
+        for line in log.splitlines():
+            if "CI_RESULT:" in line:
+                marker = line.split("CI_RESULT:", 1)[1].strip()
+        if marker:
+            break
+        time.sleep(2)
+
+    full_log = adb("logcat", "-d", "-v", "threadtime", check=False)
+    LOG.write_text(full_log, encoding="utf-8")
+    try:
+        SCREEN.write_bytes(subprocess.check_output([ADB, "exec-out", "screencap", "-p"], timeout=30))
+    except Exception:
+        pass
+
+    if not marker:
+        report("automation_error", error="The debug-only WebView test hook did not report within 45 seconds.",
+               airplane_mode=airplane)
+        return 2
+
+    try:
+        payload = json.loads(marker)
+    except json.JSONDecodeError:
+        report("automation_error", error="Invalid CI diagnostic payload: " + marker[:1000])
+        return 2
+
+    diagnostics = payload.get("diagnostics", "")
+    status_text = payload.get("status", "")
+    native_start = diagnostics.count("native-start")
+    native_end = diagnostics.count("native-end")
+    native_error = diagnostics.count("native-error")
+
+    if native_start >= 2 and native_end >= 2 and native_error == 0:
+        result = "passed"
+    elif "parent must accept" in status_text.lower() or "ترخيص" in status_text:
+        result = "blocked_explicit_parent_model_license_consent"
+    elif "speak-request" in diagnostics and native_start == 0:
+        result = "blocked_before_native_speech_or_engine_error"
+    else:
+        result = "failed"
+
+    report(result, offline=True, diagnostics=diagnostics, ui_status=status_text,
+           native_start_count=native_start, native_end_count=native_end,
+           native_error_count=native_error, ci_hook_payload=payload)
+    return 0 if result == "blocked_explicit_parent_model_license_consent" else (0 if result == "passed" else 2)
 
 if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as exc:
-        report("automation_error", error=f"{type(exc).__name__}: {exc}")
+        try:
+            report("automation_error", error=f"{type(exc).__name__}: {exc}")
+        except Exception:
+            print(f"automation_error: {type(exc).__name__}: {exc}")
         sys.exit(2)
