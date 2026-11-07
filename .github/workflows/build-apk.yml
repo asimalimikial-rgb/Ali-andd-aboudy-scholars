@@ -84,16 +84,23 @@ jobs:
           test "$DIGEST" = "$EXPECTED" || { echo "Release signer mismatch; refusing to publish."; exit 1; }
 
       - name: Name APK
+        shell: bash
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/Ali-Aboudy-Scholars-v1.3.0.apk
-          sha256sum dist/Ali-Aboudy-Scholars-v1.3.0.apk
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            APK_NAME="Ali-Aboudy-Scholars-v1.3.0.apk"
+          else
+            APK_NAME="Ali-Aboudy-Scholars-Supertonic3-Beta-v1.3.0.apk"
+          fi
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/$APK_NAME"
+          echo "APK_NAME=$APK_NAME" >> "$GITHUB_ENV"
+          sha256sum "dist/$APK_NAME"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ali-Aboudy-Scholars-v1.3.0
-          path: dist/Ali-Aboudy-Scholars-v1.3.0.apk
+          name: ${{ github.ref == 'refs/heads/main' && 'Ali-Aboudy-Scholars-v1.3.0' || 'Ali-Aboudy-Scholars-Supertonic3-Beta-v1.3.0' }}
+          path: dist/*.apk
           if-no-files-found: error
           retention-days: 30
 
