@@ -16,7 +16,7 @@ const checks=[
   ['Mobile trace canvas size',html.includes('height:210px')],
   ['Wide single-column Word Study grid',html.includes('jolly-wordstudy-grid') && html.includes('grid-template-columns:minmax(0,1fr)')],
   ['Arabic helper rendered before answer choices',html.includes('مساعدة قبل الإجابة: ') && html.includes('const arabicHelper = Store.data.settings.arabicSupport !== false ? this.getArabicHelper(q) :')],
-  ['Arabic helper spoken before answer selection',/if\\s*\\(arabicHelper\\)\\s*await\\s+speakIf\\s*\\(\\s*arabicHelper\\s*,\\s*\\{\\s*language:\\s*['"]ar['"]\\s*\\}\\s*\\)/.test(html)],
+  ['Arabic helper spoken before answer selection',/if\s*\(arabicHelper\)\s*await\s+speakIf\s*\(\s*arabicHelper\s*,\s*\{\s*language:\s*['"]ar['"]\s*\}\s*\)/.test(html)],
   ['Ali target letters use phoneme playback',html.includes('playAliLetterSound(letter)') && html.includes("a:'æ'") && html.includes('this.playAliLetterSound(targetLetter)')],
   ['Slash-delimited phonemes use sound playback',html.includes('titleText.matchAll(') && html.includes('await this.playAliLetterSound(token[1])')],
   ['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')],
