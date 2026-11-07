@@ -87,9 +87,8 @@ jobs:
           disable-animations: true
           script: |
             set -e
-            adb shell settings put global airplane_mode_on 1
-            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
-            adb shell svc wifi disable || true
+            adb shell cmd connectivity airplane-mode enable
+            adb shell cmd wifi set-wifi-enabled disabled || true
             adb shell svc data disable || true
             adb install -r dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
             adb shell am start -n com.alialiaboudyscholars.app/.MainActivity
