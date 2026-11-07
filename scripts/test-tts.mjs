@@ -388,11 +388,11 @@ function makeSpeechEnv() {
   assert.equal(app.advances, 1, 'Continue must work after the short guard window');
 }
 
-assert.ok(native.includes('if (request != generation.get()) {\n                    notifyJs(requestId, "end");\n                    return;\n                }'),
-  'Stale native requests must not overwrite engine readiness or report current-request errors');
+assert.ok(native.includes('request-cancelled-before-start') && native.includes('notifyJs(requestId, "cancelled")'),
+  'Stale native requests must be reported as cancellations, not successful speech completion');
 assert.ok(native.includes('public void prewarm()'),
   'Native bridge must support background model prewarming');
-assert.ok(native.includes('if (request != generation.get()) {\n                    notifyJs(id, "end");\n                    return;\n                }'),
+assert.ok(native.includes('audio-cancelled-before-track') && native.includes('notifyJs(id, "cancelled")'),
   'AudioTrack must not be registered for a stale generation');
 
 console.log('Speech runtime regression checks passed: timeout cancellation, stop, stale callback, narration invalidation, native prewarm, and stale-request handling.');

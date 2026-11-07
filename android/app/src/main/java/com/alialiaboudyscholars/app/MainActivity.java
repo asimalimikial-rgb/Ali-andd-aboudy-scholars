@@ -69,13 +69,13 @@ public class MainActivity extends Activity {
                         "if(!a){EmulatorTestBridge.report('CI_RESULT:missing-license-checkbox');return;}" +
                         "a.checked=true;" +
                         "a.dispatchEvent(new Event('change',{bubbles:true}));" +
+                        "window.__voiceDoctorCompleted=false;" +
                         "var b=document.getElementById('btn-test-voice');" +
                         "if(!b){EmulatorTestBridge.report('CI_RESULT:missing-test-button');return;}" +
                         "b.click();" +
-                        "window.__voiceDoctorCompleted=false;" +
-                        "var started=Date.now(),seenBusy=false;" +
-                        "function pollVoiceDoctor(){seenBusy=seenBusy||!!App._voiceTestBusy;" +
-                        "if(seenBusy&&window.__voiceDoctorCompleted){var d='';" +
+                        "var started=Date.now();" +
+                        "function pollVoiceDoctor(){" +
+                        "if(window.__voiceDoctorCompleted){var d='';" +
                         "try{d=Speech.getDiagnostics();}catch(e){d='diagnostics-error:'+String(e);}" +
                         "var h=document.getElementById('hybrid-voice-status');" +
                         "var l=document.getElementById('local-voice-status');" +
