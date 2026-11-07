@@ -52,7 +52,7 @@ assert.ok(html.includes('scheduleScreenSpeech(()=>this.playJollyPhoneme(x,parts[
 assert.ok(html.includes(`if (active && active.id === 'screen-jolly') callback();`), 'Delayed Jolly speech must verify its screen is still active');
 assert.ok(html.includes("if (Store.data.settings.aiVoiceTermsAccepted) Speech.prewarm();"), 'App startup must invoke embedded model prewarm when voice consent is present');
 const voiceDoctor = html.slice(html.indexOf('  async testVoiceDoctor() {'), html.indexOf('  exportData() {'));
-assert.ok(voiceDoctor.includes('const guard = QuestionNarration.makeGuard();') && voiceDoctor.includes('guard.say(') && voiceDoctor.includes('if (!guard.isCurrent()) return;'), 'Voice Doctor must stop between languages when its generation is cancelled');
+assert.ok(voiceDoctor.includes('const g = QuestionNarration.makeGuard();') && voiceDoctor.includes("if (!(await g.say('Hello! This is the embedded English voice test.'))) return;") && voiceDoctor.includes("if (!(await g.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;"), 'Voice Doctor must stop between languages when its generation is cancelled');
 assert.ok(voiceDoctor.includes('Speech.note("test-call"') && voiceDoctor.includes('new Error().stack'), 'Voice Doctor must record the call stack to identify its caller');
 assert.ok(voiceDoctor.includes('if (this._voiceTestBusy)') && voiceDoctor.includes('this._voiceTestBusy = true;') && voiceDoctor.includes('this._voiceTestBusy = false;'), 'Voice Doctor must reject overlapping invocations that would cancel active PCM playback');
 assert.ok(voiceDoctor.includes("testButton.disabled = true") && voiceDoctor.includes("testButton.disabled = false"), 'Voice Doctor button must remain disabled during its two-language test');
