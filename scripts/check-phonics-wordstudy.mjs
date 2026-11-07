@@ -68,8 +68,8 @@ checks.push(['Letter without mapped audio preserves the current narration guard'
   html.includes('Promise.resolve(guard.isCurrent())')]);
 checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encouragement only')][1]=answer.includes('أحسنت! إجابة صحيحة!')&&answer.includes('محاولة جميلة!')&&answer.includes("const spokenFeedback = isCorrect ? 'أحسنت!' : 'محاولة جميلة!';");
 checks.push(['Option speech promises handle playback failures',
-  /HybridSpeech\\.speak\\(opt\\)\\s*\\.catch\\(/.test(html) &&
-  /playAliLetterSound\\(letter\\)[\\s\\S]*?\\.catch\\(/.test(html)]);
+  /HybridSpeech\.speak\(opt\)\s*\.catch\(/.test(html) &&
+  /playAliLetterSound\(letter\)[\s\S]*?\.catch\(/.test(html)]);
 checks.push(['Continue button has a 700ms double-tap guard',
   answer.includes('submitBtn.disabled = true') && answer.includes('}, 700);')]);
 const blending=html.indexOf("else if(skill==='blending')");
