@@ -109,5 +109,7 @@ jobs:
             dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
             dist/emulator-evidence/**
             emulator-audio-report.json
+            emulator-logcat.txt
+            emulator-screen.png
           if-no-files-found: warn
           retention-days: 30
