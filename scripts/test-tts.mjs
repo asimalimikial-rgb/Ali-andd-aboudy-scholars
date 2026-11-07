@@ -53,8 +53,11 @@ assert.ok(html.includes(`if (active && active.id === 'screen-jolly') callback();
 assert.ok(html.includes("if (Store.data.settings.aiVoiceTermsAccepted) Speech.prewarm();"), 'App startup must invoke embedded model prewarm when voice consent is present');
 const voiceDoctor = html.slice(html.indexOf('  async testVoiceDoctor() {'), html.indexOf('  exportData() {'));
 assert.ok(voiceDoctor.includes('const guard = QuestionNarration.makeGuard();') && voiceDoctor.includes('guard.say(') && voiceDoctor.includes('if (!guard.isCurrent()) return;'), 'Voice Doctor must stop between languages when its generation is cancelled');
-assert.ok(voiceDoctor.includes('if (this._voiceDoctorRunning)') && voiceDoctor.includes('this._voiceDoctorRunning = true;') && voiceDoctor.includes('this._voiceDoctorRunning = false;'), 'Voice Doctor must reject overlapping invocations that would cancel active PCM playback');
+assert.ok(voiceDoctor.includes('Speech.note("test-call"') && voiceDoctor.includes('new Error().stack'), 'Voice Doctor must record the call stack to identify its caller');
+assert.ok(voiceDoctor.includes('if (this._voiceTestBusy)') && voiceDoctor.includes('this._voiceTestBusy = true;') && voiceDoctor.includes('this._voiceTestBusy = false;'), 'Voice Doctor must reject overlapping invocations that would cancel active PCM playback');
 assert.ok(voiceDoctor.includes("testButton.disabled = true") && voiceDoctor.includes("testButton.disabled = false"), 'Voice Doctor button must remain disabled during its two-language test');
+assert.ok(html.includes('if (log.length > 300) log.shift();'), 'Speech diagnostics must retain the latest 300 events');
+assert.ok(html.includes('String(detail).slice(0, 400)'), 'Speech diagnostics must preserve enough caller stack detail');
 
 console.log('Embedded TTS checks passed: no Android/browser/network TTS, pinned offline model/runtime, native PCM playback, language routing, and feedback safeguards.');
 
