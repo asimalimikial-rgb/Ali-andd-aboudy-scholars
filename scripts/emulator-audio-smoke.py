@@ -54,7 +54,7 @@ def main():
     time.sleep(2)
 
     marker = ""
-    deadline = time.time() + 45
+    deadline = time.time() + 300
     while time.time() < deadline:
         log = adb("logcat", "-d", "-s", "CI_AUDIO_TEST:I", check=False)
         for line in log.splitlines():
@@ -72,7 +72,7 @@ def main():
         pass
 
     if not marker:
-        report("automation_error", error="The debug-only WebView test hook did not report within 45 seconds.",
+        report("automation_error", error="The debug-only WebView test hook did not report within 300 seconds.",
                airplane_mode=airplane)
         return 2
 
@@ -86,21 +86,24 @@ def main():
     status_text = payload.get("status", "")
     native_start = diagnostics.count("native-start")
     native_end = diagnostics.count("native-end")
+    synth_end = diagnostics.count("native-synth-end")
     native_error = diagnostics.count("native-error")
+    test_complete = "test-complete" in diagnostics and payload.get("testCompleted") is True
 
-    if native_start >= 2 and native_end >= 2 and native_error == 0:
+    if test_complete and native_start >= 2 and native_end >= 2 and synth_end >= 2 and native_error == 0:
         result = "passed"
-    elif "parent must accept" in status_text.lower() or "ترخيص" in status_text:
-        result = "blocked_explicit_parent_model_license_consent"
+    elif not test_complete:
+        result = "failed_test_did_not_complete"
     elif "speak-request" in diagnostics and native_start == 0:
-        result = "blocked_before_native_speech_or_engine_error"
+        result = "failed_before_native_playback"
     else:
-        result = "failed"
+        result = "failed_incomplete_or_native_error"
 
     report(result, offline=True, diagnostics=diagnostics, ui_status=status_text,
            native_start_count=native_start, native_end_count=native_end,
-           native_error_count=native_error, ci_hook_payload=payload)
-    return 0 if result == "blocked_explicit_parent_model_license_consent" else (0 if result == "passed" else 2)
+           native_synth_end_count=synth_end, native_error_count=native_error,
+           test_completed=test_complete, ci_hook_payload=payload)
+    return 0 if result == "passed" else 2
 
 if __name__ == "__main__":
     try:

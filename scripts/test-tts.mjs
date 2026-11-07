@@ -17,6 +17,8 @@ assert.equal(html.includes('fetchClip('),false,'No remote speech clip fetcher ma
 assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must use the app-owned native bridge');
 assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
 assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
+assert.ok(native.includes('getNativeLog()') && native.includes('synth-start') && native.includes('synth-end'), 'Native stage diagnostics must be exposed');
+assert.ok(engine.includes('NUM_THREADS = 2') && engine.includes('NUM_STEPS = 8') && engine.includes('PROVIDER = "cpu"'), 'Runtime settings must be explicit');
 assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
 assert.equal(native.includes('if (style.startsWith(\"M\")) index += 5;'),true,'Supertonic SID order must map F1-F5 to 0-4 and M1-M5 to 5-9');
 assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');
@@ -130,10 +132,10 @@ function makeSpeechEnv() {
     () => 'resolved',
     error => error.message
   );
-  const timeout = timers.find(item => !item.cleared && item.ms >= 30000);
-  assert.ok(timeout, 'A native response timeout must be scheduled');
+  const timeout = timers.find(item => !item.cleared && item.ms === 180000);
+  assert.ok(timeout, 'A bounded worker-queue watchdog must be scheduled');
   fire(timeout.id);
-  assert.equal(await timeoutResult, 'Embedded voice engine did not respond in time.');
+  assert.match(await timeoutResult, /timed out during worker-queue/, 'The watchdog must identify the timed-out phase');
   assert.ok(calls.some(item => item.op === 'cancel'),
     'The JavaScript timeout must cancel native generation/playback');
   const timedOutId = calls.find(item => item.op === 'speak').id;
@@ -141,6 +143,31 @@ function makeSpeechEnv() {
   env.window.__nativeSpeechEvent(timedOutId, 'end');
   assert.equal(calls.filter(item => item.op === 'speak').length, speechCallsAfterTimeout,
     'A late native callback after timeout must not restart speech');
+}
+
+// Verify phase-specific watchdog renewal and unknown-event handling.
+{
+  const { env, calls, timers, fire } = makeSpeechEnv();
+  const request = env.Speech.speak('Stage timing test').then(() => 'resolved', e => e.message);
+  const id = calls.find(item => item.op === 'speak').id;
+  const active = () => timers.filter(item => !item.cleared).at(-1);
+  assert.equal(active().ms, 180000);
+  env.window.__nativeSpeechEvent(id, 'diagnostic-only');
+  assert.equal(active().ms, 180000, 'Unknown events must not terminate a request');
+  env.window.__nativeSpeechEvent(id, 'load-start');
+  env.window.__nativeSpeechEvent(id, 'load-end:45');
+  assert.equal(active().ms, 15000);
+  env.window.__nativeSpeechEvent(id, 'synth-start');
+  assert.equal(active().ms, 120000);
+  env.window.__nativeSpeechEvent(id, 'synth-end:32000:samples=48000:rate=24000:duration-ms=2000');
+  assert.equal(active().ms, 20000);
+  env.window.__nativeSpeechEvent(id, 'start:2000');
+  assert.equal(active().ms, 20000);
+  env.window.__nativeSpeechEvent(id, 'end');
+  const tick = active();
+  assert.equal(tick.ms, 80);
+  fire(tick.id);
+  assert.equal(await request, 'resolved');
 }
 
 {

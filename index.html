@@ -967,7 +967,11 @@ const Speech = {
     if (log.length > 300) log.shift();
   },
   getDiagnostics() {
-    return ((this.diag && this.diag.log) || []).join("\n");
+    const jsLog = ((this.diag && this.diag.log) || []).join("\n");
+    let nativeLog = "";
+    try { if (window.NativeSpeech && typeof window.NativeSpeech.getNativeLog === "function") nativeLog = window.NativeSpeech.getNativeLog() || ""; }
+    catch (e) { nativeLog = "native-log-read-error " + (e && e.message ? e.message : String(e)); }
+    return jsLog + (nativeLog ? "\n--- native ---\n" + nativeLog : "");
   },
   prewarm() {
     if (!Store.data.settings.aiVoiceTermsAccepted) return false;
@@ -1001,18 +1005,23 @@ const Speech = {
       if (local && visibleMessage) local.textContent = visibleMessage;
       this.loadVoices();
     };
-    window.__nativeSpeechEvent = (id, event) => {
-      this.note("native-" + event, id);
+    window.__nativeSpeechEvent = (id, rawEvent) => {
+      const eventText = String(rawEvent || "");
+      const parts = eventText.split(":");
+      const event = parts.shift();
+      const detail = parts.join(":");
+      this.note("native-" + event, id + (detail ? " " + detail : ""));
       const pending = this._nativePending;
       if (!pending || pending.id !== id) return;
-      if (event === "start") {
-        pending.startedAt = Date.now();
-        return;
-      }
-      this._nativePending = null;
-      clearTimeout(pending.timeout);
-      if (event === "end") pending.finish();
-      else pending.fail(new Error("Embedded offline speech generation or playback failed."));
+      if (event === "load-start") { pending.arm(180000, "model-load"); return; }
+      if (event === "load-end") { pending.arm(15000, "synthesis-start"); return; }
+      if (event === "synth-start") { pending.arm(120000, "model-synthesis"); return; }
+      if (event === "synth-end") { pending.arm(20000, "AudioTrack-start"); return; }
+      if (event === "start") { pending.startedAt = Date.now(); pending.arm(Math.max(20000, (Number(parts[0]) || 0) + 15000), "PCM-playback"); return; }
+      if (event === "end") { this._nativePending = null; clearTimeout(pending.timeout); pending.finish(); return; }
+      if (event === "error") { this._nativePending = null; clearTimeout(pending.timeout); pending.fail(new Error("Embedded offline speech generation or playback failed.")); return; }
+      if (event === "cancelled") { this._nativePending = null; clearTimeout(pending.timeout); pending.cancel(); return; }
+      this.note("native-unknown-event", id + " " + eventText);
     };
     this.loadVoices();
     document.addEventListener("pointerdown", () => {
@@ -1168,27 +1177,23 @@ const Speech = {
         const id = "embedded-" + generation + "-" + index + "-" + Date.now();
         const pending = {
           id,
-          finish: () => { if (!settled && generation === this._speechGeneration) setTimeout(playNext, 80); },
-          cancel: () => {
-            if (!settled) {
-              settled = true;
-              this.note("cancelled", id);
-              resolve();
-            }
+          timeout: null,
+          arm: (ms, phase) => {
+            clearTimeout(pending.timeout);
+            pending.timeout = setTimeout(() => {
+              if (this._nativePending && this._nativePending.id === id) {
+                this.note("timeout", id + " phase=" + phase + " limit-ms=" + ms);
+                pending.fail(new Error("Embedded voice engine timed out during " + phase + "."));
+                this.stop();
+              }
+            }, ms);
           },
-          fail: error => {
-            this.note("error", id + " " + (error && error.message ? error.message : error));
-            fail(error);
-          }
+          finish: () => { if (!settled && generation === this._speechGeneration) setTimeout(playNext, 80); },
+          cancel: () => { if (!settled) { settled = true; this.note("cancelled", id); resolve(); } },
+          fail: error => { this.note("error", id + " " + (error && error.message ? error.message : error)); fail(error); }
         };
-        pending.timeout = setTimeout(() => {
-          if (this._nativePending && this._nativePending.id === id) {
-            fail(new Error("Embedded voice engine did not respond in time."));
-            this.stop();
-            try { this.note("timeout", id); } catch (e) {}
-          }
-        }, Math.max(30000, segment.text.length * 700));
         this._nativePending = pending;
+        pending.arm(180000, "worker-queue");
         try {
           try { this.note("speak", segment.text.slice(0, 40)); } catch (e) {}
           window.NativeSpeech.speak(id, segment.text, language, voice ? voice.name : "", rate, opts.pitch || 1.0);
@@ -9945,6 +9950,8 @@ const App = {
       if (g.isCurrent()) HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
     } finally {
       this._voiceTestBusy = false;
+      window.__voiceDoctorCompleted = true;
+      try { Speech.note("test-complete", "busy=false"); } catch (e) {}
       if (testButton) testButton.disabled = false;
       this.showVoiceLog();
     }
