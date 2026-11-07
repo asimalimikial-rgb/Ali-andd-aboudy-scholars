@@ -8346,9 +8346,19 @@ const JOLLY_ARABIC_WORDS = {
 
 const QuestionNarration = {
   token: 0,
-  begin() { return ++this.token; },
   invalidate() { this.token++; return this.token; },
-  isCurrent(token) { return token === this.token; }
+  makeGuard() {
+    const token = ++this.token;
+    const isCurrent = () => token === this.token;
+    const say = async (text, opts = {}) => {
+      if (!isCurrent()) return false;
+      const pending = HybridSpeech.speak(text, opts);
+      const generation = Speech._speechGeneration;
+      await pending;
+      return isCurrent() && generation === Speech._speechGeneration;
+    };
+    return { token, isCurrent, say };
+  }
 };
 
 const App = {
@@ -8457,7 +8467,7 @@ const App = {
     container.appendChild(box);
   },
 
-  playAliLetterSound(letter) {
+  getAliLetterSpeech(letter) {
     const key = String(letter || '').trim().toLowerCase();
     const phonemes = {
       a:'æ', b:'b', c:'k', d:'d', e:'ɛ', f:'f', g:'ɡ', h:'h', i:'ɪ', j:'dʒ',
@@ -8472,8 +8482,13 @@ const App = {
       x:'ks sound', y:'y sound', z:'zzz'
     };
     const phoneme = phonemes[key];
-    if (!phoneme) return HybridSpeech.speak(key);
-    return HybridSpeech.speak(key, { phoneme, fallbackText: examples[key], rate: 0.88 });
+    if (!phoneme) return { text: key, options: {} };
+    return { text: key, options: { phoneme, fallbackText: examples[key], rate: 0.88 } };
+  },
+
+  playAliLetterSound(letter) {
+    const speech = this.getAliLetterSpeech(letter);
+    return speech ? HybridSpeech.speak(speech.text, speech.options) : Promise.resolve();
   },
 
   getJollyPhonemeData(sound, example) {
@@ -9179,18 +9194,13 @@ const App = {
     // Speak the English prompt first, then the Arabic helper, before answer selection.
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
     const narrateQuestion = async () => {
-      const token = QuestionNarration.begin();
-      const isCurrent = () => QuestionNarration.isCurrent(token) && !this.answerLocked;
+      const guard = QuestionNarration.makeGuard();
+      const isCurrent = () => guard.isCurrent() && !this.answerLocked;
       HybridSpeech.stop();
-      const speakIf = async (text, opts) => {
-        if (!isCurrent()) return false;
-        await HybridSpeech.speak(text, opts);
-        return isCurrent();
-      };
-      const playLetterIf = async letter => {
-        if (!isCurrent()) return false;
-        await this.playAliLetterSound(letter);
-        return isCurrent();
+      const speakIf = (text, opts) => guard.say(text, opts);
+      const playLetterIf = letter => {
+        const speech = this.getAliLetterSpeech(letter);
+        return speech ? guard.say(speech.text, speech.options) : Promise.resolve(false);
       };
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
@@ -9373,6 +9383,7 @@ const App = {
           btn.className = 'option-btn';
           btn.textContent = opt;
           btn.onclick = () => {
+            this.invalidateQuestionNarration();
             SoundEffects.click();
             const optionText = String(opt).trim();
             if (Store.data.activeChild === 'ali' && /^[a-z]$/i.test(optionText) &&
@@ -9401,6 +9412,7 @@ const App = {
           const btn = document.createElement('button');
           btn.className = 'option-btn'; btn.textContent = choice.label;
           btn.onclick = () => {
+            this.invalidateQuestionNarration();
             SoundEffects.click();
             compareGrid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected'); this.selectedAnswer = choice.key;
@@ -9424,6 +9436,7 @@ const App = {
           const select = document.createElement('select'); select.style.flex = '1'; select.style.minHeight = '48px';
           select.innerHTML = '<option value="">Choose the word</option>' + words.map(word => '<option>' + word + '</option>').join('');
           select.onchange = () => {
+            this.invalidateQuestionNarration();
             if (select.value === pair.b) this.pairMatches.add(index); else this.pairMatches.delete(index);
             this.selectedAnswer = this.pairMatches.size === q.pairs.length;
           };
@@ -9440,6 +9453,7 @@ const App = {
           item.className = 'count-item';
           item.textContent = q.item;
           item.onclick = () => {
+            this.invalidateQuestionNarration();
             if (!item.classList.contains('tapped')) {
               item.classList.add('tapped');
               this.tappedCount++;
@@ -9461,6 +9475,7 @@ const App = {
           btn.className = 'option-btn';
           btn.textContent = label;
           btn.onclick = () => {
+            this.invalidateQuestionNarration();
             SoundEffects.click();
             container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
@@ -9505,6 +9520,7 @@ const App = {
           tile.type = 'button';
           tile.textContent = itm;
           tile.onclick = () => {
+            this.invalidateQuestionNarration();
             SoundEffects.click();
             const pickedIndex = currentPicked.findIndex(item => item.tile === tile);
             if (pickedIndex >= 0) {
@@ -9546,7 +9562,7 @@ const App = {
         ctx.fillText(q.letter, 140, 140);
 
         let drawing = false;
-        const startDraw = () => { drawing = true; this.selectedAnswer = true; };
+        const startDraw = () => { this.invalidateQuestionNarration(); drawing = true; this.selectedAnswer = true; };
         const draw = (e) => {
           if (!drawing) return;
           const rect = canvas.getBoundingClientRect();
@@ -9576,6 +9592,7 @@ const App = {
           btn.className = 'option-btn';
           btn.textContent = opt;
           btn.onclick = () => {
+            this.invalidateQuestionNarration();
             container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             this.selectedAnswer = opt;
@@ -9588,6 +9605,7 @@ const App = {
   },
 
   evaluateAnswer(q) {
+    this.invalidateQuestionNarration();
     if (this.answerLocked) return;
     let isCorrect = false;
 
@@ -9614,7 +9632,6 @@ const App = {
     }
 
     this.answerLocked = true;
-    this.invalidateQuestionNarration();
     const audioControls = document.getElementById('question-audio-controls');
     if (audioControls) audioControls.style.display = 'none';
     const feedback = document.getElementById('answer-feedback');
@@ -9883,6 +9900,12 @@ Store.data.settings.speechEngine='embedded';
 window.addEventListener('DOMContentLoaded',()=>HybridSpeech.updateStatus());
 
 // Initialize Application
+// A hidden or unloading page must never leave queued question speech playing.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') App.invalidateQuestionNarration();
+});
+window.addEventListener('pagehide', () => App.invalidateQuestionNarration());
+
 window.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
