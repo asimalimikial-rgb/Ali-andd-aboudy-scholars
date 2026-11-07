@@ -202,7 +202,7 @@ function makeSpeechEnv() {
   fireSpeechTick();
   await optionPromise;
   assert.deepEqual(calls.filter(item => item.op === 'speak').map(item => item.text),
-    ['First replay prompt', 'Second replay prompt', 'English question', 'Chosen option'],
+    ['Question before silent choice', 'First replay prompt', 'Second replay prompt', 'English question', 'Chosen option'],
     'No stale helper speech may be queued after the selected option');
 
   const renderStart = html.indexOf('  renderQuestionType(q, container) {');
