@@ -1,5 +1,6 @@
 name: Supertonic 3 ARM-compatible Android emulator audio test
 
+# Refreshing this workflow on the repair branch triggers the offline Android emulator audio test.
 on:
   push:
     branches: [fix/speech-cancellation-diagnostics]
