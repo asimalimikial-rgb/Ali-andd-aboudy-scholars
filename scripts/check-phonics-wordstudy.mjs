@@ -44,11 +44,25 @@ checks[checks.findIndex(x=>x[0]==='All 42 sound entries mapped')][1]=soundEntrie
 const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
-checks[checks.findIndex(x=>x[0]==='Arabic helper spoken before answer selection')][1]=narration.includes("if (arabicHelper) await HybridSpeech.speak(arabicHelper, { language: 'ar' })");
+checks[checks.findIndex(x=>x[0]==='Arabic helper spoken before answer selection')][1]=
+  narration.includes('QuestionNarration.makeGuard()') &&
+  narration.includes('const speakIf = (text, opts) => guard.say(text, opts)') &&
+  narration.includes("if (arabicHelper) await speakIf(arabicHelper, { language: 'ar' })");
+const interactionStart=html.indexOf('  renderQuestionType(q, container) {');
+const interactionEnd=html.indexOf('  evaluateAnswer(q) {');
+const interactions=interactionStart>=0&&interactionEnd>interactionStart?html.slice(interactionStart,interactionEnd):'';
+checks.push(['Every answer interaction invalidates narration before acting',
+  (interactions.match(/this\\.invalidateQuestionNarration\\(\\);/g)||[]).length >= 8]);
+checks.push(['Page hide and backgrounding stop narration',
+  html.includes("window.addEventListener('pagehide'") &&
+  html.includes("document.addEventListener('visibilitychange'")]);
 const answerStart=html.indexOf('  evaluateAnswer(q) {');
 const answerEnd=html.indexOf('  advanceActivity() {',answerStart);
 const answer=answerStart>=0&&answerEnd>answerStart?html.slice(answerStart,answerEnd):'';
 checks[checks.findIndex(x=>x[0]==='No explanation or hint is emitted after submission')][1]=answer.length>0&&!answer.includes('q.explanation')&&!answer.includes('q.hint')&&!answer.includes('${explanation}')&&!answer.includes('${hint}');
+checks.push(['Check action invalidates narration before evaluation',
+  answer.indexOf('this.invalidateQuestionNarration();') >= 0 &&
+  answer.indexOf('this.invalidateQuestionNarration();') < answer.indexOf('let isCorrect = false;')]);
 checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encouragement only')][1]=answer.includes('أحسنت! إجابة صحيحة!')&&answer.includes('محاولة جميلة!')&&answer.includes("'Great job! أحسنت!'")&&answer.includes("'Good try! محاولة جميلة!'");
 const blending=html.indexOf("else if(skill==='blending')");
 const study=html.indexOf("else if(skill==='wordstudy')");
