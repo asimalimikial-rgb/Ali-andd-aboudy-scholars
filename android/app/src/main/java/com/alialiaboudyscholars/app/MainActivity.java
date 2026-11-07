@@ -68,7 +68,11 @@ public class MainActivity extends Activity {
                         "b.click();" +
                         "window.setTimeout(function(){var d='';" +
                         "try{d=Speech.getDiagnostics();}catch(e){d='diagnostics-error:'+String(e);}" +
-                        "EmulatorTestBridge.report('CI_RESULT:'+d);},8000);" +
+                        "var h=document.getElementById('hybrid-voice-status');" +
+                        "var l=document.getElementById('local-voice-status');" +
+                        "var s=(h&&h.textContent)||(l&&l.textContent)||'';" +
+                        "var a=document.getElementById('chk-ai-voice-terms');" +
+                        "EmulatorTestBridge.report('CI_RESULT:'+JSON.stringify({diagnostics:d,status:s,licenseAccepted:!!(a&&a.checked)}));},8000);" +
                         "}catch(e){EmulatorTestBridge.report('CI_RESULT:exception:'+String(e));}})();",
                         null), 2500);
                 }
