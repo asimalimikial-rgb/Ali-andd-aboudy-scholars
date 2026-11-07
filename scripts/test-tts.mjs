@@ -266,7 +266,7 @@ function makeSpeechEnv() {
   assert.ok(helperMatch, 'Actual playLetterIf helper must be present');
   const helperSource = helperMatch[0]
     .replace('const playLetterIf = letter => {', '(letter) => {')
-    .replace(/\\n      \};$/, '\\n}');
+    .replace(/\n      \};$/, '\n}');
   const playLetterIf = vm.runInContext('(' + helperSource + ')', env);
   const guard = env.Guard.makeGuard();
   const appStub = { getAliLetterSpeech: () => null };
@@ -303,7 +303,7 @@ function makeSpeechEnv() {
     HybridSpeech: { speak: text => { spoken.push(text); return Promise.resolve(); } }
   };
   vm.createContext(env);
-  vm.runInContext('globalThis.evaluateAnswer = ({' + methodSource + '\n}).evaluateAnswer;, env);
+  vm.runInContext('globalThis.evaluateAnswer = ({' + methodSource + '\n}).evaluateAnswer;', env);
   const app = {
     answerLocked: false, selectedAnswer: null, tappedCount: 0, lessonScore: 0,
     invalidations: 0, advances: 0,
