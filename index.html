@@ -8489,7 +8489,10 @@ const App = {
 
   playAliLetterSound(letter) {
     const speech = this.getAliLetterSpeech(letter);
-    return speech ? HybridSpeech.speak(speech.text, speech.options) : Promise.resolve();
+    return speech
+      ? HybridSpeech.speak(speech.text, speech.options)
+          .catch(error => console.warn('Option speech failed:', error))
+      : Promise.resolve();
   },
 
   getJollyPhonemeData(sound, example) {
@@ -9153,6 +9156,12 @@ const App = {
 
   renderCurrentQuestion() {
     this.invalidateQuestionNarration();
+    if (this._continueUnlockTimer) {
+      clearTimeout(this._continueUnlockTimer);
+      this._continueUnlockTimer = null;
+    }
+    const submitButton = document.getElementById('btn-submit-answer');
+    if (submitButton) submitButton.disabled = false;
     const q = this.currentLesson.questions[this.currentQuestionIndex];
     const total = this.currentLesson.questions.length;
     this.answerLocked = false;
@@ -9199,7 +9208,9 @@ const App = {
       const speakIf = (text, opts) => guard.say(text, opts);
       const playLetterIf = letter => {
         const speech = this.getAliLetterSpeech(letter);
-        return speech ? guard.say(speech.text, speech.options) : Promise.resolve(false);
+        return speech
+          ? guard.say(speech.text, speech.options)
+          : Promise.resolve(guard.isCurrent());
       };
       const titleText = String(q.title || '');
       const isAli = Store.data.activeChild === 'ali';
@@ -9389,7 +9400,8 @@ const App = {
                 /\b(?:letter|sound|starts?|begins?|phonics|alphabet)\b/i.test(q.title || '')) {
               this.playAliLetterSound(optionText);
             } else {
-              HybridSpeech.speak(opt);
+              HybridSpeech.speak(opt)
+                .catch(error => console.warn('Option speech failed:', error));
             }
             container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
@@ -9604,8 +9616,17 @@ const App = {
   },
 
   evaluateAnswer(q) {
-    this.invalidateQuestionNarration();
     if (this.answerLocked) return;
+
+    if (this.selectedAnswer === null || this.selectedAnswer === undefined) {
+      const feedback = document.getElementById('answer-feedback');
+      feedback.className = 'feedback-banner coach';
+      feedback.style.display = 'block';
+      feedback.textContent = 'Choose an answer first, then check it. / اختر إجابة أولاً ثم تحقّق.';
+      return;
+    }
+
+    this.invalidateQuestionNarration();
     let isCorrect = false;
 
     if (q.type === 'spelling') {
@@ -9620,14 +9641,6 @@ const App = {
       isCorrect = this.selectedAnswer === true;
     } else {
       isCorrect = this.selectedAnswer === q.answer;
-    }
-
-    if (this.selectedAnswer === null || this.selectedAnswer === undefined) {
-      const feedback = document.getElementById('answer-feedback');
-      feedback.className = 'feedback-banner coach';
-      feedback.style.display = 'block';
-      feedback.textContent = 'Choose an answer first, then check it. / اختر إجابة أولاً ثم تحقّق.';
-      return;
     }
 
     this.answerLocked = true;
@@ -9646,8 +9659,16 @@ const App = {
     const submitBtn = document.getElementById('btn-submit-answer');
     submitBtn.textContent = 'Continue / متابعة';
     submitBtn.onclick = () => this.advanceActivity();
+    submitBtn.disabled = true;
+    if (this._continueUnlockTimer) clearTimeout(this._continueUnlockTimer);
+    this._continueUnlockTimer = setTimeout(() => {
+      this._continueUnlockTimer = null;
+      if (this.answerLocked && document.getElementById('btn-submit-answer') === submitBtn) {
+        submitBtn.disabled = false;
+      }
+    }, 700);
 
-    const spokenFeedback = isCorrect ? 'Great job! أحسنت!' : 'Good try! محاولة جميلة!';
+    const spokenFeedback = isCorrect ? 'أحسنت!' : 'محاولة جميلة!';
     if (isCorrect) {
       SoundEffects.correct();
       this.lessonScore++;
@@ -9656,6 +9677,7 @@ const App = {
     }
     HybridSpeech.speak(spokenFeedback)
       .catch(error => console.warn('Feedback narration failed:', error));
+  }
   },
 
   advanceActivity() {
