@@ -294,6 +294,12 @@ public final class NativeSpeech {
     @JavascriptInterface public void cancel() {
         long cancelledGeneration = generation.incrementAndGet();
         logNative("cancel generation=" + cancelledGeneration);
+        synchronized (workerLock) {
+            if (queuedSpeechTask != null && worker.remove(queuedSpeechTask)) {
+                queuedSpeechTask = null;
+                logNative("queued-speech-cancelled");
+            }
+        }
         synchronized (audioLock) {
             if (activeTrack != null) {
                 try { activeTrack.pause(); activeTrack.flush(); activeTrack.stop(); } catch (Exception ignored) {}

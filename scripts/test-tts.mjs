@@ -394,6 +394,7 @@ assert.ok(native.includes('public void prewarm()'),
   'Native bridge must support background model prewarming');
 assert.ok(native.includes('ThreadPoolExecutor') && native.includes('worker.remove(queuedSpeechTask)') && native.includes('queued-speech-replaced'), 'Only the newest queued speech request may remain behind an active synthesis');
 assert.ok(native.includes('prewarm-skipped worker-busy'), 'Prewarm must not accumulate behind a busy native worker');
+assert.ok(native.includes('queued-speech-cancelled'), 'Explicit stop must remove a not-yet-started queued request');
 assert.ok(native.includes('audio-cancelled-before-track') && native.includes('notifyJs(id, "cancelled")'),
   'AudioTrack must not be registered for a stale generation');
 
