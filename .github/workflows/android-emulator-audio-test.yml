@@ -56,15 +56,15 @@ jobs:
           node scripts/test-tts.mjs
 
       - name: Build installable emulator APK
-        run: gradle --no-daemon --stacktrace -p android :app:assembleDebug
+        run: gradle --no-daemon --stacktrace -p android -PttsNumSteps=4 -PttsNumThreads=2 :app:assembleDebug
 
       - name: Name emulator APK with speech engine
         shell: bash
         run: |
           mkdir -p dist
           cp android/app/build/outputs/apk/debug/app-debug.apk \
-            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
-          sha256sum dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0.apk
+          sha256sum dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0.apk
 
       - name: Enable KVM acceleration on the GitHub runner
         shell: bash
@@ -91,7 +91,7 @@ jobs:
             adb shell cmd connectivity airplane-mode enable
             adb shell cmd wifi set-wifi-enabled disabled || true
             adb shell svc data disable || true
-            adb install -r dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+            adb install -r dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0.apk
             mkdir -p dist/emulator-evidence
             python3 scripts/emulator-audio-smoke.py
             cp emulator-audio-report.json dist/emulator-evidence/
@@ -101,9 +101,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0
+          name: Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0
           path: |
-            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0.apk
             dist/emulator-evidence/**
             emulator-audio-report.json
             emulator-logcat.txt

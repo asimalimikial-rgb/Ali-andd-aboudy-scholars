@@ -8,6 +8,10 @@ def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = releaseStorePath && file(releaseStorePath).isFile() && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+def ttsNumSteps = providers.gradleProperty('ttsNumSteps').getOrElse('8').toInteger()
+def ttsNumThreads = providers.gradleProperty('ttsNumThreads').getOrElse('2').toInteger()
+if (ttsNumSteps < 1 || ttsNumSteps > 16) throw new GradleException('ttsNumSteps must be between 1 and 16')
+if (ttsNumThreads < 1 || ttsNumThreads > 8) throw new GradleException('ttsNumThreads must be between 1 and 8')
 
 android {
     namespace 'com.alialiaboudyscholars.app'
@@ -19,6 +23,9 @@ android {
         targetSdk 35
         versionCode 9
         versionName '1.3.0'
+        // Runtime defaults stay at 8 steps / 2 threads; benchmark variants may override with -PttsNumSteps/-PttsNumThreads.
+        resValue 'integer', 'tts_num_steps', ttsNumSteps.toString()
+        resValue 'integer', 'tts_num_threads', ttsNumThreads.toString()
         ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
         // Pull-request builds are isolated beta installs; they never replace the stable app.
         if (System.getenv('GITHUB_EVENT_NAME') == 'pull_request') {

@@ -92,7 +92,7 @@ public final class NativeSpeech {
             final long loadStart = android.os.SystemClock.elapsedRealtime();
             try {
                 notifyStatus("Loading the embedded offline voice… / جارٍ تحميل محرك الصوت المضمّن…");
-                logNative("prewarm-engine-load-start " + EmbeddedTtsEngine.configSummary());
+                logNative("prewarm-engine-load-start " + EmbeddedTtsEngine.configSummary(context));
                 engine = new EmbeddedTtsEngine(context);
                 ready = true;
                 lastError = "";
@@ -137,7 +137,7 @@ public final class NativeSpeech {
                     long loadStart = android.os.SystemClock.elapsedRealtime();
                     notifyJs(requestId, "load-start");
                     notifyStatus("Loading the embedded offline voice… / جارٍ تحميل محرك الصوت المضمّن…");
-                    logNative("engine-load-start id=" + requestId + " " + EmbeddedTtsEngine.configSummary());
+                    logNative("engine-load-start id=" + requestId + " " + EmbeddedTtsEngine.configSummary(context));
                     active = new EmbeddedTtsEngine(context);
                     engine = active;
                     ready = true;

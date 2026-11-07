@@ -12,16 +12,20 @@ import java.util.Collections;
 /** Fully embedded Supertonic 3 runtime. No Android TTS or network services are used. */
 final class EmbeddedTtsEngine {
     private static final String MODEL_DIR = "embedded-tts/supertonic3";
-    static final int NUM_THREADS = 2;
-    static final int NUM_STEPS = 8;
     static final String PROVIDER = "cpu";
+    private final int numThreads;
+    private final int numSteps;
 
-    static String configSummary() {
-        return "provider=" + PROVIDER + " numThreads=" + NUM_THREADS + " numSteps=" + NUM_STEPS + " model=Supertonic3-int8";
+    static String configSummary(Context context) {
+        int threads = context.getResources().getInteger(R.integer.tts_num_threads);
+        int steps = context.getResources().getInteger(R.integer.tts_num_steps);
+        return "provider=" + PROVIDER + " numThreads=" + threads + " numSteps=" + steps + " model=Supertonic3-int8";
     }
     private final OfflineTts tts;
 
     EmbeddedTtsEngine(Context context) {
+        numThreads = context.getResources().getInteger(R.integer.tts_num_threads);
+        numSteps = context.getResources().getInteger(R.integer.tts_num_steps);
         OfflineTtsSupertonicModelConfig supertonic = new OfflineTtsSupertonicModelConfig();
         supertonic.setDurationPredictor(MODEL_DIR + "/duration_predictor.int8.onnx");
         supertonic.setTextEncoder(MODEL_DIR + "/text_encoder.int8.onnx");
@@ -33,7 +37,7 @@ final class EmbeddedTtsEngine {
 
         OfflineTtsModelConfig model = new OfflineTtsModelConfig();
         model.setSupertonic(supertonic);
-        model.setNumThreads(NUM_THREADS);
+        model.setNumThreads(numThreads);
         model.setDebug(false);
         model.setProvider(PROVIDER);
 
@@ -47,7 +51,7 @@ final class EmbeddedTtsEngine {
     GeneratedAudio synthesize(String text, String language, int voiceId, float speed) {
         GenerationConfig generation = new GenerationConfig();
         generation.setSid(Math.max(0, Math.min(9, voiceId)));
-        generation.setNumSteps(NUM_STEPS);
+        generation.setNumSteps(numSteps);
         generation.setSpeed(Math.max(0.70f, Math.min(1.20f, speed)));
         generation.setSilenceScale(0.2f);
         generation.setExtra(Collections.singletonMap("lang", language));

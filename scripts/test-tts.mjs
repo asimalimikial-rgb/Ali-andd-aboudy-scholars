@@ -18,7 +18,9 @@ assert.equal(html.includes('window.NativeSpeech.speak'),true,'All speech must us
 assert.equal(native.includes('android.speech.tts'),false,'Android system TTS must not be imported');
 assert.equal(native.includes('TextToSpeech'),false,'Android TextToSpeech must not be called');
 assert.ok(native.includes('getNativeLog()') && native.includes('synth-start') && native.includes('synth-end'), 'Native stage diagnostics must be exposed');
-assert.ok(engine.includes('NUM_THREADS = 2') && engine.includes('NUM_STEPS = 8') && engine.includes('PROVIDER = "cpu"'), 'Runtime settings must be explicit');
+assert.ok(engine.includes('context.getResources().getInteger(R.integer.tts_num_threads)') && engine.includes('context.getResources().getInteger(R.integer.tts_num_steps)') && engine.includes('PROVIDER = "cpu"'), 'Runtime settings must be explicit and build-configurable');
+const appGradle = fs.readFileSync('android/app/build.gradle','utf8');
+assert.ok(appGradle.includes("getOrElse('8')") && appGradle.includes("getOrElse('2')"), 'Production defaults must remain at 8 steps and 2 threads');
 assert.equal(native.includes('new EmbeddedTtsEngine(context)'),true,'Native bridge must instantiate embedded engine');
 assert.equal(native.includes('if (style.startsWith(\"M\")) index += 5;'),true,'Supertonic SID order must map F1-F5 to 0-4 and M1-M5 to 5-9');
 assert.equal(native.includes('AudioTrack'),true,'Generated PCM must be played through Android audio output');

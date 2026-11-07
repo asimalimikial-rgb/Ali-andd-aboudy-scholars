@@ -46,7 +46,7 @@ def main():
         raise RuntimeError("Emulator is not offline; airplane-mode status was: " + airplane)
 
     package = "com.alialiaboudyscholars.app"
-    apk = "dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk"
+    apk = "dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-steps4-v1.3.0.apk"
     adb("logcat", "-c", check=False)
     adb("install", "-r", apk, timeout=180)
     adb("shell", "am", "start", "-n", package + "/.MainActivity",
@@ -99,7 +99,12 @@ def main():
     else:
         result = "failed_incomplete_or_native_error"
 
+    native_log = diagnostics.split('--- native ---', 1)[1] if '--- native ---' in diagnostics else ''
+    import re
+    synth_ms = [int(value) for value in re.findall(r'synth-end id=.*? synth-ms=(\d+)', native_log)]
+    load_ms = [int(value) for value in re.findall(r'(?:prewarm-engine-load-end load-ms=|engine-load-end id=.*? load-ms=)(\d+)', native_log)]
     report(result, offline=True, diagnostics=diagnostics, ui_status=status_text,
+           synthesis_durations_ms=synth_ms, model_load_durations_ms=load_ms,
            native_start_count=native_start, native_end_count=native_end,
            native_synth_end_count=synth_end, native_error_count=native_error,
            test_completed=test_complete, ci_hook_payload=payload)
