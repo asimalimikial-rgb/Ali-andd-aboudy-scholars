@@ -60,10 +60,18 @@ const answerStart=html.indexOf('  evaluateAnswer(q) {');
 const answerEnd=html.indexOf('  advanceActivity() {',answerStart);
 const answer=answerStart>=0&&answerEnd>answerStart?html.slice(answerStart,answerEnd):'';
 checks[checks.findIndex(x=>x[0]==='No explanation or hint is emitted after submission')][1]=answer.length>0&&!answer.includes('q.explanation')&&!answer.includes('q.hint')&&!answer.includes('${explanation}')&&!answer.includes('${hint}');
-checks.push(['Check action invalidates narration before evaluation',
-  answer.indexOf('this.invalidateQuestionNarration();') >= 0 &&
-  answer.indexOf('this.invalidateQuestionNarration();') < answer.indexOf('let isCorrect = false;')]);
-checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encouragement only')][1]=answer.includes('أحسنت! إجابة صحيحة!')&&answer.includes('محاولة جميلة!')&&answer.includes("'Great job! أحسنت!'")&&answer.includes("'Good try! محاولة جميلة!'");
+checks.push(['Empty and repeated checks preserve current narration',
+  answer.indexOf('if (this.answerLocked) return;') >= 0 &&
+  answer.indexOf('this.selectedAnswer === null') >= 0 &&
+  answer.indexOf('this.invalidateQuestionNarration();') > answer.indexOf('this.selectedAnswer === null')]);
+checks.push(['Letter without mapped audio preserves the current narration guard',
+  html.includes('Promise.resolve(guard.isCurrent())')]);
+checks[checks.findIndex(x=>x[0]==='Correct and incorrect answers use encouragement only')][1]=answer.includes('أحسنت! إجابة صحيحة!')&&answer.includes('محاولة جميلة!')&&answer.includes("const spokenFeedback = isCorrect ? 'أحسنت!' : 'محاولة جميلة!';");
+checks.push(['Option speech promises handle playback failures',
+  /HybridSpeech\\.speak\\(opt\\)\\s*\\.catch\\(/.test(html) &&
+  /playAliLetterSound\\(letter\\)[\\s\\S]*?\\.catch\\(/.test(html)]);
+checks.push(['Continue button has a 700ms double-tap guard',
+  answer.includes('submitBtn.disabled = true') && answer.includes('}, 700);')]);
 const blending=html.indexOf("else if(skill==='blending')");
 const study=html.indexOf("else if(skill==='wordstudy')");
 const segmenting=html.indexOf("else if(skill==='segmenting')");
