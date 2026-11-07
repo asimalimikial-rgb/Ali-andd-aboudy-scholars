@@ -259,10 +259,10 @@ function makeSpeechEnv() {
     speak: (text, opts) => env.Speech.speak(text, opts || {}),
     stop: () => env.Speech.stop()
   };
-  const guardSource = html.match(/const QuestionNarration = \{[\\s\\S]*?\\n\};/);
+  const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
   assert.ok(guardSource, 'Question narration guard must be available');
-  vm.runInContext(guardSource[0] + '\\nglobalThis.Guard = QuestionNarration;', env);
-  const helperMatch = html.match(/const playLetterIf = letter => \{[\\s\\S]*?\\n      \};/);
+  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+  const helperMatch = html.match(/const playLetterIf = letter => \{[\s\S]*?\n      \};/);
   assert.ok(helperMatch, 'Actual playLetterIf helper must be present');
   const helperSource = helperMatch[0]
     .replace('const playLetterIf = letter => {', '(letter) => {')
@@ -285,9 +285,9 @@ function makeSpeechEnv() {
 // Exercise the actual evaluateAnswer method with a controlled DOM and timers.
 {
   const methodStart = html.indexOf('  evaluateAnswer(q) {');
-  const methodEnd = html.indexOf('\\n  },\\n\\n  advanceActivity() {', methodStart);
+  const methodEnd = html.indexOf('\n  },\n\n  advanceActivity() {', methodStart);
   assert.ok(methodStart >= 0 && methodEnd > methodStart, 'evaluateAnswer method boundaries must exist');
-  const methodSource = html.slice(methodStart, methodEnd) + '\\n  }';
+  const methodSource = html.slice(methodStart, methodEnd) + '\n  }';
   const scheduled = [];
   const elements = {
     'answer-feedback': { className: '', style: {}, textContent: '' },
@@ -303,7 +303,7 @@ function makeSpeechEnv() {
     HybridSpeech: { speak: text => { spoken.push(text); return Promise.resolve(); } }
   };
   vm.createContext(env);
-  vm.runInContext('globalThis.evaluateAnswer = ({' + methodSource + '\\n}).evaluateAnswer;', env);
+  vm.runInContext('globalThis.evaluateAnswer = ({' + methodSource + '\n}).evaluateAnswer;, env);
   const app = {
     answerLocked: false, selectedAnswer: null, tappedCount: 0, lessonScore: 0,
     invalidations: 0, advances: 0,
