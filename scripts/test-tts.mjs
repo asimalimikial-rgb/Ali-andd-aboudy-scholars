@@ -44,10 +44,10 @@ assert.equal(html.includes("const spokenFeedback = isCorrect ? 'أحسنت!' : '
 assert.equal(html.includes("feedback.textContent = isCorrect\n      ? 'That’s right! / أحسنت! إجابة صحيحة!'\n      : 'Good try! / محاولة جميلة!';"),true,'Post-answer text must contain encouragement only');
 assert.equal(html.includes('btn-replay-question')&&html.includes('btn-stop-question'),true,'Lesson screen must provide replay and stop controls before answer submission');
 assert.equal(html.includes(`this.note("speak-request", String(input == null ? "" : input).slice(0, 40))`),true,'Speech diagnostics must record the first 40 characters of each request');
-assert.ok(html.includes(`this.note("native-" + event, id)`), 'Native start/end/error callbacks must be logged');
+assert.ok(html.includes(`this.note("native-" + event, id + (detail ? " " + detail : ""))`), 'Native stage callbacks and timing details must be logged');
 assert.ok(html.includes(`try { Speech.note("guard-cancel"`), 'Guard invalidation must be recorded independently of playback');
-assert.ok(html.includes(`try { this.note("timeout", id); } catch (e) {}`), 'Timeout diagnostics must not run before failure and cancellation');
-assert.ok(html.indexOf(`fail(new Error("Embedded voice engine did not respond in time."));`) < html.indexOf(`try { this.note("timeout", id); } catch (e) {}`), 'Timeout must reject and stop before recording diagnostics');
+assert.ok(html.includes(`this.note("timeout", id + " phase=" + phase + " limit-ms=" + ms)`), 'Timeout diagnostics must record the exact phase and limit');
+assert.ok(html.includes(`pending.fail(new Error("Embedded voice engine timed out during " + phase + "."))`), 'Phase timeout must reject the active request with a precise error');
 assert.ok(html.includes(`id="btn-copy-speech-diagnostics"`) && html.includes(`getElementById('btn-copy-speech-diagnostics').onclick`), 'Speech diagnostics must include a working copy control');
 assert.ok(html.includes(`this.invalidateQuestionNarration("leave-" + activeScreen.id)`) && html.includes('this.clearScreenSpeechTimers();'), 'Changing any active screen must invalidate speech and clear screen timers');
 assert.ok(html.includes('scheduleScreenSpeech(()=>this.playJollyPhoneme(x,parts[3]),i*650)') && html.includes('scheduleScreenSpeech(()=>Speech.speak(parts[3]),2200)'), 'Jolly blending speech delays must be cancellable screen-owned timers');
