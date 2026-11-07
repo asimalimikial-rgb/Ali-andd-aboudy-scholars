@@ -191,16 +191,30 @@ function makeSpeechEnv() {
     /const startDraw = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/
   ]) assert.match(render, pattern, 'Every answer interaction must cancel question narration first');
 
+  const compareStart = render.indexOf("case 'compare'");
+  const compareEnd = render.indexOf("case 'match_pairs'", compareStart);
+  const compareHandler = render.slice(compareStart, compareEnd);
+  assert.match(compareHandler, /btn\.onclick = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
+    'A silent answer option must cancel narration immediately');
+  assert.equal(compareHandler.includes('HybridSpeech.speak('), false,
+    'The silent compare option must not start replacement speech');
+
   const answerBlock = html.slice(html.indexOf('  evaluateAnswer(q) {'), html.indexOf('  advanceActivity() {'));
   assert.match(answerBlock, /evaluateAnswer\(q\) \{\s*this\.invalidateQuestionNarration\(\);/,
     'Check Answer must cancel question narration immediately');
+  assert.equal((answerBlock.match(/HybridSpeech\.speak\(/g) || []).length, 1,
+    'Post-answer handling must speak only the final encouragement');
+  assert.ok(answerBlock.indexOf('HybridSpeech.speak(spokenFeedback)') >
+    answerBlock.indexOf('this.invalidateQuestionNarration();'),
+    'Post-answer encouragement must occur after question narration is cancelled');
   assert.ok(html.includes("document.addEventListener('visibilitychange'") &&
     html.includes("window.addEventListener('pagehide'"),
     'Hiding or unloading the page must cancel queued speech');
   const currentQuestion = html.slice(html.indexOf('  renderCurrentQuestion() {'), html.indexOf('  renderQuestionType(q, container) {'));
   assert.ok(currentQuestion.includes('this.invalidateQuestionNarration();'),
     'Changing the question must invalidate speech from the previous question');
-  assert.ok(html.includes("document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();"),
+  assert.ok(html.includes("document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();") &&
+    (html.match(/this\.testVoiceDoctor\(\)/g) || []).length === 1,
     'Voice test must only be started by an explicit button press');
   assert.ok(html.includes("Welcome narration failed:"),
     'The profile welcome narration must handle rejected promises');
