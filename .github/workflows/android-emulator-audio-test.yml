@@ -55,13 +55,13 @@ jobs:
           node scripts/test-tts.mjs
 
       - name: Build installable emulator APK
-        run: gradle --no-daemon --stacktrace -p android :app:assembleRelease
+        run: gradle --no-daemon --stacktrace -p android :app:assembleDebug
 
       - name: Name emulator APK with speech engine
         shell: bash
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk \
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
             dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
           sha256sum dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
 
