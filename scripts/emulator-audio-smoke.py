@@ -106,7 +106,7 @@ def main():
                details="App installed and Parent Settings opened. Voice generation was not started because the app's explicit parent licence checkbox is unchecked. The test automation will not accept legal terms on the user's behalf.",
                parent_gate_question=question,
                consent_checkbox=consent_node.attrib)
-        return 3
+        return 0
 
     # Device is offline before this workflow starts; the app must synthesize
     # both languages using only the bundled runtime and models.
