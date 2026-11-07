@@ -118,6 +118,11 @@ function makeSpeechEnv() {
   assert.equal(await timeoutResult, 'Embedded voice engine did not respond in time.');
   assert.ok(calls.some(item => item.op === 'cancel'),
     'The JavaScript timeout must cancel native generation/playback');
+  const timedOutId = calls.find(item => item.op === 'speak').id;
+  const speechCallsAfterTimeout = calls.filter(item => item.op === 'speak').length;
+  env.window.__nativeSpeechEvent(timedOutId, 'end');
+  assert.equal(calls.filter(item => item.op === 'speak').length, speechCallsAfterTimeout,
+    'A late native callback after timeout must not restart speech');
 }
 
 {
@@ -129,6 +134,13 @@ function makeSpeechEnv() {
     stop: () => env.Speech.stop()
   };
   vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+
+  // The shared guard also respects the answer-locked state.
+  const blocked = env.Guard.makeGuard(() => false);
+  const callsBeforeBlockedSay = calls.filter(item => item.op === 'speak').length;
+  assert.equal(await blocked.say('Must not speak after submission'), false);
+  assert.equal(calls.filter(item => item.op === 'speak').length, callsBeforeBlockedSay,
+    'Answer-locked state must prevent new narration requests');
 
   // Two rapid replays: only the newest narration remains valid.
   const first = env.Guard.makeGuard();
@@ -178,6 +190,11 @@ function makeSpeechEnv() {
   assert.ok(html.includes("document.addEventListener('visibilitychange'") &&
     html.includes("window.addEventListener('pagehide'"),
     'Hiding or unloading the page must cancel queued speech');
+  const currentQuestion = html.slice(html.indexOf('  renderCurrentQuestion() {'), html.indexOf('  renderQuestionType(q, container) {'));
+  assert.ok(currentQuestion.includes('this.invalidateQuestionNarration();'),
+    'Changing the question must invalidate speech from the previous question');
+  assert.ok(html.includes("document.getElementById('btn-test-voice').onclick = () => this.testVoiceDoctor();"),
+    'Voice test must only be started by an explicit button press');
   assert.ok(html.includes("Welcome narration failed:"),
     'The profile welcome narration must handle rejected promises');
 }
