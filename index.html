@@ -1190,6 +1190,7 @@ const Speech = {
         }, Math.max(30000, segment.text.length * 700));
         this._nativePending = pending;
         try {
+          try { this.note("speak", segment.text.slice(0, 40)); } catch (e) {}
           window.NativeSpeech.speak(id, segment.text, language, voice ? voice.name : "", rate, opts.pitch || 1.0);
         } catch (error) {
           clearTimeout(pending.timeout);
@@ -8345,6 +8346,22 @@ const JOLLY_ARABIC_WORDS = {
   sun:'شمس',ant:'نملة',tap:'نقرة',ink:'حبر',pig:'خنزير',net:'شبكة',cat:'قطة',kite:'طائرة ورقية',egg:'بيضة',hat:'قبعة',red:'أحمر',map:'خريطة',dog:'كلب',goat:'ماعز',octopus:'أخطبوط',up:'أعلى',leg:'ساق',fish:'سمكة',bag:'حقيبة',rain:'مطر',jam:'مربّى',boat:'قارب',tie:'ربطة عنق',feet:'أقدام',fork:'شوكة',zip:'سحّاب',web:'شبكة عنكبوت',ring:'خاتم',van:'سيارة نقل',moon:'قمر',book:'كتاب',yes:'نعم',box:'صندوق',chip:'رقاقة',ship:'سفينة',this:'هذا',thin:'رفيع',queen:'ملكة',out:'خارج',coin:'عملة',blue:'أزرق',fern:'سرخس',farm:'مزرعة'
 };
 
+const SpeechTimers = {
+  ids: new Set(),
+  set(fn, ms) {
+    const id = setTimeout(() => {
+      this.ids.delete(id);
+      fn();
+    }, ms);
+    this.ids.add(id);
+    return id;
+  },
+  clear() {
+    this.ids.forEach(id => clearTimeout(id));
+    this.ids.clear();
+  }
+};
+
 const QuestionNarration = {
   token: 0,
   invalidate(reason = "invalidated") {
@@ -8680,23 +8697,21 @@ const App = {
 
   invalidateQuestionNarration(reason = "screen-change") {
     QuestionNarration.invalidate(reason);
+    this.clearScreenSpeechTimers();
     HybridSpeech.stop();
   },
 
   clearScreenSpeechTimers() {
+    SpeechTimers.clear();
     (this._screenSpeechTimers || []).forEach(timer => clearTimeout(timer));
     this._screenSpeechTimers = [];
   },
 
   scheduleScreenSpeech(callback, delay) {
-    if (!Array.isArray(this._screenSpeechTimers)) this._screenSpeechTimers = [];
-    const timer = setTimeout(() => {
-      this._screenSpeechTimers = this._screenSpeechTimers.filter(id => id !== timer);
+    return SpeechTimers.set(() => {
       const active = document.querySelector('.screen.active');
       if (active && active.id === 'screen-jolly') callback();
     }, delay);
-    this._screenSpeechTimers.push(timer);
-    return timer;
   },
 
   showScreen(screenId) {
@@ -9903,6 +9918,14 @@ const App = {
     HybridSpeech.updateStatus();
   },
 
+  showVoiceLog() {
+    const output = document.getElementById('speech-diagnostics-output');
+    if (!output) return;
+    output.hidden = false;
+    output.value = Speech.getDiagnostics() || 'No speech events recorded yet.';
+    output.scrollTop = output.scrollHeight;
+  },
+
   async testVoiceDoctor() {
     const guard = QuestionNarration.makeGuard();
     try {
@@ -9914,6 +9937,8 @@ const App = {
       if (guard.isCurrent()) {
         HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
       }
+    } finally {
+      this.showVoiceLog();
     }
   },
 
