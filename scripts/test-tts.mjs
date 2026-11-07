@@ -269,8 +269,8 @@ function makeSpeechEnv() {
     .replace(/\n      \};$/, '\n}');
   const playLetterIf = vm.runInContext('(' + helperSource + ')', env);
   const guard = env.Guard.makeGuard();
-  const appStub = { getAliLetterSpeech: () => null };
-  assert.equal(await playLetterIf.call(appStub, '?'), true,
+  env.getAliLetterSpeech = () => null;
+  assert.equal(await playLetterIf('?'), true,
     'A letter with no mapped audio must leave the narration guard current');
   const titlePromise = guard.say('Remaining title after unmapped letter');
   const titleId = calls.filter(item => item.op === 'speak').at(-1).id;
@@ -279,7 +279,18 @@ function makeSpeechEnv() {
   assert.ok(tick, 'Remaining title should complete normally');
   fire(tick.id);
   assert.equal(await titlePromise, true,
-    'Remaining title and subsequent Arabic helper remain eligible after missing letter audio');
+    'Remaining title must complete after missing letter audio');
+  const helperPromise = guard.say('Arabic helper after unmapped letter', { language: 'ar' });
+  const helperId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.window.__nativeSpeechEvent(helperId, 'end');
+  const helperTick = timers.find(item => !item.cleared && item.ms === 80);
+  assert.ok(helperTick, 'Arabic helper should be scheduled after the remaining title');
+  fire(helperTick.id);
+  assert.equal(await helperPromise, true,
+    'Arabic helper must remain eligible after missing letter audio');
+  assert.deepEqual(calls.filter(item => item.op === 'speak').slice(-2).map(item => item.text),
+    ['Remaining title after unmapped letter', 'Arabic helper after unmapped letter'],
+    'The remaining title and Arabic helper must both be spoken');
 }
 
 // Exercise the actual evaluateAnswer method with a controlled DOM and timers.
