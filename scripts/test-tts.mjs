@@ -142,10 +142,7 @@ function makeSpeechEnv() {
   const { env, calls, timers, fire } = makeSpeechEnv();
   const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
   assert.ok(guardSource, 'Shared question narration guard must exist');
-  env.HybridSpeech = {
-    speak: (text, opts) => env.Speech.speak(text, opts || {}),
-    stop: () => env.Speech.stop()
-  };
+  vm.runInContext('Speech.localSpeak = Speech.speak.bind(Speech);', env);
   env.Guard = vm.runInContext('QuestionNarration', env);
   const fireSpeechTick = () => {
     const timer = timers.find(item => !item.cleared && item.ms === 80);
