@@ -19,6 +19,7 @@ const checks=[
   ['Arabic helper spoken before answer selection',/if\s*\(arabicHelper\)\s*await\s+speakIf\s*\(\s*arabicHelper\s*,\s*\{\s*language:\s*['"]ar['"]\s*\}\s*\)/.test(html)],
   ['Ali target letters use shared guarded phoneme playback',html.includes('getAliLetterSpeech(letter)') && html.includes("a:'æ'") && html.includes('guard.say(speech.text, speech.options)')],
   ['Slash-delimited phonemes use shared guarded playback',html.includes('titleText.matchAll(') && html.includes('await playLetterIf(token[1])')],
+  ['Standalone target-letter title branches both play the mapped letter sound', (html.match(/await\\s+playLetterIf\\(\\s*targetLetter\\s*\\)/g) || []).length >= 2],
   ['Single-letter phonics options use sound playback',html.includes('this.playAliLetterSound(optionText)')],
   ['All 42 sound entries mapped',true],
   ['No explanation or hint is emitted after submission',true],
