@@ -126,7 +126,7 @@ function makeSpeechEnv() {
 }
 
 {
-  const { env, calls } = makeSpeechEnv();
+  const { env, calls, timers, fire } = makeSpeechEnv();
   const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
   assert.ok(guardSource, 'Shared question narration guard must exist');
   env.HybridSpeech = {
@@ -134,6 +134,11 @@ function makeSpeechEnv() {
     stop: () => env.Speech.stop()
   };
   vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+  const fireSpeechTick = () => {
+    const timer = timers.find(item => !item.cleared && item.ms === 80);
+    assert.ok(timer, 'Expected the native end callback to schedule the next narration tick');
+    fire(timer.id);
+  };
 
   // The shared guard also respects the answer-locked state.
   const blocked = env.Guard.makeGuard(() => false);
@@ -153,6 +158,7 @@ function makeSpeechEnv() {
   env.window.__nativeSpeechEvent(firstId, 'end');
   assert.equal(await firstPromise, false, 'The older replay must not continue');
   env.window.__nativeSpeechEvent(secondId, 'end');
+  fireSpeechTick();
   assert.equal(await secondPromise, true, 'The newest replay must complete');
 
   // Selection interrupts the question and prevents the Arabic helper from starting.
@@ -168,6 +174,7 @@ function makeSpeechEnv() {
   assert.equal(await question.say('Arabic helper', { language: 'ar' }), false,
     'Arabic helper must not start after selection');
   env.window.__nativeSpeechEvent(optionId, 'end');
+  fireSpeechTick();
   await optionPromise;
   assert.deepEqual(calls.filter(item => item.op === 'speak').map(item => item.text),
     ['First replay prompt', 'Second replay prompt', 'English question', 'Chosen option'],
