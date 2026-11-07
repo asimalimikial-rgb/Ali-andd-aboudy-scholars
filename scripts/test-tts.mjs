@@ -121,21 +121,63 @@ function makeSpeechEnv() {
 }
 
 {
-  const { env } = makeSpeechEnv();
+  const { env, calls } = makeSpeechEnv();
   const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
-  assert.ok(guardSource, 'Question narration token guard must exist');
-  const guardEnv = {};
-  vm.createContext(guardEnv);
-  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', guardEnv);
-  const token = guardEnv.Guard.begin();
-  assert.equal(guardEnv.Guard.isCurrent(token), true);
-  guardEnv.Guard.invalidate();
-  assert.equal(guardEnv.Guard.isCurrent(token), false,
-    'Submitting an answer or leaving the lesson must invalidate pending helper narration');
+  assert.ok(guardSource, 'Shared question narration guard must exist');
+  env.HybridSpeech = {
+    speak: (text, opts) => env.Speech.speak(text, opts || {}),
+    stop: () => env.Speech.stop()
+  };
+  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+
+  // Two rapid replays: only the newest narration remains valid.
+  const first = env.Guard.makeGuard();
+  const firstPromise = first.say('First replay prompt');
+  const firstId = calls.filter(item => item.op === 'speak').at(-1).id;
+  const second = env.Guard.makeGuard();
+  assert.equal(first.isCurrent(), false, 'A new replay must invalidate the older sequence');
+  const secondPromise = second.say('Second replay prompt');
+  const secondId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.window.__nativeSpeechEvent(firstId, 'end');
+  assert.equal(await firstPromise, false, 'The older replay must not continue');
+  env.window.__nativeSpeechEvent(secondId, 'end');
+  assert.equal(await secondPromise, true, 'The newest replay must complete');
+
+  // Selection interrupts the question and prevents the Arabic helper from starting.
+  const question = env.Guard.makeGuard();
+  const questionPromise = question.say('English question');
+  const questionId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.Guard.invalidate();
+  env.HybridSpeech.stop();
+  const optionPromise = env.HybridSpeech.speak('Chosen option');
+  const optionId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.window.__nativeSpeechEvent(questionId, 'end');
+  assert.equal(await questionPromise, false, 'Selection must invalidate in-flight question narration');
+  assert.equal(await question.say('Arabic helper', { language: 'ar' }), false,
+    'Arabic helper must not start after selection');
+  env.window.__nativeSpeechEvent(optionId, 'end');
+  await optionPromise;
+  assert.deepEqual(calls.filter(item => item.op === 'speak').map(item => item.text),
+    ['First replay prompt', 'Second replay prompt', 'English question', 'Chosen option'],
+    'No stale helper speech may be queued after the selected option');
+
+  const renderStart = html.indexOf('  renderQuestionType(q, container) {');
+  const renderEnd = html.indexOf('  renderVisualModel(', renderStart);
+  const render = html.slice(renderStart, renderEnd);
+  for (const pattern of [
+    /btn\.onclick = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
+    /select\.onchange = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
+    /item\.onclick = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
+    /tile\.onclick = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
+    /const startDraw = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/
+  ]) assert.match(render, pattern, 'Every answer interaction must cancel question narration first');
+
   const answerBlock = html.slice(html.indexOf('  evaluateAnswer(q) {'), html.indexOf('  advanceActivity() {'));
-  assert.ok(answerBlock.indexOf('this.invalidateQuestionNarration();') <
-    answerBlock.indexOf('HybridSpeech.speak(spokenFeedback)'),
-    'Question narration must be invalidated before post-answer encouragement');
+  assert.match(answerBlock, /evaluateAnswer\(q\) \{\s*this\.invalidateQuestionNarration\(\);/,
+    'Check Answer must cancel question narration immediately');
+  assert.ok(html.includes("document.addEventListener('visibilitychange'") &&
+    html.includes("window.addEventListener('pagehide'"),
+    'Hiding or unloading the page must cancel queued speech');
   assert.ok(html.includes("Welcome narration failed:"),
     'The profile welcome narration must handle rejected promises');
 }
