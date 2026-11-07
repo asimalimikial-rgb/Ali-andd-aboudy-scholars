@@ -9196,7 +9196,6 @@ const App = {
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
     const narrateQuestion = async () => {
       const guard = QuestionNarration.makeGuard(() => !this.answerLocked);
-      const isCurrent = guard.isCurrent;
       const speakIf = (text, opts) => guard.say(text, opts);
       const playLetterIf = letter => {
         const speech = this.getAliLetterSpeech(letter);
