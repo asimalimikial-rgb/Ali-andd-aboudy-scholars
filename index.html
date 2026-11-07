@@ -963,8 +963,8 @@ const Speech = {
   diag: { log: [] },
   note(ev, detail) {
     const log = (this.diag = this.diag || { log: [] }).log;
-    log.push(new Date().toISOString().slice(11, 23) + " " + ev + (detail ? " " + String(detail).slice(0, 120) : ""));
-    if (log.length > 60) log.shift();
+    log.push(new Date().toISOString().slice(11, 23) + " " + ev + (detail ? " " + String(detail).slice(0, 400) : ""));
+    if (log.length > 300) log.shift();
   },
   getDiagnostics() {
     return ((this.diag && this.diag.log) || []).join("\n");
@@ -9926,27 +9926,25 @@ const App = {
   },
 
   async testVoiceDoctor() {
-    // Ignore repeated taps/click events while the current two-language test is active.
-    // A second guard would call stop() and cancel the first native PCM generation.
-    if (this._voiceDoctorRunning) {
-      try { Speech.note("voice-test-ignored", "already-running"); } catch (e) {}
+    try {
+      Speech.note("test-call", (new Error().stack || "").split("\n").slice(1, 4).join(" | "));
+    } catch (e) {}
+    if (this._voiceTestBusy) {
+      try { Speech.note("test-ignored-busy"); } catch (e) {}
       return;
     }
-    this._voiceDoctorRunning = true;
+    this._voiceTestBusy = true;
     const testButton = document.getElementById('btn-test-voice');
     if (testButton) testButton.disabled = true;
-    const guard = QuestionNarration.makeGuard();
+    const g = QuestionNarration.makeGuard();
     try {
-      if (!(await guard.say('Hello! This is the embedded English voice test.'))) return;
-      if (!(await guard.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;
-      if (!guard.isCurrent()) return;
+      if (!(await g.say('Hello! This is the embedded English voice test.'))) return;
+      if (!(await g.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;
       HybridSpeech.updateStatus('Both embedded voices completed the test / اكتمل اختبار الصوتين المضمّنين');
     } catch (error) {
-      if (guard.isCurrent()) {
-        HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
-      }
+      if (g.isCurrent()) HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
     } finally {
-      this._voiceDoctorRunning = false;
+      this._voiceTestBusy = false;
       if (testButton) testButton.disabled = false;
       this.showVoiceLog();
     }
