@@ -422,9 +422,9 @@ assert.ok(renderQuestion.indexOf('this.invalidateQuestionNarration();') >= 0 &&
 const doctorStart = html.indexOf('  async testVoiceDoctor() {');
 const doctorEnd = html.indexOf('  exportData() {', doctorStart);
 const doctor = html.slice(doctorStart, doctorEnd);
-assert.ok(doctor.includes('const guard = QuestionNarration.makeGuard();') &&
-  doctor.includes("if (!(await guard.say('Hello! This is the embedded English voice test.'))) return;") &&
-  doctor.includes("if (!(await guard.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;") &&
+assert.ok(doctor.includes('const g = QuestionNarration.makeGuard();') &&
+  doctor.includes("if (!(await g.say('Hello! This is the embedded English voice test.'))) return;") &&
+  doctor.includes("if (!(await g.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;") &&
   doctor.includes('finally') && doctor.includes('this.showVoiceLog();'),
   'Voice Doctor must guard both languages and always expose its diagnostics log');
 assert.ok(doctor.includes('this.showVoiceLog();') &&
