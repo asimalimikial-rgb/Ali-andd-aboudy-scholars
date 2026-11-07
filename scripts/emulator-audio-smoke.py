@@ -30,7 +30,7 @@ def dump_ui():
         return ET.Element("hierarchy")
 
 def bounds_center(node):
-    m = re.match(r"\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]", node.attrib.get("bounds", ""))
+    m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
     if not m:
         return None
     x1,y1,x2,y2 = map(int,m.groups())
@@ -86,7 +86,7 @@ def main():
     tap_text("Parent settings", timeout=25)
     question_node, _ = find_node(lambda n: "Adult Verification: Solve" in n.attrib.get("text",""), timeout=15)
     question = question_node.attrib.get("text","")
-    numbers = re.search(r"(\\d+)\\s*\\+\\s*(\\d+)", question)
+    numbers = re.search(r"(\d+)\s*\+\s*(\d+)", question)
     if not numbers:
         raise RuntimeError("Could not parse the parent verification arithmetic.")
     answer = str(int(numbers.group(1)) + int(numbers.group(2)))
