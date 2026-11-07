@@ -95,9 +95,6 @@ jobs:
             python3 scripts/emulator-audio-smoke.py
             cp emulator-audio-report.json dist/emulator-evidence/
             adb logcat -d -v threadtime > dist/emulator-evidence/logcat.txt
-            if grep -q 'blocked_explicit_parent_model_license_consent' emulator-audio-report.json; then
-              echo "::warning::The emulator installed and launched the app, but audio synthesis remained behind the app's explicit parent model-licence consent gate. No legal consent was assumed."
-            fi
 
       - name: Preserve emulator test evidence and named APK
         if: always()
