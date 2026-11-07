@@ -22,7 +22,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ciAudioTest = ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)\n            && getIntent().getBooleanExtra("ci_audio_test", false);
+        ciAudioTest = ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)
+            && getIntent().getBooleanExtra("ci_audio_test", false);
         webView = new WebView(this);
         if (Build.VERSION.SDK_INT >= 35) {
             webView.setOnApplyWindowInsetsListener((view, insets) -> {
