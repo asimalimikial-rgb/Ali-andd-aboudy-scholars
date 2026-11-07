@@ -2,7 +2,7 @@ name: Build and publish Ali & Aboudy Scholars APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/speech-cancellation-diagnostics]
     paths:
       - 'index.html'
       - 'MODEL-LICENSES.md'
