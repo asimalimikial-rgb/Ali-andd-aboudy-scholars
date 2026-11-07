@@ -1,0 +1,104 @@
+name: Supertonic 3 ARM-compatible Android emulator audio test
+
+on:
+  push:
+    branches: [fix/speech-cancellation-diagnostics]
+    paths:
+      - 'index.html'
+      - 'android/**'
+      - 'scripts/**'
+      - '.github/workflows/android-emulator-audio-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  emulator-audio-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/speech-cancellation-diagnostics
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 12266719
+          accept-android-sdk-licenses: true
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Prepare offline app and embedded Supertonic 3
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/assets
+          cp index.html android/app/src/main/assets/index.html
+          bash scripts/prepare-embedded-tts.sh
+
+      - name: Run source regression checks
+        run: |
+          node scripts/check-html.mjs
+          node scripts/check-phonics-wordstudy.mjs
+          node scripts/test-tts.mjs
+
+      - name: Build installable emulator APK
+        run: gradle --no-daemon --stacktrace -p android :app:assembleRelease
+
+      - name: Name emulator APK with speech engine
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk \
+            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+          sha256sum dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+
+      - name: Run Android 15 emulator with ARM native-library translation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          emulator-boot-timeout: 600
+          emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: |
+            set -e
+            adb shell settings put global airplane_mode_on 1
+            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
+            adb shell svc wifi disable || true
+            adb shell svc data disable || true
+            adb install -r dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+            adb shell am start -n com.alialiaboudyscholars.app/.MainActivity
+            mkdir -p dist/emulator-evidence
+            python3 scripts/emulator-audio-smoke.py
+            cp emulator-audio-report.json dist/emulator-evidence/
+            adb logcat -d -v threadtime > dist/emulator-evidence/logcat.txt
+            if grep -q 'blocked_explicit_parent_model_license_consent' emulator-audio-report.json; then
+              echo "::warning::The emulator booted and reached Parent Settings, but audio synthesis was not run because explicit parent acceptance of the bundled Supertonic 3 licence is not stored. No legal consent was assumed."
+            fi
+
+      - name: Preserve emulator test evidence and named APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0
+          path: |
+            dist/Ali-Aboudy-Scholars-Supertonic3-ARMCompat-EmulatorTest-v1.3.0.apk
+            dist/emulator-evidence/**
+            emulator-audio-report.json
+          if-no-files-found: warn
+          retention-days: 30
