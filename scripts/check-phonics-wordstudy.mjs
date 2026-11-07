@@ -45,14 +45,14 @@ const narrationStart=html.indexOf('const narrateQuestion = async () =>');
 const narrationEnd=html.indexOf('this.renderQuestionType(q, area);',narrationStart);
 const narration=narrationStart>=0?html.slice(narrationStart,narrationEnd):'';
 checks[checks.findIndex(x=>x[0]==='Arabic helper spoken before answer selection')][1]=
-  narration.includes('QuestionNarration.makeGuard()') &&
+  narration.includes('QuestionNarration.makeGuard(') &&
   narration.includes('const speakIf = (text, opts) => guard.say(text, opts)') &&
   narration.includes("if (arabicHelper) await speakIf(arabicHelper, { language: 'ar' })");
 const interactionStart=html.indexOf('  renderQuestionType(q, container) {');
 const interactionEnd=html.indexOf('  evaluateAnswer(q) {');
 const interactions=interactionStart>=0&&interactionEnd>interactionStart?html.slice(interactionStart,interactionEnd):'';
 checks.push(['Every answer interaction invalidates narration before acting',
-  (interactions.match(/this\\.invalidateQuestionNarration\\(\\);/g)||[]).length >= 8]);
+  (interactions.split('this.invalidateQuestionNarration();').length - 1) >= 8]);
 checks.push(['Page hide and backgrounding stop narration',
   html.includes("window.addEventListener('pagehide'") &&
   html.includes("document.addEventListener('visibilitychange'")]);
