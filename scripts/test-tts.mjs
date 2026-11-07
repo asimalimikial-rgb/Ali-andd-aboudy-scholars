@@ -147,6 +147,21 @@ function makeSpeechEnv() {
   assert.equal(calls.filter(item => item.op === 'speak').length, callsBeforeBlockedSay,
     'Answer-locked state must prevent new narration requests');
 
+  // A silent answer choice must cancel the question and suppress the Arabic helper.
+  const silentQuestion = env.Guard.makeGuard();
+  const silentQuestionPromise = silentQuestion.say('Question before silent choice');
+  const silentQuestionId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.Guard.invalidate();
+  env.HybridSpeech.stop(); // the selected compare/true-false option has no voice of its own
+  env.window.__nativeSpeechEvent(silentQuestionId, 'end');
+  assert.equal(await silentQuestionPromise, false,
+    'A silent choice must cancel the in-flight question narration');
+  const speechCountAfterSilentChoice = calls.filter(item => item.op === 'speak').length;
+  assert.equal(await silentQuestion.say('Arabic helper after silent choice'), false,
+    'The Arabic helper must not start after a silent choice');
+  assert.equal(calls.filter(item => item.op === 'speak').length, speechCountAfterSilentChoice,
+    'Silent choice must not enqueue any new speech');
+
   // Two rapid replays: only the newest narration remains valid.
   const first = env.Guard.makeGuard();
   const firstPromise = first.say('First replay prompt');
@@ -181,7 +196,7 @@ function makeSpeechEnv() {
     'No stale helper speech may be queued after the selected option');
 
   const renderStart = html.indexOf('  renderQuestionType(q, container) {');
-  const renderEnd = html.indexOf('  renderVisualModel(', renderStart);
+  const renderEnd = html.indexOf('  evaluateAnswer(q) {', renderStart);
   const render = html.slice(renderStart, renderEnd);
   for (const pattern of [
     /btn\.onclick = \(\) => \{\s*this\.invalidateQuestionNarration\(\);/,
