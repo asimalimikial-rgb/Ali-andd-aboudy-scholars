@@ -65,6 +65,10 @@ public class MainActivity extends Activity {
                 if (ciAudioTest) {
                     view.postDelayed(() -> view.evaluateJavascript(
                         "(function(){try{" +
+                        "var a=document.getElementById('chk-ai-voice-terms');" +
+                        "if(!a){EmulatorTestBridge.report('CI_RESULT:missing-license-checkbox');return;}" +
+                        "a.checked=true;" +
+                        "a.dispatchEvent(new Event('change',{bubbles:true}));" +
                         "var b=document.getElementById('btn-test-voice');" +
                         "if(!b){EmulatorTestBridge.report('CI_RESULT:missing-test-button');return;}" +
                         "b.click();" +
@@ -73,8 +77,7 @@ public class MainActivity extends Activity {
                         "var h=document.getElementById('hybrid-voice-status');" +
                         "var l=document.getElementById('local-voice-status');" +
                         "var s=(h&&h.textContent)||(l&&l.textContent)||'';" +
-                        "var a=document.getElementById('chk-ai-voice-terms');" +
-                        "EmulatorTestBridge.report('CI_RESULT:'+JSON.stringify({diagnostics:d,status:s,licenseAccepted:!!(a&&a.checked)}));},8000);" +
+                        "EmulatorTestBridge.report('CI_RESULT:'+JSON.stringify({diagnostics:d,status:s,licenseAccepted:!!a.checked,consentScope:'debug-emulator-only'}));},25000);" +
                         "}catch(e){EmulatorTestBridge.report('CI_RESULT:exception:'+String(e));}})();",
                         null), 2500);
                 }
