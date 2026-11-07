@@ -146,7 +146,7 @@ function makeSpeechEnv() {
     speak: (text, opts) => env.Speech.speak(text, opts || {}),
     stop: () => env.Speech.stop()
   };
-  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+  env.Guard = vm.runInContext('QuestionNarration', env);
   const fireSpeechTick = () => {
     const timer = timers.find(item => !item.cleared && item.ms === 80);
     assert.ok(timer, 'Expected the native end callback to schedule the next narration tick');
