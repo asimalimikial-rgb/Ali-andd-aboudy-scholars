@@ -10,8 +10,9 @@ import android.webkit.WebView;
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -21,7 +22,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class NativeSpeech {
     private final Context context;
     private final WebView webView;
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final Object workerLock = new Object();
+    private final ThreadPoolExecutor worker = new ThreadPoolExecutor(1, 1, 0L,
+        TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    private volatile Runnable queuedSpeechTask;
     private final AtomicLong generation = new AtomicLong(0);
     private final Object audioLock = new Object();
     private volatile EmbeddedTtsEngine engine;
@@ -75,7 +79,13 @@ public final class NativeSpeech {
     @JavascriptInterface public void prewarm() {
         final long queued = android.os.SystemClock.elapsedRealtime();
         logNative("prewarm-enqueued");
-        worker.execute(() -> {
+        synchronized (workerLock) {
+            if (worker.getActiveCount() > 0 || !worker.getQueue().isEmpty()) {
+                logNative("prewarm-skipped worker-busy active=" + worker.getActiveCount() +
+                    " queued=" + worker.getQueue().size());
+                return;
+            }
+            worker.execute(() -> {
             final long workerStart = android.os.SystemClock.elapsedRealtime();
             logNative("prewarm-worker-start queue-ms=" + (workerStart - queued));
             if (engine != null) { logNative("prewarm-skipped engine=ready"); return; }
@@ -94,7 +104,8 @@ public final class NativeSpeech {
                 logNative("prewarm-engine-load-error load-ms=" + (android.os.SystemClock.elapsedRealtime() - loadStart) + " error=" + lastError);
                 notifyStatus("Embedded offline voice initialization failed / تعذّر تهيئة محرك الصوت المضمّن: " + lastError);
             }
-        });
+            });
+        }
     }
 
     @JavascriptInterface public void speak(String id, String text, String language,
@@ -108,7 +119,11 @@ public final class NativeSpeech {
         logNative("request-enqueued id=" + requestId + " chars=" + content.length() + " lang=" + lang);
         if (content.isEmpty()) { notifyJs(requestId, "end"); return; }
 
-        worker.execute(() -> {
+        final Runnable[] taskRef = new Runnable[1];
+        Runnable speechTask = () -> {
+            synchronized (workerLock) {
+                if (queuedSpeechTask == taskRef[0]) queuedSpeechTask = null;
+            }
             logNative("request-worker-start id=" + requestId + " queue-ms=" +
                 (android.os.SystemClock.elapsedRealtime() - queued));
             try {
@@ -168,7 +183,15 @@ public final class NativeSpeech {
                 notifyStatus("Embedded offline speech failed / تعذّر تشغيل محرك الصوت المضمّن: " + lastError);
                 notifyJs(requestId, "error");
             }
-        });
+        };
+        taskRef[0] = speechTask;
+        synchronized (workerLock) {
+            if (queuedSpeechTask != null && worker.remove(queuedSpeechTask)) {
+                logNative("queued-speech-replaced by=" + requestId);
+            }
+            queuedSpeechTask = speechTask;
+            worker.execute(speechTask);
+        }
     }
 
     private void playAudio(String id, GeneratedAudio audio, long request) {
@@ -306,12 +329,16 @@ public final class NativeSpeech {
 
     void shutdown() {
         cancel();
-        worker.execute(() -> {
-            EmbeddedTtsEngine current = engine;
-            engine = null;
-            ready = false;
-            if (current != null) current.close();
-        });
-        worker.shutdown();
+        synchronized (workerLock) {
+            worker.getQueue().clear();
+            queuedSpeechTask = null;
+            worker.execute(() -> {
+                EmbeddedTtsEngine current = engine;
+                engine = null;
+                ready = false;
+                if (current != null) current.close();
+            });
+            worker.shutdown();
+        }
     }
 }
