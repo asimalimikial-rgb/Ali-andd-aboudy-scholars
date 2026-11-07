@@ -9926,6 +9926,15 @@ const App = {
   },
 
   async testVoiceDoctor() {
+    // Ignore repeated taps/click events while the current two-language test is active.
+    // A second guard would call stop() and cancel the first native PCM generation.
+    if (this._voiceDoctorRunning) {
+      try { Speech.note("voice-test-ignored", "already-running"); } catch (e) {}
+      return;
+    }
+    this._voiceDoctorRunning = true;
+    const testButton = document.getElementById('btn-test-voice');
+    if (testButton) testButton.disabled = true;
     const guard = QuestionNarration.makeGuard();
     try {
       if (!(await guard.say('Hello! This is the embedded English voice test.'))) return;
@@ -9937,6 +9946,8 @@ const App = {
         HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
       }
     } finally {
+      this._voiceDoctorRunning = false;
+      if (testButton) testButton.disabled = false;
       this.showVoiceLog();
     }
   },
