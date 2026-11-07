@@ -8347,10 +8347,10 @@ const JOLLY_ARABIC_WORDS = {
 const QuestionNarration = {
   token: 0,
   invalidate() { this.token++; return this.token; },
-  makeGuard() {
+  makeGuard(isAllowed = () => true) {
     const token = ++this.token;
     HybridSpeech.stop();
-    const isCurrent = () => token === this.token;
+    const isCurrent = () => token === this.token && isAllowed();
     const say = async (text, opts = {}) => {
       if (!isCurrent()) return false;
       const pending = HybridSpeech.speak(text, opts);
@@ -9195,8 +9195,8 @@ const App = {
     // Speak the English prompt first, then the Arabic helper, before answer selection.
     // For Ali, an isolated target letter is spoken as its phonics sound, not its letter name.
     const narrateQuestion = async () => {
-      const guard = QuestionNarration.makeGuard();
-      const isCurrent = () => guard.isCurrent() && !this.answerLocked;
+      const guard = QuestionNarration.makeGuard(() => !this.answerLocked);
+      const isCurrent = guard.isCurrent;
       const speakIf = (text, opts) => guard.say(text, opts);
       const playLetterIf = letter => {
         const speech = this.getAliLetterSpeech(letter);
