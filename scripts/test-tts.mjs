@@ -389,7 +389,7 @@ const timerEnv = {
   }
 };
 vm.createContext(timerEnv);
-vm.runInContext(speechTimersMatch[0] + '\\nglobalThis.Timers = SpeechTimers;', timerEnv);
+vm.runInContext(speechTimersMatch[0] + '\nglobalThis.Timers = SpeechTimers;', timerEnv);
 let delayedSpeechRan = false;
 timerEnv.Timers.set(() => { delayedSpeechRan = true; }, 2200);
 assert.equal(timerCalls.length, 1, 'A delayed Jolly speech callback must register one timer');
