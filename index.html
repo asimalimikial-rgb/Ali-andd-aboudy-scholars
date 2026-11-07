@@ -737,6 +737,7 @@
         <select id="voice-picker-ar-select" style="width:100%;min-height:44px;margin-top:4px;"><option value="">Auto (best offline voice)</option></select>
         <div id="local-voice-status" role="status" aria-live="polite" style="margin-top:8px;line-height:1.6;">Detecting available device voices…</div>
         <button class="btn btn-secondary" id="btn-show-speech-diagnostics" type="button" style="width:100%;margin-top:10px;">Show speech diagnostics / عرض سجل الصوت</button>
+        <button class="btn btn-secondary" id="btn-copy-speech-diagnostics" type="button" style="width:100%;margin-top:6px;">Copy diagnostics / نسخ السجل</button>
         <textarea id="speech-diagnostics-output" rows="7" readonly hidden aria-label="Speech diagnostics log" style="width:100%;margin-top:8px;padding:10px;border:1px solid #CBD5E0;border-radius:10px;font:12px monospace;direction:ltr;user-select:text;"></textarea>
       </div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:12px;"><input type="checkbox" id="chk-arabic-support" checked> Arabic learning explanations / إظهار الشرح العربي المساعد</label>
@@ -1128,7 +1129,7 @@ const Speech = {
     setTimeout(() => { bubble.style.display = 'none'; }, 4500);
   },
   speak(input, opts = {}) {
-    this.note("speak-request", String(input == null ? "" : input).slice(0, 90));
+    this.note("speak-request", String(input == null ? "" : input).slice(0, 40));
     this.stop();
     const generation = (this._speechGeneration || 0) + 1;
     this._speechGeneration = generation;
@@ -1182,9 +1183,9 @@ const Speech = {
         };
         pending.timeout = setTimeout(() => {
           if (this._nativePending && this._nativePending.id === id) {
-            this.note("timeout", id);
             fail(new Error("Embedded voice engine did not respond in time."));
             this.stop();
+            try { this.note("timeout", id); } catch (e) {}
           }
         }, Math.max(30000, segment.text.length * 700));
         this._nativePending = pending;
@@ -8346,9 +8347,14 @@ const JOLLY_ARABIC_WORDS = {
 
 const QuestionNarration = {
   token: 0,
-  invalidate() { this.token++; return this.token; },
+  invalidate(reason = "invalidated") {
+    this.token++;
+    try { Speech.note("guard-cancel", reason + " token=" + this.token); } catch (e) {}
+    return this.token;
+  },
   makeGuard(isAllowed = () => true) {
     const token = ++this.token;
+    try { Speech.note("guard-start", "token=" + token); } catch (e) {}
     HybridSpeech.stop();
     const isCurrent = () => token === this.token && isAllowed();
     const say = async (text, opts = {}) => {
@@ -8374,6 +8380,8 @@ const App = {
   answerLocked: false,
 
   renderJollyPhonics(skill = 'sounds') {
+    this.clearScreenSpeechTimers();
+    HybridSpeech.stop();
     const skills = [
       ['sounds','🔊 Letter sounds','أصوات الحروف'],['formation','✍️ Letter formation','كتابة الحروف'],['wordstudy','📚 Word Study','دراسة الكلمات'],['blending','🧩 Blending','دمج الأصوات'],['segmenting','👂 Segmenting','تقسيم الكلمات'],['tricky','⭐ Tricky words','الكلمات الشائعة']
     ];
@@ -8399,7 +8407,7 @@ const App = {
       });
     } else if(skill==='blending') {
       const examples=[['s','a','t','sat'],['p','i','n','pin'],['t','a','p','tap'],['n','a','p','nap'],['m','a','p','map'],['s','i','t','sit']];
-      examples.forEach(parts=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<h3 style="text-align:center">${parts.slice(0,3).join('  +  ')}</h3><p style="text-align:center;font-size:1.8rem;margin:8px">→ ${parts[3]}</p><p dir="rtl" style="text-align:center">اسمع كل صوت منفصلاً، ثم قرّب الأصوات من بعضها حتى تسمع الكلمة.</p>`;const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Listen and blend';b.onclick=()=>{parts.slice(0,3).forEach((x,i)=>setTimeout(()=>this.playJollyPhoneme(x,parts[3]),i*650));setTimeout(()=>Speech.speak(parts[3]),2200);};box.appendChild(b);root.appendChild(box);});
+      examples.forEach(parts=>{const box=document.createElement('div');box.className='jolly-practice';box.innerHTML=`<h3 style="text-align:center">${parts.slice(0,3).join('  +  ')}</h3><p style="text-align:center;font-size:1.8rem;margin:8px">→ ${parts[3]}</p><p dir="rtl" style="text-align:center">اسمع كل صوت منفصلاً، ثم قرّب الأصوات من بعضها حتى تسمع الكلمة.</p>`;const b=document.createElement('button');b.className='btn btn-primary';b.textContent='Listen and blend';b.onclick=()=>{this.clearScreenSpeechTimers();HybridSpeech.stop();parts.slice(0,3).forEach((x,i)=>this.scheduleScreenSpeech(()=>this.playJollyPhoneme(x,parts[3]),i*650));this.scheduleScreenSpeech(()=>Speech.speak(parts[3]),2200);};box.appendChild(b);root.appendChild(box);});
     } else if(skill==='wordstudy') {
       const ali=Store.data.activeChild==='ali';
       const words=ali?[
@@ -8606,6 +8614,19 @@ const App = {
       output.scrollTop = output.scrollHeight;
       output.focus();
     };
+    document.getElementById('btn-copy-speech-diagnostics').onclick = async () => {
+      const output = document.getElementById('speech-diagnostics-output');
+      output.value = Speech.getDiagnostics() || 'No speech events recorded yet.';
+      output.hidden = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(output.value);
+        else { output.focus(); output.select(); document.execCommand('copy'); }
+        HybridSpeech.updateStatus('Speech diagnostics copied / تم نسخ سجل الصوت');
+      } catch (error) {
+        output.focus(); output.select();
+        HybridSpeech.updateStatus('Select and copy the diagnostics text / حدد النص وانسخه يدوياً');
+      }
+    };
     document.getElementById('voice-picker-select').onchange = e => { Store.data.settings.manualVoiceEn = e.target.value; Store.save(); };
     document.getElementById('voice-picker-ar-select').onchange = e => { Store.data.settings.manualVoiceAr = e.target.value; Store.save(); };
     document.getElementById('chk-ai-voice-terms').onchange = e => {
@@ -8657,15 +8678,32 @@ const App = {
     };
   },
 
-  invalidateQuestionNarration() {
-    QuestionNarration.invalidate();
+  invalidateQuestionNarration(reason = "screen-change") {
+    QuestionNarration.invalidate(reason);
     HybridSpeech.stop();
+  },
+
+  clearScreenSpeechTimers() {
+    (this._screenSpeechTimers || []).forEach(timer => clearTimeout(timer));
+    this._screenSpeechTimers = [];
+  },
+
+  scheduleScreenSpeech(callback, delay) {
+    if (!Array.isArray(this._screenSpeechTimers)) this._screenSpeechTimers = [];
+    const timer = setTimeout(() => {
+      this._screenSpeechTimers = this._screenSpeechTimers.filter(id => id !== timer);
+      const active = document.querySelector('.screen.active');
+      if (active && active.id === 'screen-jolly') callback();
+    }, delay);
+    this._screenSpeechTimers.push(timer);
+    return timer;
   },
 
   showScreen(screenId) {
     const activeScreen = document.querySelector('.screen.active');
-    if (activeScreen && activeScreen.id === 'screen-lesson' && screenId !== 'screen-lesson') {
-      this.invalidateQuestionNarration();
+    if (activeScreen && activeScreen.id !== screenId) {
+      this.invalidateQuestionNarration("leave-" + activeScreen.id);
+      this.clearScreenSpeechTimers();
     }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(screenId);
@@ -9866,12 +9904,16 @@ const App = {
   },
 
   async testVoiceDoctor() {
+    const guard = QuestionNarration.makeGuard();
     try {
-      await HybridSpeech.speak('Hello! This is the embedded English voice test.');
-      await HybridSpeech.speak('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' });
+      if (!(await guard.say('Hello! This is the embedded English voice test.'))) return;
+      if (!(await guard.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;
+      if (!guard.isCurrent()) return;
       HybridSpeech.updateStatus('Both embedded voices completed the test / اكتمل اختبار الصوتين المضمّنين');
     } catch (error) {
-      HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
+      if (guard.isCurrent()) {
+        HybridSpeech.updateStatus('Embedded voice test failed / فشل اختبار الصوت المضمّن: ' + (error.message || 'unknown error'));
+      }
     }
   },
 
