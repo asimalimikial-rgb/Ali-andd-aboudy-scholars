@@ -2,6 +2,8 @@ package com.alialiaboudyscholars.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -14,10 +16,12 @@ import android.os.Build;
 public class MainActivity extends Activity {
     private WebView webView;
     private NativeSpeech nativeSpeech;
+    private boolean ciAudioTest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ciAudioTest = BuildConfig.DEBUG && getIntent().getBooleanExtra("ci_audio_test", false);
         webView = new WebView(this);
         if (Build.VERSION.SDK_INT >= 35) {
             webView.setOnApplyWindowInsetsListener((view, insets) -> {
@@ -38,6 +42,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 26) settings.setSafeBrowsingEnabled(true);
         nativeSpeech = new NativeSpeech(this, webView);
         webView.addJavascriptInterface(nativeSpeech, "NativeSpeech");
+        if (ciAudioTest) webView.addJavascriptInterface(new EmulatorTestBridge(), "EmulatorTestBridge");
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -51,10 +56,34 @@ public class MainActivity extends Activity {
                 }
                 return true;
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (ciAudioTest) {
+                    view.postDelayed(() -> view.evaluateJavascript(
+                        "(function(){try{" +
+                        "var b=document.getElementById('btn-test-voice');" +
+                        "if(!b){EmulatorTestBridge.report('CI_RESULT:missing-test-button');return;}" +
+                        "b.click();" +
+                        "window.setTimeout(function(){var d='';" +
+                        "try{d=Speech.getDiagnostics();}catch(e){d='diagnostics-error:'+String(e);}" +
+                        "EmulatorTestBridge.report('CI_RESULT:'+d);},8000);" +
+                        "}catch(e){EmulatorTestBridge.report('CI_RESULT:exception:'+String(e));}})();",
+                        null), 2500);
+                }
+            }
         });
         setContentView(webView);
         if (savedInstanceState == null) webView.loadUrl("file:///android_asset/index.html");
         else webView.restoreState(savedInstanceState);
+    }
+
+    private final class EmulatorTestBridge {
+        @JavascriptInterface
+        public void report(String diagnostics) {
+            Log.i("CI_AUDIO_TEST", diagnostics == null ? "" : diagnostics);
+        }
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
@@ -69,7 +98,11 @@ public class MainActivity extends Activity {
 
     @Override protected void onDestroy() {
         if (nativeSpeech != null) nativeSpeech.shutdown();
-        if (webView != null) { webView.removeJavascriptInterface("NativeSpeech"); webView.destroy(); }
+        if (webView != null) {
+            webView.removeJavascriptInterface("NativeSpeech");
+            if (ciAudioTest) webView.removeJavascriptInterface("EmulatorTestBridge");
+            webView.destroy();
+        }
         super.onDestroy();
     }
 }
