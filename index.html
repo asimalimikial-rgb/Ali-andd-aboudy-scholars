@@ -8349,6 +8349,7 @@ const QuestionNarration = {
   invalidate() { this.token++; return this.token; },
   makeGuard() {
     const token = ++this.token;
+    HybridSpeech.stop();
     const isCurrent = () => token === this.token;
     const say = async (text, opts = {}) => {
       if (!isCurrent()) return false;
@@ -9196,7 +9197,6 @@ const App = {
     const narrateQuestion = async () => {
       const guard = QuestionNarration.makeGuard();
       const isCurrent = () => guard.isCurrent() && !this.answerLocked;
-      HybridSpeech.stop();
       const speakIf = (text, opts) => guard.say(text, opts);
       const playLetterIf = letter => {
         const speech = this.getAliLetterSpeech(letter);
@@ -9246,7 +9246,7 @@ const App = {
     document.getElementById('btn-replay-question').onclick = () => {
       narrateQuestion().catch(error => console.warn('Question replay failed:', error));
     };
-    document.getElementById('btn-stop-question').onclick = () => HybridSpeech.stop();
+    document.getElementById('btn-stop-question').onclick = () => this.invalidateQuestionNarration();
     narrateQuestion().catch(error => console.warn('Question narration failed:', error));
     this.renderQuestionType(q, area);
 
