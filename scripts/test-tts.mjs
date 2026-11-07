@@ -370,3 +370,66 @@ assert.ok(native.includes('if (request != generation.get()) {\n                 
   'AudioTrack must not be registered for a stale generation');
 
 console.log('Speech runtime regression checks passed: timeout cancellation, stop, stale callback, narration invalidation, native prewarm, and stale-request handling.');
+
+
+// Regression checks for screen-owned speech timers and the final UI wiring.
+const speechTimersMatch = html.match(/const SpeechTimers = \{[\s\S]*?\n\};/);
+assert.ok(speechTimersMatch, 'Speech-only screen timers must use the shared cancellable registry');
+const timerCalls = [];
+let timerSequence = 0;
+const timerEnv = {
+  setTimeout(fn, ms) {
+    const id = ++timerSequence;
+    timerCalls.push({ id, fn, ms, cleared: false });
+    return id;
+  },
+  clearTimeout(id) {
+    const timer = timerCalls.find(item => item.id === id);
+    if (timer) timer.cleared = true;
+  }
+};
+vm.createContext(timerEnv);
+vm.runInContext(speechTimersMatch[0] + '\\nglobalThis.Timers = SpeechTimers;', timerEnv);
+let delayedSpeechRan = false;
+timerEnv.Timers.set(() => { delayedSpeechRan = true; }, 2200);
+assert.equal(timerCalls.length, 1, 'A delayed Jolly speech callback must register one timer');
+timerEnv.Timers.clear();
+assert.equal(timerCalls[0].cleared, true, 'Screen invalidation must clear the pending delayed speech timer');
+assert.equal(delayedSpeechRan, false, 'A cleared delayed speech callback must never run');
+
+assert.ok(html.includes('this.clearScreenSpeechTimers();') &&
+  html.includes('SpeechTimers.clear();') &&
+  html.includes('return SpeechTimers.set(() => {'),
+  'Jolly screen speech timers must be cancelled through the shared timer registry');
+assert.ok(html.includes('try { this.note("speak", segment.text.slice(0, 40)); } catch (e) {}'),
+  'Each native speech segment must be recorded in diagnostics');
+const invalidateStart = html.indexOf('  invalidateQuestionNarration(reason = "screen-change") {');
+const invalidateEnd = html.indexOf('  clearScreenSpeechTimers() {', invalidateStart);
+const invalidation = html.slice(invalidateStart, invalidateEnd);
+assert.ok(invalidation.includes('QuestionNarration.invalidate(reason)') &&
+  invalidation.includes('this.clearScreenSpeechTimers()') &&
+  invalidation.includes('HybridSpeech.stop()'),
+  'Question invalidation must cancel guards, delayed screen speech, and native playback');
+
+const renderStart = html.indexOf('  renderCurrentQuestion() {');
+const renderEnd = html.indexOf('  renderVisualModel(', renderStart);
+const renderQuestion = html.slice(renderStart, renderEnd);
+assert.ok(renderQuestion.indexOf('this.invalidateQuestionNarration();') >= 0 &&
+  renderQuestion.indexOf('submitButton.disabled = false;') >= 0 &&
+  renderQuestion.indexOf('this.answerLocked = false;') >= 0 &&
+  renderQuestion.indexOf('this.answerLocked = false;') < renderQuestion.indexOf('narrateQuestion().catch('),
+  'A new question must unlock answer controls before narration begins');
+
+const doctorStart = html.indexOf('  async testVoiceDoctor() {');
+const doctorEnd = html.indexOf('  exportData() {', doctorStart);
+const doctor = html.slice(doctorStart, doctorEnd);
+assert.ok(doctor.includes('const guard = QuestionNarration.makeGuard();') &&
+  doctor.includes("if (!(await guard.say('Hello! This is the embedded English voice test.'))) return;") &&
+  doctor.includes("if (!(await guard.say('مرحباً! هذا اختبار الصوت العربي المضمّن.', { language: 'ar' }))) return;") &&
+  doctor.includes('finally') && doctor.includes('this.showVoiceLog();'),
+  'Voice Doctor must guard both languages and always expose its diagnostics log');
+assert.ok(doctor.includes('this.showVoiceLog();') &&
+  html.includes("output.value = Speech.getDiagnostics() || 'No speech events recorded yet.';"),
+  'Voice Doctor must render the latest speech diagnostics after testing or cancellation');
+
+console.log('Speech timer and Voice Doctor UI regression checks passed.');
