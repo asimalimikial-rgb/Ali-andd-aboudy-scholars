@@ -272,12 +272,12 @@ function makeSpeechEnv() {
   const helperMatch = html.match(/const playLetterIf = letter => \{[\s\S]*?\n      \};/);
   assert.ok(helperMatch, 'Actual playLetterIf helper must be present');
   const helperSource = helperMatch[0]
-    .replace('const playLetterIf = letter => {', '(letter) => {')
+    .replace('const playLetterIf = letter => {', '(guard, letter) => {')
     .replace(/\n      \};$/, '\n}');
   const playLetterIf = vm.runInContext('(' + helperSource + ')', env);
   const guard = env.Guard.makeGuard();
   env.getAliLetterSpeech = () => null;
-  assert.equal(await playLetterIf('?'), true,
+  assert.equal(await playLetterIf(guard, '?'), true,
     'A letter with no mapped audio must leave the narration guard current');
   const titlePromise = guard.say('Remaining title after unmapped letter');
   const titleId = calls.filter(item => item.op === 'speak').at(-1).id;
