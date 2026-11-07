@@ -215,13 +215,24 @@ function makeSpeechEnv() {
     'The silent compare option must not start replacement speech');
 
   const answerBlock = html.slice(html.indexOf('  evaluateAnswer(q) {'), html.indexOf('  advanceActivity() {'));
-  assert.match(answerBlock, /evaluateAnswer\(q\) \{\s*this\.invalidateQuestionNarration\(\);/,
-    'Check Answer must cancel question narration immediately');
+  assert.match(answerBlock, /evaluateAnswer\(q\) \{\s*if \(this\.answerLocked\) return;[\s\S]*?if \(this\.selectedAnswer === null \|\| this\.selectedAnswer === undefined\) \{[\s\S]*?return;\s*\}[\s\S]*?this\.invalidateQuestionNarration\(\);/,
+    'Check Answer must preserve narration for empty submissions and invalidate only after valid submission');
+  assert.ok(answerBlock.indexOf('this.invalidateQuestionNarration();') >
+    answerBlock.indexOf('this.selectedAnswer === null'),
+    'Check Answer must not stop narration when no answer is selected');
+  assert.ok(answerBlock.includes('submitBtn.disabled = true') && answerBlock.includes('}, 700);'),
+    'Continue must be briefly disabled after submission to prevent accidental double-tap advance');
+  assert.match(answerBlock, /const spokenFeedback = isCorrect \? 'أحسنت!' : 'محاولة جميلة!';/,
+    'Spoken feedback must be short Arabic-only encouragement');
   assert.equal((answerBlock.match(/HybridSpeech\.speak\(/g) || []).length, 1,
     'Post-answer handling must speak only the final encouragement');
   assert.ok(answerBlock.indexOf('HybridSpeech.speak(spokenFeedback)') >
     answerBlock.indexOf('this.invalidateQuestionNarration();'),
     'Post-answer encouragement must occur after question narration is cancelled');
+  assert.match(render, /HybridSpeech\.speak\(opt\)\s*\.catch\(/,
+    'Ordinary option speech must handle rejected playback promises');
+  assert.match(html, /playAliLetterSound\(letter\)[\s\S]*?HybridSpeech\.speak\(speech\.text, speech\.options\)[\s\S]*?\.catch\(/,
+    'Ali letter option speech must handle rejected playback promises');
   assert.ok(html.includes("document.addEventListener('visibilitychange'") &&
     html.includes("window.addEventListener('pagehide'"),
     'Hiding or unloading the page must cancel queued speech');
@@ -238,6 +249,93 @@ function makeSpeechEnv() {
     'Voice test must only be started by an explicit button press');
   assert.ok(html.includes("Welcome narration failed:"),
     'The profile welcome narration must handle rejected promises');
+}
+
+
+// A missing letter-sound mapping is not cancellation: the title and Arabic helper continue.
+{
+  const { env, calls, timers, fire } = makeSpeechEnv();
+  env.HybridSpeech = {
+    speak: (text, opts) => env.Speech.speak(text, opts || {}),
+    stop: () => env.Speech.stop()
+  };
+  const guardSource = html.match(/const QuestionNarration = \{[\\s\\S]*?\\n\};/);
+  assert.ok(guardSource, 'Question narration guard must be available');
+  vm.runInContext(guardSource[0] + '\\nglobalThis.Guard = QuestionNarration;', env);
+  const helperMatch = html.match(/const playLetterIf = letter => \{[\\s\\S]*?\\n      \};/);
+  assert.ok(helperMatch, 'Actual playLetterIf helper must be present');
+  const helperSource = helperMatch[0]
+    .replace('const playLetterIf = letter => {', '(letter) => {')
+    .replace(/\\n      \};$/, '\\n}');
+  const playLetterIf = vm.runInContext('(' + helperSource + ')', env);
+  const guard = env.Guard.makeGuard();
+  const appStub = { getAliLetterSpeech: () => null };
+  assert.equal(await playLetterIf.call(appStub, '?'), true,
+    'A letter with no mapped audio must leave the narration guard current');
+  const titlePromise = guard.say('Remaining title after unmapped letter');
+  const titleId = calls.filter(item => item.op === 'speak').at(-1).id;
+  env.window.__nativeSpeechEvent(titleId, 'end');
+  const tick = timers.find(item => !item.cleared && item.ms === 80);
+  assert.ok(tick, 'Remaining title should complete normally');
+  fire(tick.id);
+  assert.equal(await titlePromise, true,
+    'Remaining title and subsequent Arabic helper remain eligible after missing letter audio');
+}
+
+// Exercise the actual evaluateAnswer method with a controlled DOM and timers.
+{
+  const methodStart = html.indexOf('  evaluateAnswer(q) {');
+  const methodEnd = html.indexOf('\\n  },\\n\\n  advanceActivity() {', methodStart);
+  assert.ok(methodStart >= 0 && methodEnd > methodStart, 'evaluateAnswer method boundaries must exist');
+  const methodSource = html.slice(methodStart, methodEnd) + '\\n  }';
+  const scheduled = [];
+  const elements = {
+    'answer-feedback': { className: '', style: {}, textContent: '' },
+    'question-audio-controls': { style: {} },
+    'btn-submit-answer': { textContent: '', disabled: false, onclick: null }
+  };
+  const spoken = [];
+  const env = {
+    console, Promise, JSON, setTimeout: (fn, ms) => { scheduled.push({ fn, ms }); return scheduled.length; },
+    clearTimeout: () => {},
+    document: { getElementById: id => elements[id] || null },
+    SoundEffects: { correct() {}, wrong() {} },
+    HybridSpeech: { speak: text => { spoken.push(text); return Promise.resolve(); } }
+  };
+  vm.createContext(env);
+  vm.runInContext('globalThis.evaluateAnswer = ({' + methodSource + '\\n}).evaluateAnswer;', env);
+  const app = {
+    answerLocked: false, selectedAnswer: null, tappedCount: 0, lessonScore: 0,
+    invalidations: 0, advances: 0,
+    invalidateQuestionNarration() { this.invalidations++; },
+    advanceActivity() { this.advances++; },
+    saveVocabularyWord() {}
+  };
+  env.evaluateAnswer.call(app, { type: 'mc_text', answer: 'A' });
+  assert.equal(app.invalidations, 0, 'Empty submission must not invalidate active narration');
+  assert.match(elements['answer-feedback'].textContent, /اختر إجابة أولاً/,
+    'Empty submission must show the existing choose-answer message');
+  assert.equal(spoken.length, 0, 'Empty submission must not speak feedback');
+
+  app.answerLocked = true;
+  env.evaluateAnswer.call(app, { type: 'mc_text', answer: 'A' });
+  assert.equal(app.invalidations, 0, 'Repeated check after locking must not stop feedback narration');
+
+  app.answerLocked = false;
+  app.selectedAnswer = 'A';
+  env.evaluateAnswer.call(app, { type: 'mc_text', answer: 'A' });
+  assert.equal(app.invalidations, 1, 'Valid submission must invalidate question narration once');
+  assert.deepEqual(spoken, ['أحسنت!'], 'Correct feedback must speak Arabic-only encouragement');
+  assert.equal(elements['btn-submit-answer'].disabled, true,
+    'Continue must remain disabled immediately after submission');
+  assert.equal(scheduled.at(-1).ms, 700, 'Continue unlock delay must be 700ms');
+  if (!elements['btn-submit-answer'].disabled) elements['btn-submit-answer'].onclick();
+  assert.equal(app.advances, 0, 'A double tap must not advance during the feedback guard window');
+  scheduled.at(-1).fn();
+  assert.equal(elements['btn-submit-answer'].disabled, false,
+    'Continue must unlock after the guard window');
+  elements['btn-submit-answer'].onclick();
+  assert.equal(app.advances, 1, 'Continue must work after the short guard window');
 }
 
 assert.ok(native.includes('if (request != generation.get()) {\n                    notifyJs(requestId, "end");\n                    return;\n                }'),
