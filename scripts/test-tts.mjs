@@ -162,7 +162,7 @@ function makeSpeechEnv() {
   const silentQuestionPromise = silentQuestion.say('Question before silent choice');
   const silentQuestionId = calls.filter(item => item.op === 'speak').at(-1).id;
   env.Guard.invalidate();
-  env.HybridSpeech.stop(); // the selected compare/true-false option has no voice of its own
+  vm.runInContext('HybridSpeech.stop();', env); // the selected compare/true-false option has no voice of its own
   env.window.__nativeSpeechEvent(silentQuestionId, 'end');
   assert.equal(await silentQuestionPromise, false,
     'A silent choice must cancel the in-flight question narration');
@@ -191,8 +191,8 @@ function makeSpeechEnv() {
   const questionPromise = question.say('English question');
   const questionId = calls.filter(item => item.op === 'speak').at(-1).id;
   env.Guard.invalidate();
-  env.HybridSpeech.stop();
-  const optionPromise = env.HybridSpeech.speak('Chosen option');
+  vm.runInContext('HybridSpeech.stop();', env);
+  const optionPromise = vm.runInContext('HybridSpeech.speak("Chosen option")', env);
   const optionId = calls.filter(item => item.op === 'speak').at(-1).id;
   env.window.__nativeSpeechEvent(questionId, 'end');
   assert.equal(await questionPromise, false, 'Selection must invalidate in-flight question narration');
@@ -265,13 +265,10 @@ function makeSpeechEnv() {
 // A missing letter-sound mapping is not cancellation: the title and Arabic helper continue.
 {
   const { env, calls, timers, fire } = makeSpeechEnv();
-  env.HybridSpeech = {
-    speak: (text, opts) => env.Speech.speak(text, opts || {}),
-    stop: () => env.Speech.stop()
-  };
+  vm.runInContext('Speech.localSpeak = Speech.speak.bind(Speech);', env);
   const guardSource = html.match(/const QuestionNarration = \{[\s\S]*?\n\};/);
   assert.ok(guardSource, 'Question narration guard must be available');
-  vm.runInContext(guardSource[0] + '\nglobalThis.Guard = QuestionNarration;', env);
+  env.Guard = vm.runInContext('QuestionNarration', env);
   const helperMatch = html.match(/const playLetterIf = letter => \{[\s\S]*?\n      \};/);
   assert.ok(helperMatch, 'Actual playLetterIf helper must be present');
   const helperSource = helperMatch[0]
